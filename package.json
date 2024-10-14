@@ -1,4 +1,5 @@
 {
+  "homepage": "https://irojascantol.github.io/AppMobileCantol/comercial",
   "name": "test_project",
   "private": true,
   "version": "0.0.0",
@@ -11,6 +12,8 @@
   },
   "scripts": {
     "dev": "vite",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
