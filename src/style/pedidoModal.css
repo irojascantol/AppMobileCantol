@@ -1,0 +1,18 @@
+
+@media (max-width: 574px) {
+.custom-modal .modal-dialog {
+    max-width: 310px; /* Set your desired width */
+    width: 100%; /* Optional: make it responsive */
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%) !important;
+}
+}
+
+@media (min-width: 575px) {
+    .custom-modal .modal-dialog {
+        max-width: 310px; /* Set your desired width */
+        width: 100%; /* Optional: make it responsive */
+        transform: translate(0%, 0%);
+    }
+}

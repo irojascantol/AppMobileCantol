@@ -1,0 +1,17 @@
+
+.dropdown{
+    width: 100%;
+    /* min-width: 380px; */
+}
+
+.dropdown-toggle {  
+    width: 100% !important; /* Set your desired width */  
+  }
+
+.custom-tab .nav-link .active{
+    color: black !important;
+}
+
+.custom-tab .nav-link{
+    color: black !important;
+}
