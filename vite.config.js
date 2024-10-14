@@ -8,5 +8,6 @@ export default defineConfig({
     //target: 'esnext' //browsers can handle the latest ES features
     chunkSizeWarningLimit: 1600,
     target:'esnext'
-  }
+  },
+  base: '/AppMobileCantol/',
 })
