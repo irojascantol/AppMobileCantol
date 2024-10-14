@@ -13,19 +13,19 @@ const msalInstance = new PublicClientApplication(msalConfig);
 function App() {
   return (
     <>
-    <div className="tw-flex tw-justify-center tw-items-center tw-h-screen tw-text-lg tw-font-bold">Hola Mundo</div>
+      {/* <BrowserRouter basename="comercial"> */}
+      <BrowserRouter>
+        <MsalProvider instance={msalInstance}>
+          <ComercialContext>
+            <NoAutorizado/>
+            <div className='page-content'>
+              <MiRutas/>
+            </div>
+          </ComercialContext>
+        </MsalProvider>
+      </BrowserRouter>
     </>
   )
 }
-      // {/* <BrowserRouter basename="comercial"> */}
-      // <BrowserRouter>
-      //   <MsalProvider instance={msalInstance}>
-      //     <ComercialContext>
-      //       <NoAutorizado/>
-      //       <div className='page-content'>
-      //         <MiRutas/>
-      //       </div>
-      //     </ComercialContext>
-      //   </MsalProvider>
-      // </BrowserRouter>
+    // {/* <div className="tw-flex tw-justify-center tw-items-center tw-h-screen tw-text-lg tw-font-bold">Hola Mundo</div> */}
 export default App
