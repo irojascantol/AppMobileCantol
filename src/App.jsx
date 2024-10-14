@@ -13,7 +13,8 @@ const msalInstance = new PublicClientApplication(msalConfig);
 function App() {
   return (
     <>
-      <BrowserRouter basename="comercial">
+      {/* <BrowserRouter basename="comercial"> */}
+      <BrowserRouter>
         <MsalProvider instance={msalInstance}>
           <ComercialContext>
             <NoAutorizado/>
