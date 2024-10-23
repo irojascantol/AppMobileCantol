@@ -24,6 +24,7 @@ export default function ReportePedido() {
             setLoading(true);
             const {username} = await decodeJWT();
             const response = await getPedido({usuario_codigo: username}, params.reporte)
+            //secure shield
             if(response !== undefined){
                 setLoading(false);
                 await setListReporte(response);
@@ -35,6 +36,7 @@ export default function ReportePedido() {
         waitFunc();
     }, [params]);
 
+    //esta parte para ingresar a la parte detalle
     const handleCarusel = (item) => {
         setItemSelected(item);
         handleTabPedido('general')

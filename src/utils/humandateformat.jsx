@@ -1,9 +1,15 @@
 export const getHumanDateFormat = (data) => {
-    const date = new Date(data);
-    date.setDate(date.getDate() + 1);
-    const options = { year: 'numeric', month: 'numeric', day: 'numeric'
-    };
-    return date.toLocaleDateString('es-PE', options);
+  const date = new Date(data);
+  date.setDate(date.getDate() + 1);
+  const options = { year: 'numeric', month: 'numeric', day: 'numeric'};
+  return date.toLocaleDateString('es-PE', options);
+  }
+
+export const getHumanDateReporte = (data) => {
+  const date = new Date(data);
+  date.setDate(date.getDate());
+  const options = { year: 'numeric', month: 'numeric', day: 'numeric'};
+  return date.toLocaleDateString('es-PE', options);
   }
 
 export const getHumanDateFormat_plus = (data, daysmore) => {

@@ -1,10 +1,12 @@
 import axios from "axios";
 import { mainURL } from "../constants/globals";
+// import axiosInstance from "./interceptor";
 
 
 async function getClientePorFiltro(innerParams) {
     try{
         const response = await axios(`${mainURL}/comercial/ventas/pedido/buscarpedidoclientecartera`, {
+        // const response = await axiosInstance(`${mainURL}/comercial/ventas/pedido/buscarpedidoclientecartera`, {
             params: innerParams
         });
         if (!!response.data && response.status === 200){
@@ -24,6 +26,7 @@ async function getProductoPorFiltro(innerParams) {
     delete data_body['usuario_codigo']
     try{
         const response = await axios(`${mainURL}/comercial/ventas/pedido/buscarproductoporfiltro`, {
+        // const response = await axiosInstance(`${mainURL}/comercial/ventas/pedido/buscarproductoporfiltro`, {
             params: innerParams
         });
         if (!!response.data && response.status === 200){
@@ -46,6 +49,7 @@ async function getTransportistaPorFiltro(innerParams) {
     delete data_body['usuario_codigo']
     try{
         const response = await axios(`${mainURL}/comercial/ventas/pedido/listatransportistasporfiltro`, {
+        // const response = await axiosInstance(`${mainURL}/comercial/ventas/pedido/listatransportistasporfiltro`, {
             params: innerParams
         });
         if (!!response.data && response.status === 200){

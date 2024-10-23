@@ -47,7 +47,7 @@ const fillData = {
     Cliente: (item, nuevoPedido)=>({
         cliente_codigo: item.codigo,
         codigogrupo: item.codigo_grupo_pago,
-        condicionpago: upSelectedOption(item.condicion_pago_general, item.condicion_pago),
+        condicionpago: upSelectedOption(item.condicion_pago_general, item.codigo_grupo_pago, 'condicionpago'),
         ruc: item.numero_documento,
         razonsocial: item.razon_social,
         telefono: item.telefono,
@@ -113,7 +113,7 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal}) 
     const [isSpinner,  setIsSpinner] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
     const [debounceTextFilter] = useDebounce(textFilter, 500);
-    const {handleInputTextModal, showInputTextModal, nuevoPedido, isClientChanged, handleClienteChange} = useContext(commercialContext)
+    const {handleInputTextModal, showInputTextModal, nuevoPedido, isClientChanged, handleClienteChange, handleClose} = useContext(commercialContext)
     const prevState = useRef(false)
 
     useEffect(()=>{
@@ -168,15 +168,19 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal}) 
             //obtener por primera vez el descuento por documento
             if (!!tmpCliente?.condicionpago[0] && tmpCliente?.canal_familia){
                 let body = {
-                    PaymentGroupCode: tmpCliente?.condicionpago[0]?.PaymentGroupCode,
-                    codigo_canal_cliente: tmpCliente?.canal_familia?.codigo_canal,
+                    PaymentGroupCode: (tmpCliente?.condicionpago[0]?.PaymentGroupCode).toString(),
+                    codigo_canal_cliente: (tmpCliente?.canal_familia?.codigo_canal).toString(),
                 }
+                console.log(typeof(body.PaymentGroupCode))
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
+                descuentoDoc === 406 && handleClose()
                 //formato de llegada {"descuento_documento": valor}
                 //seteo del descuento para todo el documento
-                if (!!descuentoDoc){
+                if (descuentoDoc !== 406 && !!descuentoDoc){
                     //activa el caso de que se cambie un cliente, debe actualizas descuentos
-                    if(!!isClientChanged.dsct){handleClienteChange({active: true})}
+                    // if(!!isClientChanged.dsct){handleClienteChange({active: true})}
+                    //solo identificamos el cambio del cliente
+                    handleClienteChange({active: !isClientChanged.active})
                     handleNewSaleOrder({...fillData[buscarModalValues?.operacion](item, nuevoPedido), montos: {...nuevoPedido.montos,
                         descuento: descuentoDoc?.descuento_documento, 
                         anticipo: 0, nota_credito: 0, 
@@ -299,17 +303,20 @@ function SelectorCombo({modalValues, handleInputTextModal, handleNewSaleOrder, t
         if (modalValues.operacion === 'condicionpago'){
             //actualizar el dsct documento
             if(!!modalValues?.data?.canal_familia?.codigo_canal && !!tmpObj?.condicionpago){
+                //cambios a tipo de dato string por que backend no acepta otros formatos
                 let body = {
-                    PaymentGroupCode: tmpObj?.condicionpago[0]?.PaymentGroupCode,
-                    codigo_canal_cliente: modalValues?.data?.canal_familia?.codigo_canal,
+                    PaymentGroupCode: (tmpObj?.condicionpago[0]?.PaymentGroupCode).toString(),
+                    codigo_canal_cliente: (modalValues?.data?.canal_familia?.codigo_canal).toString(),
                 }
+                console.log(typeof(body.PaymentGroupCode))
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
+                descuentoDoc === 406 && handleClose()
                 //formato de llegada {"descuento_documento": valor}
                 //seteo del descuento para todo el documento
-                if (!!descuentoDoc){
+                if (descuentoDoc !== 406 && !!descuentoDoc){
                     handleNewSaleOrder({...tmpObj, montos: {...modalValues?.data?.montos, descuento: descuentoDoc?.descuento_documento}});
                     handleInputTextModal({show: false});
-                }else{
+                }else if(descuentoDoc !== 406){
                     handleNewSaleOrder(tmpObj);
                     handleInputTextModal({show: false});
                 }
@@ -318,7 +325,6 @@ function SelectorCombo({modalValues, handleInputTextModal, handleNewSaleOrder, t
             handleNewSaleOrder(tmpObj);
             handleInputTextModal({show: false});
         }
-
     }}>
 
     {modalValues.options.map((x, index)=>{
@@ -350,7 +356,10 @@ function Anticipo_Credito({nuevopedido, modalValues, handleInputTextModal, handl
         //obtiene credito y anticipo
         const fetchData = async() =>{
             let response = await getCreditoAnticipo({cliente_codigo: nuevopedido.cliente_codigo});
-            setDataClient(response[0])
+            response === 406 && alert("Su sesión ha caducado, vuelva ingresar nuevamente.")
+            if (response !== 406 && !!response){
+                setDataClient(response[0])
+            }
         }
         dataclient === null && fetchData()
     },[])

@@ -14,6 +14,7 @@ import {
     BsTruck ,
     BsFileEarmarkCheck,
     BsFillPersonFill,
+    BsHouse,
 } from "react-icons/bs";
 import { getCodigo } from '../../utils/objects';
 import { validaAcceso } from '../../services/usuario';
@@ -40,6 +41,7 @@ const NavBar1 = () => {
       loading,
       userName,
       handlePedidoCarusel,
+      handleTabPedido,
     } = useContext(commercialContext)
 
     const innerNavigate = (path) => {
@@ -47,7 +49,9 @@ const NavBar1 = () => {
       navigate(path)
     }
 
-    const navigate2Path = async (route) => {
+    const navigate2Path = async (path) => {
+      let route = path.split('?')[0]
+      console.log(route)
       const codigo_modulo = await getCodigo(codigo_permisos, route);
       const {company: empresa_codigo, username: usuario_login } = await decodeJWT();
       let body = {
@@ -56,14 +60,21 @@ const NavBar1 = () => {
         modulo_codigo: codigo_modulo
       }
       const {acceso} = await validaAcceso(body)
-      !!acceso ? innerNavigate(route) : alert('No cuenta con permisos para ingresar')
+      // console.log("muestrame acceso:",acceso)
+      // if(1){
+      if(!!acceso){
+        innerNavigate(route)
+      }else{
+        alert('No cuenta con permisos para ingresar');
+        setExpanded(false);
+      }
     }
 
     return (
     <div>
       <Navbar expanded={expanded} expand="xl" color='dark' className="bg-body-tertiary border border-indigo-600">
         <Container>
-          <Navbar.Brand href="#" className='tw-h-12'>
+          <Navbar.Brand href="/AppMobileCantol/#/main/home" className='tw-h-12'>
             <div className='tw-h-full tw-flex tw-gap-2 tw-justify-center tw-items-center'>
               <div className='tw-block tw-h-full'>
                 <i className="tw-ml-2 tw-h-fit"><BsFillPersonFill size={26} color='gray'/></i>
@@ -84,22 +95,19 @@ const NavBar1 = () => {
           <Navbar.Collapse id="basic-navbar-nav" expand="xl" className=''>
             <Nav className="me-auto tw-mt-4" expand="xl">
             <hr></hr>
-              <NavDropdown title={<>
-                Entregas
-                <i className="tw-ml-2"><BsTruck size={21}/></i>
-              </>} id="basic-nav-dropdown" className='nav-dropdown-custom-height'>
-                  <NavItem className='nav-item-custom-height'>
-                    <div className='nav-item-custom-height tw-w-full' onClick={()=>{navigate2Path('/main/entrega/pendientechofer')}}>
-                      <NavLink href="#">Pendiente</NavLink>
-                    </div>
-                  </NavItem>
-                  <NavItem className='nav-item-custom-height'>
-                    <div className='nav-item-custom-height tw-w-full' onClick={()=>{navigate2Path('/main/entrega/completochofer')}}>
-                      <NavLink href="#">Completado</NavLink>
-                      <i className="tw-ml-2"><BsFileEarmarkCheck size={21}/></i>
-                    </div>
-                  </NavItem>
-              </NavDropdown>
+            <NavItem className='nav-item-custom-height'>
+                  <div className='nav-item-custom-height tw-w-full' onClick={()=>{navigate('/main/home'); setExpanded(false);}}>
+                    <NavLink href="#">Inicio</NavLink>
+                    <i className="tw-ml-2"><BsHouse size={21}/></i>
+                  </div>
+            </NavItem>
+            <hr></hr>
+              <NavItem className='nav-item-custom-height'>
+                  <div className='nav-item-custom-height tw-w-full' onClick={()=>{navigate2Path('/main/entrega/pendientechofer')}}>
+                    <NavLink href="#">Entregas</NavLink>
+                    <i className="tw-ml-2"><BsTruck size={21}/></i>
+                  </div>
+              </NavItem>
               <hr></hr>
               <NavDropdown title="Pedidos" id="basic-nav-dropdown" className='nav-dropdown-custom-height'>
                   <NavItem className='nav-item-custom-height'>
@@ -124,8 +132,8 @@ const NavBar1 = () => {
               </NavDropdown>
               <hr></hr>
               <NavItem className='nav-item-custom-height'>
-                  <div onClick={()=>{sessionStorage.removeItem("CDTToken"); sessionStorage.removeItem("USR");}}>
-                    <NavLink href="/comercial">Salir</NavLink>
+                  <div onClick={()=>{sessionStorage.removeItem("CDTToken"); sessionStorage.removeItem("USR");handleTabPedido('xxx');}}>
+                    <NavLink href="/AppMobileCantol/">Salir</NavLink>
                   </div>
               </NavItem>
               <hr></hr>

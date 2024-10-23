@@ -11,6 +11,8 @@ import { getFormatShipDate} from '../../utils/humandateformat';
 import Spinner from 'react-bootstrap/Spinner';
 import { getCurrentLocation } from '../../utils/location';
 import { makeSaleOrderBody } from './utils';
+import { useNavigate } from 'react-router-dom';
+import { delay } from '../../utils/delay';
 
 const tipoModal = {
   text: (nuevopedido, modalValues, handlemodal, setSaleOrder)=>(<IngresarTexto nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} type={'number'}/>),
@@ -33,24 +35,35 @@ export default function NuevoPedido() {
           //handle input modals combo/ date/ text field
           showInputTextModal: modalValues,
           //valor para conocer si cambio cliente
-          isClientChanged,
-          handleInputTextModal} = useContext(commercialContext);
+          // isClientChanged, //detectar el cambio de socio
+          handleInputTextModal,
+          //secure shield
+          handleShow,
+        } = useContext(commercialContext);
         
   const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate();
 
   useEffect(()=>{
     const doFetch = async () => 
       {
         const data_token = await decodeJWT();
         const response = await getNuevoPedidoClave({usuario_codigo: data_token.username});
-        !!response && handleNewSaleOrder({cliente_codigo: null, comentarios: {vendedor: '', nota_anticipo: ''}, numero: response.code_sale, fcontable: response.fecha, ruc:'', razonsocial:'', telefono: '', 
-        fentrega: getFormatShipDate({fechacontable: new Date(response.fecha), moredays: 1}), direccionentrega:'', ructransporte: '', moneda:'', 
-        codigogrupo: '', condicionpago:'', products: [], grupo_familia: null, ubicacion: null, montos: {anticipo: 0, descuento: 0, impuesto: 0, nota_credito: 0, total: 0, total_cred_anti: 0,
-        unidad: '', valor_venta: 0}, institucional: {cmp1: '', cmp2: '', cmp3: '', oc: ''}})
+        //secure shield
+        response === 406 && handleShow()
+        //
+        if(response !== 406 && !!response){
+          handleNewSaleOrder({cliente_codigo: null, comentarios: {vendedor: '', nota_anticipo: ''}, numero: response.code_sale, 
+          fcontable: response.fecha, ruc:'', razonsocial:'', telefono: '',
+          fentrega: getFormatShipDate({fechacontable: new Date(response.fecha), moredays: 1}), direccionentrega:'', ructransporte: '', moneda:'', 
+          codigogrupo: '', condicionpago:'', products: [], grupo_familia: null, ubicacion: null, montos: {anticipo: 0, descuento: 0, impuesto: 0, nota_credito: 0, total: 0, total_cred_anti: 0,
+          unidad: '', valor_venta: 0}, institucional: {cmp1: '', cmp2: '', cmp3: '', oc: ''}})
+        }else if(response !== 406 && !response){
+          alert('Error durante ejecución, contactar con TI')
+        }
       }
       //obtiene clave  mobile y fecha contable
       doFetch();
-
   },[])
 
   //valida que todos los campos esten correctos OV antes de guardar
@@ -61,20 +74,36 @@ export default function NuevoPedido() {
         //verifica existe producto en lista
         if(!!nuevoPedido?.products?.length){
           //verifica que no haya cambiado de cliente, pendiente actualizacion de descuento
-          if(!isClientChanged.active){
+          // if(!isClientChanged.active){
+          try{
             setIsLoading(true);
             let currentLocation = await getCurrentLocation();
             let body = makeSaleOrderBody(nuevoPedido, currentLocation)
+            
+            // await delay(1000)
+            // let status = 201;
             const [response, status] = await guardarNuevoPedido(body);
+            //
+            status === 406 && handleShow()
             //aca se devuelve una respuesta cuando concluye el proceso
             setIsLoading(false);
             status !== 200 && alert('Alerta, problemas con el servidor')
-            status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) === 'number' && alert('¡Orden de venta y borrador creados!')
-            status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) !== 'number' && alert('¡Borrador creado!')
-          }else{
-            alert("Debe aplicar descuentos nuevamente")
-            //CHECK IF VARIABLE IS NUMBER?
+            if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) === 'number'){
+              alert('¡Orden de venta y borrador creados!\nRedireccion a pedidos pendientes')
+              navigate('/main/pedido/pendiente')
+            }else if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) !== 'number'){
+              alert('¡Borrador creado!\nRedireccion a pedidos pendientes')
+              navigate('/main/pedido/pendiente')
+            }
+          }catch(error){
+            setIsLoading(false);
+            alert ('¡Error al generar pedido!\nContactar con el area de TI')
+            console.error("An error occurred:", error.message);
           }
+          // }else{
+          //   alert("Debe aplicar descuentos nuevamente")
+          //   //CHECK IF VARIABLE IS NUMBER?
+          // }
         }else{
           alert("Debe agregar productos")
         }
@@ -84,51 +113,58 @@ export default function NuevoPedido() {
     }
 
   return (
-    <>
-    {/* modal buscar cliente y buscar producto */}
-    <PedidoModal modalTitle={buscarModalValues.modalTitle} handleClose={()=>handleSearchModal({show: false})} show={buscarModalValues.show}>
-      <BuscarModal buscarModalValues={buscarModalValues} handleNewSaleOrder={handleNewSaleOrder} handleCloseModal={()=>handleSearchModal({show: false})}/>
-    </PedidoModal>
-    
-    {/* modal general para tipo combo / text field / date */}
-    {!!modalValues.tipomodal && (
-      <PedidoModal tipomodal={modalValues.tipomodal} size={modalValues.size} modalTitle={modalValues.modalTitle} handleClose={()=>handleInputTextModal({show: false})} show={modalValues.show}>
-        {tipoModal[modalValues.tipomodal](nuevoPedido, modalValues, handleInputTextModal, handleNewSaleOrder)}
+    <div className='tw-relative'>
+      {/* modal buscar cliente y buscar producto */}
+      <PedidoModal modalTitle={buscarModalValues.modalTitle} handleClose={()=>handleSearchModal({show: false})} show={buscarModalValues.show}>
+        <BuscarModal buscarModalValues={buscarModalValues} handleNewSaleOrder={handleNewSaleOrder} handleCloseModal={()=>handleSearchModal({show: false})}/>
       </PedidoModal>
-    )}
+      
+      {/* modal general para tipo combo / text field / date */}
+      {!!modalValues.tipomodal && (
+        <PedidoModal tipomodal={modalValues.tipomodal} size={modalValues.size} modalTitle={modalValues.modalTitle} handleClose={()=>handleInputTextModal({show: false})} show={modalValues.show}>
+          {tipoModal[modalValues.tipomodal](nuevoPedido, modalValues, handleInputTextModal, handleNewSaleOrder)}
+        </PedidoModal>
+      )}
 
-    <h6 className='tw-text-center bg-secondary tw-text-white tw-rounded-md' style={{marginBottom: 0, padding: "5px 0"}}>NUEVA ORDEN DE VENTA</h6>
-    <Accordion defaultActiveKey="0">
-      <Accordion.Item eventKey="0">
-        <Accordion.Header>Datos del cliente</Accordion.Header>
-        <Accordion.Body>
-          <MyListGroup plantilla="nuevopedidocabecera" data={undefined}/>
-        </Accordion.Body>
-      </Accordion.Item>
-      <Accordion.Item eventKey="1">
-        <Accordion.Header>Productos</Accordion.Header>
-        <Accordion.Body>
-          <MyListGroup plantilla="nuevopedidoproductos"/>
-        </Accordion.Body>
-      </Accordion.Item>
-    </Accordion>
-    <div className='tw-flex tw-flex-col tw-items-center tw-border-2'>
-      <button className='button-14 tw-w-2/3 tw-h-10 tw-my-4 tw-font-sans tw-font-medium' disabled={isLoading?true:false} style={{margin: '0 auto'}} onClick={validarCampos}>
-        {isLoading ? (
-          <>
-            Grabando.....
-            <Spinner animation="grow" role="status" size='sm' className='tw-ml-2'>
-              <span className="visually-hidden">Loading...</span>
-            </Spinner>
-          </>
-        ):(
-          <>
-            Grabar Orden de Venta
-          </>
-        )}
-      </button>
+      <h6 className='tw-text-center bg-secondary tw-text-white tw-rounded-md' style={{marginBottom: 0, padding: "5px 0"}}>NUEVA ORDEN DE VENTA</h6>
+      <div className='tw-absolute tw-w-screen'>
+      <Accordion defaultActiveKey="0">
+        <Accordion.Item eventKey="0">
+          <Accordion.Header>Datos del cliente</Accordion.Header>
+          <Accordion.Body>
+            <MyListGroup plantilla="nuevopedidocabecera" data={undefined}/>
+          </Accordion.Body>
+        </Accordion.Item>
+        <Accordion.Item eventKey="1">
+          <Accordion.Header>Productos</Accordion.Header>
+          <Accordion.Body>
+            <MyListGroup plantilla="nuevopedidoproductos"/>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
+        <div className='tw-flex tw-flex-col tw-items-center tw-border-2'>
+          <button className='button-14 tw-w-2/3 tw-h-10 tw-my-4 tw-font-sans tw-font-medium' disabled={isLoading?true:false} style={{margin: '0 auto'}} onClick={validarCampos}>
+            {isLoading ? (
+              <>
+                Grabando.....
+                <Spinner animation="grow" role="status" size='sm' className='tw-ml-2'>
+                  <span className="visually-hidden">Loading...</span>
+                </Spinner>
+              </>
+            ):(
+              <>
+                Grabar Orden de Venta
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+      {
+        isLoading && (<div className='glass_layer'>
+          <h3>Grabando Pedido....</h3>
+        </div>)
+      }
     </div>
-    </>
   );
 }
 

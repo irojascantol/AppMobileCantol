@@ -6,6 +6,7 @@ import { truncate } from "../../../utils/math";
 import Tab from "react-bootstrap/Tab";
 import Tabs from "react-bootstrap/Tabs";
 import '../../../style/modalPlantillaEntrega.css'
+import { getCurrentLocation } from "../../../utils/location";
 
 function Selector({modalValues, handleModal, handleModalDetalle}){
     return (
@@ -213,6 +214,7 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
      //guardar
      const guardarRegistro = async() =>
         {
+            let currentLocation = await getCurrentLocation();
             if(body?.entrega !== null){
                 let body_ = {
                     DocEntry: modalDetalle?.options?.DocEntry || null,
@@ -224,6 +226,8 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                     U_MSS_ESTRA: body?.entrega || null,
                     U_MSS_ESTLIQ: body?.entrega || null,
                     U_MSSM_COM: body?.comentarios || null,
+                    U_DIS_LATIEN: currentLocation?.latitud?.toString() || null,
+                    U_DIS_LONGEN: currentLocation?.longitud?.toString() || null,
                 }
                 let response = await registrarEntrega(body_);
                 if (response === 200){

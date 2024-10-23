@@ -6,6 +6,7 @@ import NuevoPedido from "../pages/pedido/nuevopedido";
 import ReportePedido from "../pages/pedido/reportePedido";
 import Operacion from "../pages/entrega/Operacion";
 import { NotFound } from "../pages/defecto/NotFound";
+import { Dashboard } from "../pages/home/dashboard";
 
 export function MiRutas() {
     return (
@@ -14,6 +15,7 @@ export function MiRutas() {
             <Route path="/" element={<LoginForm/>} />
             <Route path="/login" element={<LoginForm/>} />
             <Route path="/main"element={<NavBar1/>}>
+                <Route path="home" element={<Dashboard/>}/>
                 <Route path="entrega/:estado" element={<Operacion/>}/>
                 <Route path="nuevopedido" element={<NuevoPedido/>}/>
                 <Route path="pedido/:reporte" element={<ReportePedido/>}/>

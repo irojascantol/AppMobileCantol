@@ -8,25 +8,28 @@ export default function NoAutorizado() {
   const {
     showSecurity,
     handleClose,
+    handleTabPedido,
   } = useContext(commercialContext);
-  const handleExit = () => {sessionStorage.removeItem('CDTToken'); handleClose(); navigate('/');}
+  const handleExit = () => {handleTabPedido('xxx'), sessionStorage.removeItem('CDTToken'); handleClose(); navigate('/');}
 
   return (
     <>
       <Modal
         show={showSecurity}
-        onHide={()=>{console.log("Hola Mundo")}}
-        backdrop="static"
-        keyboard={false}
+        // onHide={()=>{console.log("Hola Mundo")}}
+        backdrop={true}
+        // backdrop="static"
+        // keyboard={false}
       >
-        <Modal.Header closeButton>
+        <Modal.Header>
           <Modal.Title>Aviso</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          No cuenta con autorización para revisar  este contenido.
+          La sesion ha caducado, vuelva a ingresar nuevamente.
         </Modal.Body>
         <Modal.Footer>
-          <button onClick={handleExit}>Ir a inicio</button>
+          {/* <button onClick={handleExit}>Ir a login</button> */}
+          <button onClick={handleClose}>Ir a login</button>
         </Modal.Footer>
       </Modal>
     </>

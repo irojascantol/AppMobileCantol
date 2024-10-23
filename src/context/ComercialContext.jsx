@@ -19,7 +19,7 @@ function ComercialContext({children}) {
     const [userName,  setUserName] = useState(!!sessionStorage.getItem("USR") ? reverseString(sessionStorage.getItem("USR")) : undefined)
     const [showSecurity, setShowSecurity] = useState(false);
     const [indexPedidoCarusel, setIndexPedidoCarusel] = useState(0);
-    const [tabActivePedido,  setTabActivePedido] = useState('general');
+    const [tabActivePedido,  setTabActivePedido] = useState('xxx');
     const [searchClientModal,  setSearchclientModalOpen] = useState({show: false, modalTitle: '', returnedValue: undefined, options: [], operacion: null, placeholder: null});
     const [showInputTextModal, setShowInputTextModal] = useState({show: false, modalTitle: '', returnedValue: undefined, options: [], tipomodal:null, operacion:null});
     const [isClientChanged, setClienteChange] = useState({active: false, dsct: false});
@@ -29,8 +29,11 @@ function ComercialContext({children}) {
         unidad: null, anticipo: 0, nota_credito: 0,}})
     
     //handlers
+    //manejo seguridad
     const handleShow = () => setShowSecurity(true);
     const handleClose = () => setShowSecurity(false);
+    //manejo seguridad
+
     const handleLogo = (logo_) => setLogo_C(logos[logo_]);
     const handleUser = (name) => setUserName(name);
     const handlePedidoCarusel = (index) => setIndexPedidoCarusel(index);

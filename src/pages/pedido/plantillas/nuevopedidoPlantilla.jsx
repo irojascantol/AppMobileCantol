@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import Button from 'react-bootstrap/Button';
 import { ListGroup } from 'react-bootstrap'
-import { BsArchive, BsArrowClockwise, BsArrowRightShort, BsBootstrap, BsCalendar3, BsChatLeftText, BsCurrencyExchange, BsExclamationTriangleFill, BsFileEarmarkPerson, BsFillPeopleFill, BsList, BsPlusSquareFill, BsSearch, BsTrash, BsTrash3Fill, BsX } from 'react-icons/bs';
+import { BsArchive, BsArrowClockwise, BsArrowRightShort, BsBootstrap, BsCalendar3, BsChatLeftText, BsCurrencyExchange, BsExclamationTriangleFill, BsFileEarmarkPerson, BsFillPeopleFill, BsList, BsPlusSquareFill, BsSearch, BsTextWrap, BsTrash, BsTrash3Fill, BsX } from 'react-icons/bs';
 import { commercialContext } from '../../../context/ComercialContext';
 import { getFormatShipDate, getFormatShipDate_peru, getHumanDateFormat, getHumanDateFormat_plus } from '../../../utils/humandateformat';
 import { truncate } from '../../../utils/math';
@@ -26,7 +26,7 @@ function NuevoPedidoCabecera() {
             variant="no style"
             >
             <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
-                <div className="header_section_title">Numero orden de venta:</div>
+                <div className="header_section_title">ID Venta:</div>
                 <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${nuevoPedido?.numero}&nbsp;`}}/>
             </div>
         </ListGroup.Item>
@@ -126,7 +126,7 @@ function NuevoPedidoCabecera() {
             >
             <div className="tw-ml-2 tw-mr-5  tw-flex tw-justify-between tw-w-full">
                 <div className='tw-min-w-[330px]'>
-                    <div className="header_section_title">RUC transportista:</div>
+                    <div className="header_section_title">RUC transportista (*):</div>
                     <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "ructransporte")?.nombre_transporte || '&nbsp'};`}}/>
                     <div className='tw-text-xs tw-font-semibold' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "ructransporte")?.documento_transporte || '&nbsp'}&nbsp;`}}/>
                 </div>
@@ -235,11 +235,9 @@ function NuevoPedidoCabecera() {
 
 function NuevoPedidoProductos(){
     //maneja la apertura de modal de busqueda de productos
-    const {nuevoPedido, handleSearchModal, handleNewSaleOrder, handleInputTextModal, showInputTextModal: modalValues, handleClienteChange, isClientChanged} = useContext(commercialContext);
+    const {nuevoPedido, handleSearchModal, handleNewSaleOrder, handleInputTextModal, showInputTextModal: modalValues, handleClienteChange, isClientChanged, handleShow} = useContext(commercialContext);
     //activate los botones para eliminar productos
     const [deleteMode,  setDeleteMode] = useState(false);
-    
-
     
     //verifica cliente agregado en cabecera
     const isClientExits = !!nuevoPedido?.ruc && !!nuevoPedido?.razonsocial;
@@ -260,6 +258,11 @@ function NuevoPedidoProductos(){
             setearDescuentoCredAnti(modalValues.returnedValue)
         }
     }, [modalValues.returnedValue])
+
+    //quita descueno y bonificacion cuando cambia cliente
+    useEffect(()=>{
+        eliminar_Dsct_Bonificado()
+    }, [isClientChanged.active])
 
     
     const eliminarProducto = (item) => {
@@ -289,7 +292,8 @@ function NuevoPedidoProductos(){
         let request_body = nuevoPedido.products.map((item)=>{if(!('tipo' in item)) return {codigo_articulo: item?.codigo, cantidad: item?.cantidad, precio: item?.precio}});
         request_body = request_body.filter((item)=>item !== undefined);
         let response = await getProductosBonificacion(request_body);
-        if (!!response?.length){
+        response === 406 && handleShow()
+        if (response !== 406 && !!response?.length){
             //elimina los productos de tipo bonificados
             let ghost_products_for_delete = [...nuevoPedido.products]
             let indexes = ghost_products_for_delete.reduce(function(a, e, i){ if (('tipo' in e) && (e?.tipo === 'bonificado')) a.push(i); return a}, [])
@@ -324,8 +328,8 @@ function NuevoPedidoProductos(){
         //dsct_porcentaje: el el porcentaje % por und
         if(!!(productos_?.length)){
             response = await postaplicarDescuento(requestBody)
-
-            if(!!response?.length){
+            response === 406 && handleShow()
+            if(response !== 406 && !!response?.length){
                 // //aca se agrega la actualizacion
                 let ghost_products = [...nuevoPedido?.products]
                     for( const objRes of response){
@@ -338,28 +342,34 @@ function NuevoPedidoProductos(){
                     }
                     //el calculo desl descuento subtotal va en la parte del  map
                 handleNewSaleOrder({products: [...ghost_products]})
-                isClientChanged.dsct ? handleClienteChange({active: false}): handleClienteChange({dsct: true})
+                // isClientChanged.dsct ? handleClienteChange({active: false}): handleClienteChange({dsct: true})
             }
         }
     }
 
     const calcularValorVenta = () => {
         if (largo_productos){
-            let valorVenta = nuevoPedido?.products.reduce((acc, item)=>(((item?.precio * (1 - (item?.dsct_porcentaje * 0.01))) * item?.cantidad) + acc), 0);
+            //calcular el valor de venta de producto menos el descuento
+            // let valorVenta = nuevoPedido?.products.reduce((acc, item)=>(((item?.precio * (1 - (item?.dsct_porcentaje * 0.01))) * item?.cantidad) + acc), 0); //DESACTIVADO POR UN MOMENTO
+            let valorVenta = nuevoPedido?.products.reduce((acc, item)=>((item?.precio * item?.cantidad) + acc), 0);
+            //calcular descuento total de productos
+            let itemsNoBonificados = nuevoPedido?.products.filter((item)=>!('tipo' in item))
+            let valorDescuentoProductos = itemsNoBonificados.reduce((acc, item)=>(((item?.precio * (item?.dsct_porcentaje * 0.01)) * item?.cantidad) + acc), 0);
+            
             // valorVenta = truncate(valorVenta, 2)
             //revisa que todos los productos esten con la misma unidad de moneda
             let unidad = {...nuevoPedido}?.products.map((item)=>(item?.unidad_moneda))
             unidad = unidad.filter((item, index)=>(unidad.indexOf(item) === index))
             if(unidad?.length === 1){
-                return [valorVenta, unidad[0]]
+                return [valorVenta, unidad[0], valorDescuentoProductos]
             }else{
                 let temporal_montos = {...nuevoPedido.montos, valor_venta: 0, unidad: null}
                 alert("Unidades de precio deben ser iguales")
-                return [0, null]
+                return [0, null, null]
             }
         }else{
             let temporal_montos = {...nuevoPedido.montos, valor_venta: 0}
-            return [0, null]
+            return [0, null, null]
         }
     }
 
@@ -430,13 +440,20 @@ function NuevoPedidoProductos(){
 
     const calcularTotal = () => {
         // if (largo_productos){
-            let [sum_valorventa, unit] = calcularValorVenta();
+            let [sum_valorventa, unit, dsctProductos] = calcularValorVenta();
             if (!!sum_valorventa && !!unit){
-                let sum_descuento = calcularDescuento(sum_valorventa);
-                let sum_impuesto = calcularImpuestos(sum_valorventa);
-                let total = sum_valorventa - sum_descuento + sum_impuesto;
+                // // console.log("Ingresa a qui")
+                // // console.log(nuevoPedido.products)
+                let sum_descuento = calcularDescuento(sum_valorventa - dsctProductos);
+                let sum_impuesto = calcularImpuestos();
+                let total = sum_valorventa - sum_descuento - dsctProductos + sum_impuesto;
                 let total_cred_anti = total - (nuevoPedido.montos.anticipo + nuevoPedido.montos.nota_credito)
-                let temporal_montos = {...nuevoPedido.montos, total: total, total_cred_anti: total_cred_anti, valor_venta: truncate(sum_valorventa , 2), impuesto: sum_impuesto, unidad: unit}
+                let temporal_montos = {...nuevoPedido.montos, total: total, total_cred_anti: total_cred_anti, valor_venta: truncate(sum_valorventa , 2), 
+                    impuesto: sum_impuesto, 
+                    unidad: unit,
+                    dsctProductos: dsctProductos,
+                    dsctDoc: sum_descuento,
+                }
                 handleNewSaleOrder({montos: temporal_montos})
             }
             else{
@@ -447,7 +464,7 @@ function NuevoPedidoProductos(){
         
         const setearCero = () => {
             //se quita descuento por que el calculo del porcetaje sera directo
-            let temporal_montos = {...nuevoPedido.montos, total: 0, total_cred_anti: 0, valor_venta: 0, impuesto: 0, anticipo: 0, nota_credito: 0}
+            let temporal_montos = {...nuevoPedido.montos, total: 0, total_cred_anti: 0, valor_venta: 0, impuesto: 0, anticipo: 0, nota_credito: 0, dsctProductos: 0, dsctDoc: 0}
             handleNewSaleOrder({montos: temporal_montos})
         }
         
@@ -463,6 +480,15 @@ function NuevoPedidoProductos(){
             //comentarios, montos: temporal_montos
         }
 
+        const eliminar_Dsct_Bonificado = () => {
+            //elimina descuento de no bonificados
+            let itemsSinDescuento = nuevoPedido?.products.map((item)=>(!('tipo' in item)?{...item, ...{descuento: 0, dsct_porcentaje: 0}}:{...item}))
+            
+            //elimina bonificados
+            let itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item))
+            handleNewSaleOrder({products: [...itemsNoBonificados]})
+        }
+
     return(
         <>
             <ListGroup.Item
@@ -472,6 +498,9 @@ function NuevoPedidoProductos(){
             >
                 <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>handleSearchModal({show: true, modalTitle: 'Buscar producto', returnedValue: null, operacion: 'Producto', options: [{cliente_codigo: nuevoPedido?.cliente_codigo, products: nuevoPedido?.products}], placeholder: 'Ingrese nombre o codigo de producto'})}>
                     <BsPlusSquareFill size={22}/>
+                </button>
+                <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={eliminar_Dsct_Bonificado}>
+                    <BsTextWrap size={22}/>
                 </button>
                 <button variant="danger" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>{!!(largo_productos) && setDeleteMode(!deleteMode)}}>
                     {(!deleteMode) ?(<BsTrash3Fill size={22}/>):(<BsArrowClockwise size={22}/>)} 
@@ -495,14 +524,14 @@ function NuevoPedidoProductos(){
                                         <div className='tw-text-sm tw-font-medium tw-h-10'>{itx?.descripcion} - {itx?.codigo}</div>
                                         <div className='tw-text-base'>Descuento: {itx?.dsct_porcentaje}%</div>
                                         <div className='tw-flex tw-justify-between'>
-                                            <div className='tw-text-base'>pvp: <span className='tw-text-sm'>{itx?.unidad_moneda}</span> {itx?.precio}</div>
+                                            <div className='tw-text-base'>Precio: <span className='tw-text-sm'>{itx?.unidad_moneda}</span> {itx?.precio}</div>
                                             <div className='tw-text-base'>cant: {itx?.cantidad}</div>
                                             <div className='tw-text-base'>subtotal: <span className='tw-text-sm'>{itx?.unidad_moneda}</span> {truncate((itx?.precio * (1 - (itx?.dsct_porcentaje * 0.01))) * itx?.cantidad, 2)}</div>
                                         </div>
                                         <div className={`tw-absolute button-4 tw-right-[-0px] tw-top-[-0px] tw-px-0 tw-py-0 tw-bg-black tw-text-white item-delete ${!deleteMode? 'tw-invisible tw-opacity-0': 'tw-visible tw-opacity-100'}`} onClick={()=>{eliminarProducto(itx)}}>
                                                 <BsX size={20}/>
                                         </div>
-                                        <div className={`tw-absolute button-4 tw-left-[0px] tw-bottom-[0px] tw-px-0 tw-py-0 tw-bg-yellow-400 tw-text-black item-delete ${itx?.tipo === 'bonificado'? 'tw-visible tw-opacity-100': 'tw-invisible tw-opacity-0'}`} onClick={()=>{eliminarProducto(itx)}}>
+                                        <div className={`tw-absolute button-4 tw-left-[0px] tw-bottom-[0px] tw-px-0 tw-py-0 tw-bg-yellow-400 tw-text-black item-delete ${itx?.tipo === 'bonificado'? 'tw-visible tw-opacity-100': 'tw-invisible tw-opacity-0'}`}>
                                                 <BsBootstrap size={20}/>
                                         </div>
                                     </div>
@@ -513,12 +542,17 @@ function NuevoPedidoProductos(){
                 </ListGroup>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
-                <div className='myFontFamily tw-font-medium'>Valor venta:</div>
+                <div className='myFontFamily tw-font-medium'>Subtotal:</div>
                 <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {nuevoPedido?.montos?.valor_venta}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
-                <div className='myFontFamily tw-font-medium'>Descuentos:</div>
-                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {truncate((nuevoPedido?.montos?.valor_venta)*(nuevoPedido?.montos?.descuento * 0.01), 2)}</div>
+                <div className='myFontFamily tw-font-medium'>Desct. por producto:</div>
+                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {truncate((nuevoPedido?.montos?.dsctProductos || 0), 2)}</div>
+            </ListGroup.Item>
+            <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
+                <div className='myFontFamily tw-font-medium'>Desct. por F. Pago:</div>
+                {/* <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {truncate((nuevoPedido?.montos?.valor_venta)*(nuevoPedido?.montos?.descuento * 0.01), 2)}</div> */}
+                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {truncate((nuevoPedido?.montos?.dsctDoc), 2)}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
                 <div className='myFontFamily tw-font-medium'>Impuestos:</div>
@@ -542,7 +576,7 @@ function NuevoPedidoProductos(){
                 </button>
                 <button className='button-4 tw-w-full tw-flex tw-justify-center tw-items-center tw-gap-2' disabled={!isClientExits?true:false} onClick={()=>{aplicarDescuento();}}>
                     <span>Aplicar descuento</span>
-                    {isClientChanged?.active && (<span className=''><BsExclamationTriangleFill/></span>)}
+                    {/* {isClientChanged?.active && (<span className=''><BsExclamationTriangleFill/></span>)} */}
                 </button>
                 <button className='button-4 tw-w-full' disabled={!isClientExits?true:false} onClick={()=>{
                     handleInputTextModal({show: true, modalTitle: 'Notas de crédito y anticipos', tipomodal: 'Anticipo_Credito', options: nuevoPedido?.montos})}}>

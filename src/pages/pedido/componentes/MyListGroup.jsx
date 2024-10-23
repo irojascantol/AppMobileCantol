@@ -1,8 +1,9 @@
 import React from 'react'
 import {DetallePlantillaGeneral, DetallePlantillaLogistica, DetallePlantillaFinanzas, DetallePlantillaContenido} from '../plantillas/detallePlantilla';
 import { Pendiente, Aprobado, Rechazado, PendienteChofer, CompletoChofer } from '../plantillas/pedidoPlantilla'; 
-import { ListGroup } from 'react-bootstrap'
+import { Badge, ListGroup } from 'react-bootstrap'
 import { NuevoPedidoCabecera, NuevoPedidoProductos } from '../plantillas/nuevopedidoPlantilla';
+import { truncate } from '../../../utils/math';
 
 const plantillas = {
   pendiente: (item)=><Pendiente item={item}/>,
@@ -30,7 +31,12 @@ function MyListGroup({data, plantilla, handleCarusel, tipoPedido, modalValues, h
     return (
       <ListGroup as="ol">
           {/* color de cabecera */}
-            <li className={`${bgColor[plantilla] || 'secondary'} tw-h-3`}></li>
+            <li className={`${bgColor[plantilla] || 'secondary'} tw-h-2 tw-p-0`}/>
+            <li className="tw-h-6 bg-secondary tw-flex tw-justify-end tw-items-center">
+              <Badge bg="dark" pill>
+                Total:&nbsp;&nbsp;S/.{truncate(data?.reduce((acc, cur)=> acc + cur.DocTotal, 0), 2).toLocaleString()}
+              </Badge>
+            </li>
         {data.map((item, index)=>(
             <li key={(index + 1).toString()} onClick={()=>{handleCarusel(item)}}>
                 {plantillas[plantilla](item)}
