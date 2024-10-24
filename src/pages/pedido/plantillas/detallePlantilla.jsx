@@ -165,7 +165,8 @@ function DetallePlantillaGeneral({data, tipoPedido}) {
 
   useEffect(()=>{
     const getDetalleGeneral = async () => {
-      if(tabActivePedido==='general' && data?.DocEntry){
+      console.log(tabActivePedido, data?.DocEntry)
+      if(tabActivePedido==='general' && indexPedidoCarusel === 1 && data?.DocEntry){
         const response = await getDetallePedidoGeneral(params_[tipoPedido](data), tipoPedido);
         //secure shield
         if(response !== undefined){

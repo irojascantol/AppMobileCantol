@@ -50,8 +50,8 @@ const NavBar1 = () => {
     }
 
     const navigate2Path = async (path) => {
+      //filtra el query paramater
       let route = path.split('?')[0]
-      console.log(route)
       const codigo_modulo = await getCodigo(codigo_permisos, route);
       const {company: empresa_codigo, username: usuario_login } = await decodeJWT();
       let body = {
@@ -63,7 +63,7 @@ const NavBar1 = () => {
       // console.log("muestrame acceso:",acceso)
       // if(1){
       if(!!acceso){
-        innerNavigate(route)
+        innerNavigate(path)
       }else{
         alert('No cuenta con permisos para ingresar');
         setExpanded(false);
@@ -117,15 +117,18 @@ const NavBar1 = () => {
                     </div>
                   </NavItem>
                   <NavDropdown title="Estados" id="basic-nav-dropdown" className='nav-dropdown-custom-height'>
-                      <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/aprobado')}}>
+                      {/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/aprobado?page=lista')}}> */}
+                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/aprobado?page=lista')}}>
                         <NavDropdown.Item href="#">Aprobados</NavDropdown.Item>
                       </div>
                       <NavDropdown.Divider />
-                      <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/pendiente')}}>
+                      {/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/pendiente?page=lista')}}> */}
+                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/pendiente?page=lista')}}>
                         <NavDropdown.Item href="#">Pendientes</NavDropdown.Item>
                       </div>
                       <NavDropdown.Divider />
-                      <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/rechazado')}}>
+                      {/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/rechazado?page=lista')}}> */}
+                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/rechazado?page=lista')}}>
                         <NavDropdown.Item href="#">Rechazados</NavDropdown.Item>
                       </div>
                   </NavDropdown>

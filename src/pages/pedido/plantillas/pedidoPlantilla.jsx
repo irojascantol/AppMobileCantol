@@ -127,11 +127,11 @@ function Contenido_Articulos({item}) {
         <div className="ms-2 me-auto tw-col-span-5 tw-flex tw-flex-col tw-justify-between tw-gap-1">
           <div>
             <div className="tw-font-normal text-dark">Descripción:</div>
-            <div className='text-secondary tw-text-xs'>{item?.descripcion || 'NO PRECISA'}</div>
+            <div className='text-secondary tw-text-xs'>{item?.descripcion || 'No precisa'}</div>
           </div>
           <div>
             <div className="tw-font-normal text-dark">Precio:</div>
-            <div className='text-secondary tw-text-md'>S/.{item?.precio_unitario || 'NO PRECISA'}</div>
+            <div className='text-secondary tw-text-md'>S/.{item?.precio_unitario || 'No precisa'}</div>
           </div>
         </div>
 
@@ -147,9 +147,9 @@ function Contenido_Articulos({item}) {
         </div>
 
         {/* esperar este elemento */}
-        {/* <div className={`tw-absolute button-4 tw-right-[0px] tw-bottom-[0px] tw-px-0 tw-py-0 tw-bg-yellow-400 tw-text-black item-delete ${!item?.total_linea ? 'tw-visible tw-opacity-100': 'tw-invisible tw-opacity-0'}`}>
+        <div className={`tw-absolute button-4 tw-right-[0px] tw-bottom-[0px] tw-px-0 tw-py-0 tw-bg-yellow-400 tw-text-black item-delete ${item?.bonificacion === 'Y' ? 'tw-visible tw-opacity-100': 'tw-invisible tw-opacity-0'}`}>
           <BsBootstrap size={20}/>
-        </div> */}
+        </div>
       </ListGroup.Item>
   )
 }
