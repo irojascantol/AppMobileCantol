@@ -21,6 +21,20 @@
   }
 }
 
+.hola{
+  width: 100%;
+  display: flex;
+  border: none;
+  color: white;
+  text-align: center;
+  opacity: 1;
+  transition: 0.3s;
+}
+.hola:hover {
+  background-color: rgba(107, 114, 128, 0.2);
+  opacity: 1;
+}
+
 @media (min-width: 992px) {
     /* .nav-item-custom-height{
       font-size: large;

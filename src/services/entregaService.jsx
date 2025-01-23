@@ -6,7 +6,8 @@ async function obtenerEntregaPendiente(innerParams) {
     try{
         // const response = await axios.get(`${mainURL}/despacho_mobile/entregas/entrega/listarentregaschoferpendiente`, {
         const response = await axios.get(`${mainURL}/despacho_mobile/entregas/entrega/listarentregaschofer`, {
-            params: innerParams
+            params: innerParams,
+            withCredentials: true
         });
         if (!!response.data && response.status === 200){
             return response.data;
@@ -23,7 +24,8 @@ async function obtenerEntregaPendiente(innerParams) {
 async function obtenerEntregaCompleto(innerParams) {
     try{
         const response = await axios.get(`${mainURL}/despacho_mobile/entregas/entrega/listarentregaschofercerrado`, {
-            params: innerParams
+            params: innerParams,
+            withCredentials: true
         });
         if (!!response.data && response.status === 200){
             return response.data;
@@ -40,7 +42,8 @@ async function obtenerEntregaCompleto(innerParams) {
 async function obtenerEntregaDetalle(innerParams) {
     try{
         const response = await axios.get(`${mainURL}/despacho_mobile/entregas/entrega/listardetallentrega`, {
-            params: innerParams
+            params: innerParams,
+            withCredentials: true
         });
         if (!!response.data && response.status === 200){
             return response.data;
@@ -56,7 +59,7 @@ async function obtenerEntregaDetalle(innerParams) {
 
 async function registrarEntrega(requestBody) {
     try{
-        const response = await axios.post(`${mainURL}/despacho_mobile/entregas/entrega/registrarentrega`, requestBody);
+        const response = await axios.post(`${mainURL}/despacho_mobile/entregas/entrega/registrarentrega`, requestBody, {withCredentials: true});
         return response.status
     }catch(error){
         console.log(`An Error ocurred: (registrarEntrega) _ ${error}`);
@@ -67,7 +70,8 @@ async function registrarEntrega(requestBody) {
 async function obtenerRegistro(innerParams) {
     try{
         const response = await axios.get(`${mainURL}/despacho_mobile/entregas/entrega/obtenerdatosentrega`, {
-            params: innerParams
+            params: innerParams,
+            withCredentials: true
         });
         if (!!response.data && response.status === 200){
             return response.data[0];

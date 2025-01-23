@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { commercialContext } from "../../context/ComercialContext";
 import { MySelector } from "../../componentes/Selector";
-import { Form, Button, Alert, Dropdown } from "react-bootstrap";
+import { Form, Button, Alert, Dropdown, InputGroup } from "react-bootstrap";
 import { Login } from "../../services/login";
 import { delay } from "../../utils/delay";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,8 @@ import { reverseString } from "../../utils/string";
 import ReCAPTCHA from 'react-google-recaptcha';
 import useRecaptcha from "../../hooks/useRecaptcha";
 import meLogo from './assets/cantol_black.png';
+// import {Button} from 'react-bootstrap/Button';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import 'C:/AppMobile/src/style/login.css'
 // import { validarCaptcha } from "../../services/reCaptcha";
 
@@ -18,6 +20,7 @@ const LoginForm = () => {
   const [inputUsername, setInputUsername] = useState("");
   const [inputPassword, setInputPassword] = useState("");
   const [inputCompany,  setInputCompany] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -28,17 +31,19 @@ const LoginForm = () => {
   //inicia proceso de autenticacion
   const handleSubmit = async (event) => {
     event.preventDefault();
-    //aqui se tiene validar catpcha con el backend
+    //aqui se tiene validar catpcha con el backend, falta implementar
     // const response = await validarCaptcha(capchaToken)
-    let responseJson = undefined;
-    // responseJson = true;
+    
+    // let responseJson = undefined;
+    let responseJson = true;
 
-    // if(capchaToken && inputUsername && inputPassword && inputCompany){
-    // }
     setLoading(true);
     responseJson = await Login(inputUsername, inputPassword, inputCompany);
     await delay(200);
     setLoading(false);
+
+    // if(capchaToken && inputUsername && inputPassword && inputCompany){
+    // }
 
     if (responseJson !== undefined){
       if (!responseJson.detail) {
@@ -76,7 +81,7 @@ const LoginForm = () => {
         </div>
         {/* Termina logo */}
 
-        <div className="h4 my-3 text-center">SWC</div>
+        <div className="h4 my-3 text-center">OMS</div>
         {/* Empieza aviso contraseña o clave incorrecta */}
         {show ? (
           <Alert
@@ -108,16 +113,25 @@ const LoginForm = () => {
             required
           />
         </Form.Group>
+
         <Form.Group className="mb-2" controlId="password">
           <Form.Label>Contraseña</Form.Label>
-          <Form.Control
-            type="password"
-            value={inputPassword}
-            placeholder="Contraseña"
-            onChange={(e) => setInputPassword(e.target.value)}
-            required
-          />
+          <InputGroup className="mb-3">
+            <Form.Control
+              type={showPassword ? 'text' : 'password'}
+              value={inputPassword}
+              placeholder="Contraseña"
+              onChange={(e) => setInputPassword(e.target.value)}
+              required
+            />
+            <Button variant="outline-secondary" id="button-addon2" onClick={()=>setShowPassword(!showPassword)}>
+              <div className="password-toggle-icon" >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </div>
+            </Button>
+          </InputGroup>
         </Form.Group>
+
         <div className="tw-flex tw-justify-center tw-mt-3">
           <ReCAPTCHA
           ref={recaptchaRef}
@@ -126,16 +140,16 @@ const LoginForm = () => {
           />
         </div>
         {!loading ? (
-          // // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
+          // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
           <Button className="w-100 tw-mt-3" variant="dark" type="submit">
             <span className="tw-text-sm">INGRESAR</span>
           </Button>
         ) : (
-          <Button className="w-100 tw-mt-3" variant="dark" type="submit">
-            {/* // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={false}> */}
-          {/* <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}> */}
-            <span className="tw-text-sm">INGRESANDO....</span>
-          </Button>
+            // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={false}>
+            // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
+            <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={false}>
+              <span className="tw-text-sm">INGRESANDO....</span>
+            </Button>
         )}
         <div className="d-grid justify-content-end">
           <Button

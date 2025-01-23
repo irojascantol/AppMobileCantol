@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dropdown, DropdownButton, Form, ListGroup } from "react-bootstrap";
+import { Dropdown, DropdownButton, Form, ListGroup, Spinner } from "react-bootstrap";
 import { BsFillWalletFill, BsListCheck, BsTruck } from "react-icons/bs"
 import { obtenerEntregaDetalle, obtenerRegistro, registrarEntrega } from "../../../services/entregaService";
 import { truncate } from "../../../utils/math";
@@ -7,6 +7,8 @@ import Tab from "react-bootstrap/Tab";
 import Tabs from "react-bootstrap/Tabs";
 import '../../../style/modalPlantillaEntrega.css'
 import { getCurrentLocation } from "../../../utils/location";
+// import 
+// import { GiConsoleController } from "react-icons/gi";
 
 function Selector({modalValues, handleModal, handleModalDetalle}){
     return (
@@ -21,7 +23,7 @@ function Selector({modalValues, handleModal, handleModalDetalle}){
             <div className="tw-flex tw-flex-col tw-items-center tw-w-12">
                 <button className="tw-p-2 tw-rounded"><BsFillWalletFill size={22} onClick={()=>{
                     handleModal({show: false});
-                    handleModalDetalle({show: true, tipomodal: 'cobro', modalTitle: 'Registrar entrega', options: modalValues?.options});
+                    handleModalDetalle({show: true, tipomodal: 'cobro', modalTitle: 'Registrar entrega', options: modalValues?.options, success: false});
                 }}/></button>
                 <p className="tw-text-center tw-leading-[19px]">Registrar entrega</p>
             </div>
@@ -38,7 +40,8 @@ function DetalleEntrega({modalDetalle, handleModalDetalle}){
     const [fields, setFields] = useState(
     [
         {key:'Estado de entrega:', value: null , clave: 'estado_entrega'},
-        {key:'Estado de liquidación:', value: null , clave: 'estado_liquidacion'},
+        // {key:'Estado de liquidación:', value: null , clave: 'estado_liquidacion'},
+        {key:'Seleccionar estado:', value: null , clave: 'estado_liquidacion'},
         {key:'Comentario chofer:', value: null , clave: 'comentario_chofer'},
         {key:'Contacto:', value: null , clave: 'contacto'},
         {key:'Telefono:', value: null , clave: 'telefono'},
@@ -154,9 +157,10 @@ const estado_entrega = {
     5: "No despachado",
 }
 
+// 1: "Pendiente de liquidación",
 const estado_liquidacion = {
-    1: "Pendiente de liquidación",
-    2: "Liquidado",
+    1: "Pendiente",
+    2: "Cobranza",
     3: "Rechazado",
 }
 
@@ -166,12 +170,17 @@ const tipo_pago = {
 }
 
 
-
 function RegistrarCobro({modalDetalle, handleModalDetalle}){
     //body state
     const [body, setBody] = useState({entrega: null , liquidacion: null, tipopago: null, monto: null, nrooperacion: '', comentarios: '', docTotal: 0});
+    const [loading, setLoading] = useState(false);
+    
     //handler body
     const handleBody = (obj) => setBody({...body, ...obj})
+    
+    //handler loading
+    const handleLoading = (bool) => setLoading(bool)
+
     //hadler select
     const handleSelect = (dropdown, eventKey) => {
         if (dropdown === 'entrega'){
@@ -181,6 +190,7 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                 handleBody({entrega: eventKey, liquidacion: null, tipopago: null, monto: null, nrooperacion: ''})
             }
         }else if(dropdown === 'liquidacion'){
+            console.log(eventKey)
             if(eventKey === '2'){
                 handleBody({liquidacion:  eventKey})
             }else{
@@ -229,10 +239,14 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                     U_DIS_LATIEN: currentLocation?.latitud?.toString() || null,
                     U_DIS_LONGEN: currentLocation?.longitud?.toString() || null,
                 }
+
+                handleLoading(true)
                 let response = await registrarEntrega(body_);
+                handleLoading(false)
+
                 if (response === 200){
                     alert('Registrado satisfactoriamente')
-                    handleModalDetalle({show: false})
+                    handleModalDetalle({show: false, success: true})
                 }else{
                     alert('Error al guardar')
                 }
@@ -269,14 +283,16 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                             {body?.entrega === '3' && (
                                 <Form>
                                 <Form.Group controlId="exampleForm.ControlSelect2">
-                                <Form.Label>Estado de liquidación:</Form.Label>
+                                <Form.Label>Estado de cobranza:</Form.Label>
                                 <Dropdown data-bs-theme="light" onSelect={(eventKey) => handleSelect('liquidacion', eventKey)}>
                                     <Dropdown.Toggle id="dropdown-button-dark-example2" variant={body?.liquidacion?"success":'secondary'}>
-                                    {estado_liquidacion[body?.liquidacion] || 'Estado de liquidación'}
+                                    {/* {estado_liquidacion[body?.liquidacion] || 'Estado de liquidación'} */}
+                                    {estado_liquidacion[body?.liquidacion] || 'Seleccionar estado'}
                                     </Dropdown.Toggle>
                                     <Dropdown.Menu className="tw-w-full" style={{ backgroundColor: '#f8f9fa', color: '#000' }}>
-                                        <Dropdown.Item eventKey={'1'}>Pendiente de liquidación</Dropdown.Item>
-                                        <Dropdown.Item eventKey={'2'}>Liquidado</Dropdown.Item>
+                                        {/* <Dropdown.Item eventKey={'1'}>Pendiente de liquidación</Dropdown.Item> */}
+                                        <Dropdown.Item eventKey={'1'}>Pendiente</Dropdown.Item>
+                                        <Dropdown.Item eventKey={'2'}>Cobranza</Dropdown.Item>
                                         <Dropdown.Item eventKey={'3'}>Rechazado</Dropdown.Item>
                                     </Dropdown.Menu>
                                 </Dropdown>
@@ -305,7 +321,7 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                             {(body?.tipopago == '1' || body?.tipopago == '2' ) && (
                                 <Form onSubmit={(event)=>{event.preventDefault()}}>
                                     <Form.Label>{`Monto a liquidar: (Max: ${body?.docTotal})`}</Form.Label>
-                                    <Form.Control type="number" placeholder="s/." value={(body?.monto || '').toString()} max={100} onChange={(e)=>{
+                                    <Form.Control type="number" placeholder="S/." value={(body?.monto || '').toString()} max={100} onChange={(e)=>{
                                         if(Number(e.target.value) <= Number(body?.docTotal)){
                                             handleBody({monto: Number(e.target.value)});
                                         }else{
@@ -331,11 +347,11 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                         </ListGroup.Item>
                     </ListGroup>
                 </div>
-                <button className='button-4 tw-w-full tw-mt-3' onClick={guardarRegistro}>
-                    {'Registrar'}
+                <button className='button-4 tw-w-full tw-mt-3 tw-flex tw-justify-center tw-items-center tw-gap-2' onClick={guardarRegistro} disabled={loading}>
+                    {!loading?'Registrar':'Registrando'}
+                    {loading && (<Spinner animation="border" variant="secondary" size="sm"/>)}
                 </button>
                 </>
-
             )
         }
         

@@ -16,10 +16,10 @@ export default function NoAutorizado() {
     <>
       <Modal
         show={showSecurity}
-        // onHide={()=>{console.log("Hola Mundo")}}
-        backdrop={true}
-        // backdrop="static"
-        // keyboard={false}
+        onHide={()=>{console.log("xx__xx")}}
+        // backdrop={true}
+        backdrop="static"
+        keyboard={false}
       >
         <Modal.Header>
           <Modal.Title>Aviso</Modal.Title>
@@ -28,8 +28,8 @@ export default function NoAutorizado() {
           La sesion ha caducado, vuelva a ingresar nuevamente.
         </Modal.Body>
         <Modal.Footer>
-          {/* <button onClick={handleExit}>Ir a login</button> */}
-          <button onClick={handleClose}>Ir a login</button>
+          <button onClick={handleExit}>Ir a login</button>
+          {/* <button onClick={handleClose}>Ir a login</button> */}
         </Modal.Footer>
       </Modal>
     </>

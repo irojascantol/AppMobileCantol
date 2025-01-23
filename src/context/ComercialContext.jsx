@@ -27,6 +27,7 @@ function ComercialContext({children}) {
     const [nuevoPedido, setNuevoPedido] =  useState({cliente_codigo: null, numero:null, ruc:null, razonsocial:null, telefono: null, fcontable: null, fentrega: null, direccionentrega:null, 
       ructransporte: null, moneda:null, codigogrupo: null, condicionpago:null, comentarios:{vendedor: null, nota_anticipo: null}, products: [], institucional: null, montos: {valor_venta: 0, descuento: 0, impuesto: 0, total_cred_anti: 0, total: 0,
         unidad: null, anticipo: 0, nota_credito: 0,}})
+    // const [nuevoPedido, setNuevoPedido] =  useState(!!sessionStorage.getItem("CDTToken") && {products: [], montos: {valor_venta: 0, descuento: 0, impuesto: 0, total_cred_anti: 0, total: 0, unidad: null, anticipo: 0, nota_credito: 0,}})
     
     //handlers
     //manejo seguridad
@@ -41,15 +42,16 @@ function ComercialContext({children}) {
     //handler buscar modal
     const handleSearchModal = (obj) => setSearchclientModalOpen({...searchClientModal, ...obj})
     //handler nuevo pedido
-    const handleNewSaleOrder = (obj) => setNuevoPedido({...nuevoPedido, ...obj})
+    const handleNewSaleOrder = (obj) =>{let variable = {...nuevoPedido, ...obj}; setNuevoPedido(variable);} 
     //handler setear nuevoPedido a cero
-    const handleSaleOrder2Init = () => setNuevoPedido({cliente_codigo: null, numero:null, ruc:null, razonsocial:null, telefono: null, fcontable: null, fentrega: null, direccionentrega:null, 
-      ructransporte: null, moneda:null, codigogrupo: null, condicionpago:null, comentarios:{vendedor: null, nota_anticipo: null}, products: [], institucional: null, montos: {valor_venta: 0, descuento: 0, impuesto: 0, total_cred_anti: 0, total: 0,
-        unidad: null, anticipo: 0, nota_credito: 0,}})
+    // const handleSaleOrder2Init = () => setNuevoPedido({cliente_codigo: null, numero:null, ruc:null, razonsocial:null, telefono: null, fcontable: null, fentrega: null, direccionentrega:null, 
+    //   ructransporte: null, moneda:null, codigogrupo: null, condicionpago:null, comentarios:{vendedor: null, nota_anticipo: null}, products: [], institucional: null, montos: {valor_venta: 0, descuento: 0, impuesto: 0, total_cred_anti: 0, total: 0,
+    //     unidad: null, anticipo: 0, nota_credito: 0,}})
     //handlers input modal / combo - text - date
     const handleInputTextModal = (obj) => setShowInputTextModal({...showInputTextModal, ...obj})
     //hanlder actualizacion de cliente
     const handleClienteChange = (obj) => {setClienteChange({...isClientChanged, ...obj})}
+
   
   return (
     <commercialContext.Provider value={
@@ -76,7 +78,7 @@ function ComercialContext({children}) {
         //handler datos nuevo pedido
         handleNewSaleOrder,
         //handler setear nuevoPedido a cero
-        handleSaleOrder2Init,
+        // handleSaleOrder2Init,
         //handler text modales
         handleInputTextModal,
         //handler update client

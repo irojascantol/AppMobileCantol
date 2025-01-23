@@ -9,5 +9,14 @@ export default defineConfig({
     chunkSizeWarningLimit: 1600,
     target:'esnext'
   },
-  base: '/AppMobileCantol/',
 })
+
+// export default defineConfig({
+//   plugins: [react()],
+//   build: {
+//     //target: 'esnext' //browsers can handle the latest ES features
+//     chunkSizeWarningLimit: 1600,
+//     target:'esnext'
+//   },
+//   base: '/AppMobileCantol/',
+// })

@@ -165,7 +165,7 @@ async function getCreditoAnticipo(innerParams) {
 async function postaplicarDescuento(requestBody) {
     axios.defaults.withCredentials = true;
     try{
-        const response = await axios.post(`${mainURL}/comercial/ventas/pedido/aplicardescuentonivel1`, requestBody);
+        const response = await axios.post(`${mainURL}/comercial/ventas/pedido/aplicardescuentos`, requestBody);
         if (!!response.data && response.status === 200){
             return response.data;
         }else
@@ -186,10 +186,30 @@ async function guardarNuevoPedido(requestBody) {
             return [response.data, response.status];
         }else
         {
-            return [null, response.status];
+            // console.log([null, response.status, response.data])
+            return [response?.request?.statusText, response.status];
         }
     }catch(error){
         console.log(`An Error ocurred: (guardarNuevoPedido) _ ${error}`);
+        return [error?.response?.data?.detail || error.message, error.response.status];
+    }
+}
+
+async function guardarNuevaOferta(requestBody) {
+    axios.defaults.withCredentials = true;
+    try{
+        let response = await axios.post(`${mainURL}/oferta_mobile/ofertas/oferta/grabarofertaventa`, requestBody);
+        response = response.data
+
+        if (response.status === 200){
+            return [response.message, response.status];
+        }else
+        {
+            return [null, 406];
+        }
+
+    }catch(error){
+        console.log(`An Error ocurred: (guardarNuevaOferta) _ ${error}`);
         return [null, error.response.status];
     }
 }
@@ -222,6 +242,7 @@ export {getPedido,
         postaplicarDescuento,
         guardarNuevoPedido,
         obtenerDescuentoDocumento,
+        guardarNuevaOferta,
     }
 
 // axios.defaults.withCredentials = true;

@@ -2,7 +2,8 @@ import React, { useContext, useEffect, useState } from 'react'
 import { ListGroup } from 'react-bootstrap'
 import { getDetallePedidoGeneral, getDetallePedidoLogistica, getDetallePedidoFinanzas, getDetallePedidoContenido} from '../../../services/pedidoService'
 import { commercialContext } from '../../../context/ComercialContext';
-import { getFormatShipDate_peru, getHumanDateFormat, getHumanDateReporte } from '../../../utils/humandateformat';
+// import { getFormatShipDate_peru, getHumanDateFormat, getHumanDateReporte } from '../../../utils/humandateformat';
+import { getHumanDateReporte } from '../../../utils/humandateformat';
 import { Contenido_Articulos } from './pedidoPlantilla';
 // import { useLocation } from 'react-router-dom';
 
@@ -74,7 +75,7 @@ function DetallePlantillaFinanzas({data, tipoPedido}) {
     <>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant="no style"
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -84,7 +85,7 @@ function DetallePlantillaFinanzas({data, tipoPedido}) {
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-border-b-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-border-b-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -123,7 +124,7 @@ function DetallePlantillaLogistica({data, tipoPedido}) {
     <>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -134,7 +135,7 @@ function DetallePlantillaLogistica({data, tipoPedido}) {
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -144,7 +145,7 @@ function DetallePlantillaLogistica({data, tipoPedido}) {
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-border-b-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-border-b-2 tw-mb-[1px]"
         variant="no style"
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -184,7 +185,7 @@ function DetallePlantillaGeneral({data, tipoPedido}) {
     <>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant="no style"
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -194,17 +195,17 @@ function DetallePlantillaGeneral({data, tipoPedido}) {
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
-          <div className="tw-font-semibold text-dark">Codigo de negocio:</div>
+          <div className="tw-font-semibold text-dark">Código de negocio:</div>
           <div className='text-secondary tw-text-lg'>{componentData?.codigo_negocio}</div>
         </div>
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -214,7 +215,7 @@ function DetallePlantillaGeneral({data, tipoPedido}) {
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -224,7 +225,7 @@ function DetallePlantillaGeneral({data, tipoPedido}) {
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -245,7 +246,7 @@ function DetallePlantillaGeneral({data, tipoPedido}) {
       </ListGroup.Item> */}
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -255,7 +256,7 @@ function DetallePlantillaGeneral({data, tipoPedido}) {
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -265,7 +266,7 @@ function DetallePlantillaGeneral({data, tipoPedido}) {
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -275,7 +276,7 @@ function DetallePlantillaGeneral({data, tipoPedido}) {
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
@@ -285,7 +286,7 @@ function DetallePlantillaGeneral({data, tipoPedido}) {
       </ListGroup.Item>
       <ListGroup.Item
         as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2"
+        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px]"
         variant='No style'
       >
         <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">

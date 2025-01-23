@@ -18,23 +18,27 @@ import { useAsyncError } from 'react-router-dom';
 import { mergeComments } from '../utils';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentLocation } from '../../../utils/location';
+import { addOneDecimal } from '../../../utils/math';
 
 
 const fetchFunctions = {
     Cliente: (body)=>getClientePorFiltro(body),
-    Producto: (body)=>getProductoPorFiltro(body),
+    SoloCliente: (body)=>getClientePorFiltro(body),
+    Producto: (body, isQuotation)=>getProductoPorFiltro(body, isQuotation),
     Transportista: (body)=>getTransportistaPorFiltro(body)
 }
 
 const body = {
     Cliente: (item)=>(<><div className="tw-font-medium tw-text-md">{item.razon_social}</div>
                 <div className='text-secondary tw-text-sm'>{item.numero_documento}</div></>),
-    Producto: (item)=>(<>
+    SoloCliente: (item)=>(<><div className="tw-font-medium tw-text-md">{item.razon_social}</div>
+                <div className='text-secondary tw-text-sm'>{item.numero_documento}</div></>),
+    Producto: (item, isQuotation)=>(<>
                 <div className="tw-font-medium tw-text-sm">{item?.descripcion}</div>
                 <div className='text-secondary tw-font-medium tw-text-sm'>{item.codigo}</div>
                 <div className='tw-flex tw-justify-between'>
                     <div className='text-secondary tw-font-medium tw-text-sm'>Precio: <span className='text-dark'>{item?.unidad_moneda} {item.precio}</span></div>
-                    <div className='text-secondary tw-font-medium tw-text-sm'>Stock Real: <span className='text-dark'>{item.stock}</span></div>
+                    <div className='text-secondary tw-font-medium tw-text-sm'>{!isQuotation?'Stock Real: ': 'Stock en transito'} <span className='text-dark'>{item.stock}</span></div>
                 </div>
                 </>),
     Transportista:  (item)=>(<>
@@ -57,6 +61,16 @@ const fillData = {
         montos: {...nuevoPedido.montos, total_cred_anti: nuevoPedido.montos.total, anticipo: 0, nota_credito: 0},
         canal_familia: {codigo_canal: item?.codigo_canal_cliente, nombre_canal: item?.canal_cliente},
         ubicacion: item?.ubicacion_cliente,
+        ructransporte: !item?.codigo_transportista ? null : { //aqui se agrega los datos del transportista cuando es zona Lima
+            codigo_transporte: item?.codigo_transportista,
+            nombre_transporte: item?.nombre_transporte,
+            documento_transporte: item?.ruc_transportista,
+        }
+    }),
+    SoloCliente: (item, nuevoPedido)=>({
+        cardCode: item.codigo,
+        ruc: item.numero_documento,
+        razonsocial: item.razon_social,
     }),
     Producto: (item, products, nuevoPedido)=>{
         return {products: [...products, item]}
@@ -70,6 +84,7 @@ const fillData = {
         })
     }
 
+    
 
 function CustomToggle({ children, eventKey, isCollapse, setIsCollapse, prevState}) {
     const buttonRef = useRef(null);
@@ -106,7 +121,7 @@ function CustomToggle({ children, eventKey, isCollapse, setIsCollapse, prevState
     );
   }
 
-function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal}) {
+function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, isQuotation}) {
     const [isCollapse,  setIsCollapse] = useState({toggle: false, state: false});
     const [dataSearch, setDataSearch ] = useState([]);
     const [textFilter, setTextFilter ] = useState('');
@@ -122,7 +137,7 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal}) 
                 let value = await decodeJWT()
                 setIsSpinner(true)
                 let response = []
-                response = await fetchFunctions[buscarModalValues.operacion]({usuario_codigo: value?.username, filtro: textFilter, cliente_codigo: buscarModalValues?.options[0]?.cliente_codigo})
+                response = await fetchFunctions[buscarModalValues.operacion]({usuario_codigo: value?.username, filtro: textFilter, cliente_codigo: buscarModalValues?.options[0]?.cliente_codigo}, isQuotation)
                 setDataSearch([...response.slice(0, 14)])
                 setIsSpinner(false)
                 if(!![...response.slice(0, 14)].length && !!textFilter){
@@ -153,6 +168,9 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal}) 
     },[showInputTextModal.returnedValue])
     
     const agregarItem = async (item) => {
+
+        console.log(item)
+
         //revisar si el producto ya esta agregado
         if(buscarModalValues?.operacion === 'Producto') {
             let tmpList = buscarModalValues.options[0]?.products;
@@ -171,27 +189,35 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal}) 
                     PaymentGroupCode: (tmpCliente?.condicionpago[0]?.PaymentGroupCode).toString(),
                     codigo_canal_cliente: (tmpCliente?.canal_familia?.codigo_canal).toString(),
                 }
-                console.log(typeof(body.PaymentGroupCode))
+                // console.log(typeof(body.PaymentGroupCode))
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
-                descuentoDoc === 406 && handleClose()
-                //formato de llegada {"descuento_documento": valor}
-                //seteo del descuento para todo el documento
-                if (descuentoDoc !== 406 && !!descuentoDoc){
+                descuentoDoc === 406 && handleClose() //Si retorna 406, activa ventana bloqueo 
+                
+                if (descuentoDoc !== 406 && !!descuentoDoc){ //Verifica que exista data en consulta descuento_documento
                     //activa el caso de que se cambie un cliente, debe actualizas descuentos
                     // if(!!isClientChanged.dsct){handleClienteChange({active: true})}
                     //solo identificamos el cambio del cliente
-                    handleClienteChange({active: !isClientChanged.active})
+                    
+                    handleClienteChange({active: !isClientChanged.active}) //revisar para que existe esta parte
+
                     handleNewSaleOrder({...fillData[buscarModalValues?.operacion](item, nuevoPedido), montos: {...nuevoPedido.montos,
                         descuento: descuentoDoc?.descuento_documento, 
                         anticipo: 0, nota_credito: 0, 
                         total_cred_anti: (nuevoPedido?.montos.total || 0)},
-                        comentarios: {...nuevoPedido.comentarios, nota_anticipo: ''}, 
+                        comentarios: {...nuevoPedido.comentarios, nota_anticipo: ''},
                     });
+
                     handleCloseModal();
                 }else{
                     handleNewSaleOrder(fillData[buscarModalValues?.operacion](item, nuevoPedido));
                     handleCloseModal();
                 }
+            }
+        }else if(buscarModalValues?.operacion === 'SoloCliente'){
+            let tmpCliente = fillData[buscarModalValues?.operacion](item, nuevoPedido)
+            if(!!tmpCliente){
+                handleNewSaleOrder({returnedValue: {cardCode: tmpCliente.cardCode, ruc: tmpCliente.ruc, razonsocial: tmpCliente.razonsocial}})
+                //el modal se cierra el useEffect
             }
         }else if(buscarModalValues?.operacion === 'Transportista'){
             handleNewSaleOrder(fillData[buscarModalValues?.operacion](item));
@@ -226,7 +252,7 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal}) 
                                     agregarItem(item);
                                     }}>
                                     <div>
-                                        {body[buscarModalValues?.operacion](item)}
+                                        {body[buscarModalValues?.operacion](item, isQuotation)}
                                     </div>
                                 </div>
                             </ListGroup.Item>
@@ -239,7 +265,7 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal}) 
   )
 }
 
-function IngresarTexto({modalValues, handleInputTextModal, handleNewSaleOrder, type}){
+function IngresarTexto({modalValues, handleInputTextModal, handleNewSaleOrder, type, isQuotation}){
     let initComment = modalValues?.operacion === 'comentarios' ? (modalValues?.options?.vendedor || ''): '';
     type = modalValues?.operacion === 'comentarios' ? 'text' : type;
     let rows = modalValues?.operacion === 'comentarios' ? 3 : 1;
@@ -264,11 +290,11 @@ function IngresarTexto({modalValues, handleInputTextModal, handleNewSaleOrder, t
                         handleNewSaleOrder({comentarios: {...modalValues?.options, vendedor: value.toString().trim()}}); 
                         handleInputTextModal({show: false});
                     }else if(modalValues.operacion === 'agregarProducto'){
-                        if(value > modalValues?.options?.stock){
-                            alert('La cantidad debe ser menor al stock')
-                        }else{
-                            handleInputTextModal({show: false, returnedValue: value});
-                        }
+                        handleInputTextModal({show: false, returnedValue: value});
+                        // if(value > modalValues?.options?.stock && !isQuotation){ ||RETORNAR!!
+                        //     alert('La cantidad debe ser menor al stock')
+                        // }else{
+                        // }
                     }else{
                         handleNewSaleOrder({ructransporte: value}); 
                         handleInputTextModal({show: false});
@@ -308,7 +334,7 @@ function SelectorCombo({modalValues, handleInputTextModal, handleNewSaleOrder, t
                     PaymentGroupCode: (tmpObj?.condicionpago[0]?.PaymentGroupCode).toString(),
                     codigo_canal_cliente: (modalValues?.data?.canal_familia?.codigo_canal).toString(),
                 }
-                console.log(typeof(body.PaymentGroupCode))
+                // console.log(typeof(body.PaymentGroupCode))
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
                 descuentoDoc === 406 && handleClose()
                 //formato de llegada {"descuento_documento": valor}
@@ -369,7 +395,7 @@ function Anticipo_Credito({nuevopedido, modalValues, handleInputTextModal, handl
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-start tw-flex-col tw-gap-2' variant='secondary'>
                 <div className='myFontFamily tw-font-medium tw-text-left tw-w-[188px]'>Total facturas de anticipo:</div>
                 <div className='tw-flex tw-justify-start tw-gap-2'>
-                    <div className='myFontFamily tw-font-medium tw-text-right tw-w-[188px]'>{`Disponible: S/.${!!dataclient?.anticipo?dataclient?.anticipo:'0'}`}</div>
+                    <div className='myFontFamily tw-font-medium tw-text-right tw-w-[188px]'>{`Disponible: S/.${!!dataclient?.anticipo?addOneDecimal(dataclient?.anticipo):addOneDecimal(0)}`}</div>
                     <input type='number' value={!inputFA ? '': inputFA} disabled={!dataclient?.anticipo} onChange={(event)=>{setInputFA(event.target.value)}} 
                     className='tw-block tw-min-w-[130px] tw-bg-white' placeholder='Ingrese monto' onBlur={e => {
                         if (inputFA && !isNaN(inputFA))
@@ -380,7 +406,7 @@ function Anticipo_Credito({nuevopedido, modalValues, handleInputTextModal, handl
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-start tw-flex-col tw-gap-2' variant='secondary'>
                 <div className='myFontFamily tw-font-medium tw-text-left tw-w-[188px]'>Total notas de crédito:</div>
                 <div className='tw-flex tw-justify-start tw-gap-2 tw-w-full'> 
-                    <div className='myFontFamily tw-font-medium tw-text-right tw-w-[188px]'>{`Disponible: S/.${!!dataclient?.nota_credito?dataclient?.nota_credito:'0'}`}</div>
+                    <div className='myFontFamily tw-font-medium tw-text-right tw-w-[188px]'>{`Disponible: S/.${!!dataclient?.nota_credito?addOneDecimal(dataclient?.nota_credito):addOneDecimal(0)}`}</div>
                     <input type='number' value={!inputNC ? '': inputNC} disabled={!dataclient?.nota_credito} onChange={(event)=>{setInputNC(event.target.value)}} 
                     className='tw-min-w-[130px] tw-bg-white' placeholder='Ingrese monto' onBlur={e => {
                         if (inputNC && !isNaN(inputNC))

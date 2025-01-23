@@ -3,10 +3,11 @@ import Button from 'react-bootstrap/Button';
 import { ListGroup } from 'react-bootstrap'
 import { BsArchive, BsArrowClockwise, BsArrowRightShort, BsBootstrap, BsCalendar3, BsChatLeftText, BsCurrencyExchange, BsExclamationTriangleFill, BsFileEarmarkPerson, BsFillPeopleFill, BsList, BsPlusSquareFill, BsSearch, BsTextWrap, BsTrash, BsTrash3Fill, BsX } from 'react-icons/bs';
 import { commercialContext } from '../../../context/ComercialContext';
-import { getFormatShipDate, getFormatShipDate_peru, getHumanDateFormat, getHumanDateFormat_plus } from '../../../utils/humandateformat';
-import { truncate } from '../../../utils/math';
+import { getCurrentDate, getFormatShipDate, getFormatShipDate_peru, getHumanDateFormat, getHumanDateFormat_plus } from '../../../utils/humandateformat';
+import { addOneDecimal, dsctEquiv, truncate } from '../../../utils/math';
 import { getProductosBonificacion, postaplicarDescuento } from '../../../services/pedidoService';
 import '../../../style/inputform.css'
+import { InputNumberSpinner } from '../../../componentes/globales/input';
 
 const retornaDatos = (data, key) => {
     if (!!data){
@@ -16,8 +17,14 @@ const retornaDatos = (data, key) => {
     }
 }
 
-function NuevoPedidoCabecera() {
+let operation = {
+    down: (value)=>value-1,
+    up: (value)=>value+1
+}
+
+function NuevoPedidoCabecera({data}) {
     const { handleSearchModal, handleInputTextModal, nuevoPedido} = useContext(commercialContext);
+
     return (
     <>
         <ListGroup.Item
@@ -46,7 +53,7 @@ function NuevoPedidoCabecera() {
             variant="no style"
             >
             <div className="tw-ml-2 tw-mr-5  tw-flex tw-justify-between tw-w-full">
-                <div className='tw-min-w-[330px]'>
+                <div className='tw-min-w-[310px]'>
                     <div className="header_section_title">Razón social:</div>
                     <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "razonsocial")}&nbsp;`}}/>
                 </div>
@@ -83,7 +90,7 @@ function NuevoPedidoCabecera() {
             variant="no style"
             >
             <div className="tw-ml-2 tw-mr-5  tw-flex tw-justify-between tw-w-full">
-                <div className='tw-min-w-[330px]'>
+                <div className='tw-min-w-[310px]'>
                     <div className="header_section_title">Fecha de entrega:</div>
                     <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${getFormatShipDate_peru({fecha: new Date(nuevoPedido?.fentrega)})}&nbsp;`}}/>
                 </div>
@@ -103,7 +110,7 @@ function NuevoPedidoCabecera() {
             variant="no style"
             >
             <div className="tw-ml-2 tw-mr-5  tw-flex tw-justify-between tw-w-full">
-                <div className='tw-min-w-[330px]'>
+                <div className='tw-min-w-[310px]'>
                     <div className="header_section_title">Dirección de entrega:</div>
                     <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${!!nuevoPedido.direccionentrega && nuevoPedido?.direccionentrega[0]?.direccion_entrega || ''}&nbsp;`}}/>
                 </div>
@@ -125,7 +132,7 @@ function NuevoPedidoCabecera() {
             variant="no style"
             >
             <div className="tw-ml-2 tw-mr-5  tw-flex tw-justify-between tw-w-full">
-                <div className='tw-min-w-[330px]'>
+                <div className='tw-min-w-[310px]'>
                     <div className="header_section_title">RUC transportista (*):</div>
                     <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "ructransporte")?.nombre_transporte || '&nbsp'};`}}/>
                     <div className='tw-text-xs tw-font-semibold' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "ructransporte")?.documento_transporte || '&nbsp'}&nbsp;`}}/>
@@ -169,7 +176,7 @@ function NuevoPedidoCabecera() {
             variant="no style"
             >
         <div className="tw-ml-2 tw-mr-5  tw-flex tw-justify-between tw-w-full">
-            <div className='tw-min-w-[330px]'>
+            <div className='tw-min-w-[310px]'>
                 <div className="header_section_title">Condicion de pago:</div>
                 <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${!!nuevoPedido.condicionpago && nuevoPedido?.condicionpago[0].PymntGroup || ''}&nbsp;`}}/>
             </div>
@@ -191,7 +198,7 @@ function NuevoPedidoCabecera() {
             variant="no style"
             >
         <div className="tw-ml-2 tw-mr-5  tw-flex tw-justify-between tw-w-full">
-            <div className='tw-min-w-[330px]'>
+            <div className='tw-min-w-[310px]'>
                 <div className="header_section_title">Canal de venta(*):</div>
                 <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${nuevoPedido?.canal_familia?.nombre_canal || '&nbsp;'}&nbsp;`}}/>
             </div>
@@ -213,7 +220,7 @@ function NuevoPedidoCabecera() {
             variant="no style"
             >
         <div className="tw-ml-2 tw-mr-5  tw-flex tw-justify-between tw-w-full">
-            <div className='tw-min-w-[330px]'>
+            <div className='tw-min-w-[310px]'>
                 <div className="header_section_title">Comentarios del vendedor(*):</div>
                 <div className='header_section_content tw-max-w-[330px] tw-h-7 tw-overflow-y-hidden tw-overflow-x-hidden' dangerouslySetInnerHTML={{__html: `${nuevoPedido?.comentarios?.vendedor || '&nbsp;'}&nbsp;`}}/>
             </div>
@@ -236,14 +243,15 @@ function NuevoPedidoCabecera() {
 function NuevoPedidoProductos(){
     //maneja la apertura de modal de busqueda de productos
     const {nuevoPedido, handleSearchModal, handleNewSaleOrder, handleInputTextModal, showInputTextModal: modalValues, handleClienteChange, isClientChanged, handleShow} = useContext(commercialContext);
-    //activate los botones para eliminar productos
+    // //activate los botones para eliminar productos
     const [deleteMode,  setDeleteMode] = useState(false);
+    const [isFirstRender, setIsFirstRender] = useState(true);
     
-    //verifica cliente agregado en cabecera
+    // //verifica cliente agregado en cabecera
     const isClientExits = !!nuevoPedido?.ruc && !!nuevoPedido?.razonsocial;
     const largo_productos = nuevoPedido?.products?.length;
 
-    //activa solo cuando se modifica la tabla productos
+    // //activa solo cuando se modifica la tabla productos
     useEffect(()=>{
         !!largo_productos && calcularTotal()
         !largo_productos && setearCero()
@@ -259,9 +267,15 @@ function NuevoPedidoProductos(){
         }
     }, [modalValues.returnedValue])
 
-    //quita descueno y bonificacion cuando cambia cliente
+    // //quita descueno y bonificacion cuando cambia cliente
     useEffect(()=>{
-        eliminar_Dsct_Bonificado()
+        // console.log("Ingresa aqui")
+        if (isFirstRender) {
+            setIsFirstRender(false);
+            return; // No hacer nada en el primer renderizado
+          }else{
+              eliminar_Dsct_Bonificado()
+          }
     }, [isClientChanged.active])
 
     
@@ -300,32 +314,39 @@ function NuevoPedidoProductos(){
             if(!!indexes.length){
                 //ordenar indices de mayor a menor
                 indexes.sort((a,b)=>b-a)
+                //esto de aca abajo se puede hacer con un foreach
                 for (let index of indexes){
                     ghost_products_for_delete.splice(index, 1)              
                 }
             }
         //crea arrays de las bonificaciones aplicadas
-            let tmpResponse = response.map((item)=>({...item, impuesto: {codigo: 'IGV_EXE', valor: 0}, descuento: 100, dsct_porcentaje: 100, tipo: 'bonificado'}))
+            let tmpResponse = response.map((item)=>({...item, maxLimit: item?.cantidad, impuesto: {codigo: 'IGV_EXE', valor: 0}, descuento: 100, dsct_porcentaje: 100, tipo: 'bonificado'}))
             handleNewSaleOrder({products: [...ghost_products_for_delete, ...tmpResponse]})
         }
     }
 
     const aplicarDescuento = async() => {
+        // console.log('Llega a esta parte')
         let response = null
         //obtener cuerpo para aplicar descuentos
         let productos_ = nuevoPedido?.products?.filter((x)=>(!('tipo' in x)))
         let requestBody = {
             codigo_cliente: nuevoPedido?.cliente_codigo,
             ubicacion_cliente: Number(nuevoPedido?.ubicacion),
+            grupo_familiar:  nuevoPedido?.grupo_familia,
+            fecha_promocion: getCurrentDate(),
             productos: productos_?.map((x)=>({
                 "codigo_articulo": x?.codigo,
                 "codigo_familia": x?.codigo_familia,
+                "codigo_subfamilia": x?.codigo_subfamilia,
                 "cantidad": x?.cantidad,
                 "precio": x?.precio,
             }))}
+
         //consulta descuentos solo si hay productos en lista
         //descuento: es el total descuento
         //dsct_porcentaje: el el porcentaje % por und
+       
         if(!!(productos_?.length)){
             response = await postaplicarDescuento(requestBody)
             response === 406 && handleShow()
@@ -335,8 +356,12 @@ function NuevoPedidoProductos(){
                     for( const objRes of response){
                         ghost_products.forEach((item, index) => {
                             if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
-                                item.descuento = objRes?.total_descuento;
-                                item.dsct_porcentaje = objRes?.descuento;
+                                // item.descuento = objRes?.total_descuento_n1 || "0";
+                                item.descuento = Number(objRes?.total_descuento_n1 || 0);
+                                item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
+                                // item.descuento2 = objRes?.total_descuento_n2 || "0";
+                                item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
+                                item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
                             }
                         })
                     }
@@ -354,7 +379,7 @@ function NuevoPedidoProductos(){
             let valorVenta = nuevoPedido?.products.reduce((acc, item)=>((item?.precio * item?.cantidad) + acc), 0);
             //calcular descuento total de productos
             let itemsNoBonificados = nuevoPedido?.products.filter((item)=>!('tipo' in item))
-            let valorDescuentoProductos = itemsNoBonificados.reduce((acc, item)=>(((item?.precio * (item?.dsct_porcentaje * 0.01)) * item?.cantidad) + acc), 0);
+            let valorDescuentoProductos = itemsNoBonificados.reduce((acc, item)=>((item?.precio * dsctEquiv(item?.dsct_porcentaje, item?.dsct_porcentaje2) * 0.01 * item?.cantidad) + acc), 0);
             
             // valorVenta = truncate(valorVenta, 2)
             //revisa que todos los productos esten con la misma unidad de moneda
@@ -386,7 +411,7 @@ function NuevoPedidoProductos(){
         if (largo_productos){
             //esta parte calcular el impuesto sobre el total menos el descuento
             // let impuestoTotal = nuevoPedido?.products.reduce((acc, item)=>(((item?.precio *  returnDsctFactor(item?.dsct_porcentaje)) * item?.cantidad * ((item?.impuesto?.valor) * 0.01)) + acc), 0);
-            let impuestoTotal = nuevoPedido?.products.reduce((acc, item)=>(((item?.precio *  returnDsctFactor(item?.dsct_porcentaje)) * returnDsctFactor(nuevoPedido?.montos?.descuento) *  item?.cantidad * ((item?.impuesto?.valor) * 0.01)) + acc), 0);
+            let impuestoTotal = nuevoPedido?.products.reduce((acc, item)=>(((item?.precio *  returnDsctFactor(dsctEquiv(item?.dsct_porcentaje, item?.dsct_porcentaje2))) * returnDsctFactor(nuevoPedido?.montos?.descuento) *  item?.cantidad * ((item?.impuesto?.valor) * 0.01)) + acc), 0);
             //seria cuestion de verificar primero que todos sean del %18
             // let valor_venta_menos_descuento = sum_valorventa - (1 - nuevoPedido?.montos?.descuento * 0.01)
             // let  impuestoTotal = valor_venta_menos_descuento * ((item?.impuesto?.valor) * 0.01)
@@ -481,12 +506,26 @@ function NuevoPedidoProductos(){
         }
 
         const eliminar_Dsct_Bonificado = () => {
-            //elimina descuento de no bonificados
-            let itemsSinDescuento = nuevoPedido?.products.map((item)=>(!('tipo' in item)?{...item, ...{descuento: 0, dsct_porcentaje: 0}}:{...item}))
+            // console.log(nuevoPedido)
+            // //elimina descuento de no bonificados
+            let itemsSinDescuento = nuevoPedido?.products.map((item)=>(!('tipo' in item)?{...item, ...{descuento: 0, dsct_porcentaje: 0, descuento2: 0, dsct_porcentaje2: 0}}:{...item}))
             
-            //elimina bonificados
+            // //elimina bonificados
             let itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item))
+            // console.log({products: [...itemsNoBonificados]})
             handleNewSaleOrder({products: [...itemsNoBonificados]})
+        }
+
+        const handleInputSpinner = (action, itemCode, value) => {
+            //copia la lista de productos
+            let ghost_products = JSON.parse(JSON.stringify(nuevoPedido?.products))
+            ghost_products.forEach((idy, index, array)=>{
+                if(idy?.tipo === 'bonificado' && ghost_products[index].codigo === itemCode){
+                    let values = operation[action](value)
+                    array[index].cantidad = values
+                }
+            })
+            handleNewSaleOrder({products: ghost_products})
         }
 
     return(
@@ -522,11 +561,31 @@ function NuevoPedidoProductos(){
                                 <ListGroup.Item key={(index + 4).toString()} as="li" className="d-flex tw-flex-row tw-rounded-md tw-justify-start tw-gap-2 tw-pl-1 product_card tw-relative" style={{width: 'calc(100% - 5px)'}} variant="no style">
                                     <div className='tw-w-full tw-h-24'>
                                         <div className='tw-text-sm tw-font-medium tw-h-10'>{itx?.descripcion} - {itx?.codigo}</div>
-                                        <div className='tw-text-base'>Descuento: {itx?.dsct_porcentaje}%</div>
+                                        <div className='tw-text-base'>
+                                            <span className='tw-text-sm'>Descuento:</span>&nbsp;
+                                            {truncate(dsctEquiv(itx?.dsct_porcentaje, itx?.dsct_porcentaje2), 2)}%</div>
                                         <div className='tw-flex tw-justify-between'>
-                                            <div className='tw-text-base'>Precio: <span className='tw-text-sm'>{itx?.unidad_moneda}</span> {itx?.precio}</div>
-                                            <div className='tw-text-base'>cant: {itx?.cantidad}</div>
-                                            <div className='tw-text-base'>subtotal: <span className='tw-text-sm'>{itx?.unidad_moneda}</span> {truncate((itx?.precio * (1 - (itx?.dsct_porcentaje * 0.01))) * itx?.cantidad, 2)}</div>
+                                                <div className='tw-text-base'>
+                                                    <span className='tw-text-sm'>Precio:</span>&nbsp;
+                                                    <span className='tw-text-xs'>{itx?.unidad_moneda}</span> 
+                                                    {addOneDecimal(itx?.precio)}
+                                                </div>
+                                                <div className={`tw-text-base tw-flex`}>
+                                                    <div>
+                                                        <span className='tw-text-sm'>Cant:</span>&nbsp;
+                                                    </div>
+                                                    {itx?.tipo === 'bonificado' ? 
+                                                    (
+                                                        <InputNumberSpinner min={0} max={itx?.maxLimit} value={itx?.cantidad} onChange={(action)=>{handleInputSpinner(action, itx?.codigo, itx?.cantidad)}}/>
+                                                    ):
+                                                        (<span>{itx?.cantidad}</span>)
+                                                    }
+                                                </div>
+                                            <div className='tw-text-base'>
+                                                <span className='tw-text-sm'>Subtotal:</span>&nbsp;
+                                                <span className='tw-text-xs'>{itx?.unidad_moneda}</span> 
+                                                {addOneDecimal(truncate(itx?.precio * itx?.cantidad, 2))}
+                                            </div>
                                         </div>
                                         <div className={`tw-absolute button-4 tw-right-[-0px] tw-top-[-0px] tw-px-0 tw-py-0 tw-bg-black tw-text-white item-delete ${!deleteMode? 'tw-invisible tw-opacity-0': 'tw-visible tw-opacity-100'}`} onClick={()=>{eliminarProducto(itx)}}>
                                                 <BsX size={20}/>
@@ -543,28 +602,28 @@ function NuevoPedidoProductos(){
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
                 <div className='myFontFamily tw-font-medium'>Subtotal:</div>
-                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {nuevoPedido?.montos?.valor_venta}</div>
+                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.valor_venta), 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
                 <div className='myFontFamily tw-font-medium'>Desct. por producto:</div>
-                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {truncate((nuevoPedido?.montos?.dsctProductos || 0), 2)}</div>
+                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.dsctProductos || 0), 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
                 <div className='myFontFamily tw-font-medium'>Desct. por F. Pago:</div>
-                {/* <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {truncate((nuevoPedido?.montos?.valor_venta)*(nuevoPedido?.montos?.descuento * 0.01), 2)}</div> */}
-                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {truncate((nuevoPedido?.montos?.dsctDoc), 2)}</div>
+                {/* <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.valor_venta)*(nuevoPedido?.montos?.descuento * 0.01), 2)}</d)iv> */}
+                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.dsctDoc), 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
                 <div className='myFontFamily tw-font-medium'>Impuestos:</div>
-                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {truncate(nuevoPedido?.montos?.impuesto, 2)}</div>
+                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate(nuevoPedido?.montos?.impuesto, 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
                 <div className='myFontFamily tw-font-medium'>Importe total:</div>
-                <div className='myFontFamily tw-font-normal tw-bg-green-300 product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {truncate(nuevoPedido?.montos?.total, 2)}</div>
+                <div className='myFontFamily tw-font-normal tw-bg-green-300 product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate(nuevoPedido?.montos?.total, 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
                 <div className='myFontFamily tw-font-medium'>**Importe total - FA - NC:</div>
-                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {truncate(nuevoPedido?.montos?.total_cred_anti, 2)}</div>
+                <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate(nuevoPedido?.montos?.total_cred_anti, 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item
             as="li"

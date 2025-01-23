@@ -1,25 +1,29 @@
 const options = {
     enableHighAccuracy: true,
-    timeout: 1000,
+    timeout: 3000, // 3 segundos de timeout
     maximumAge: 0,
 }
-//
-export const getCurrentLocation = async () => {
-    return new Promise((resolve, reject)=>{
-        if(navigator.geolocation){
-            navigator.geolocation.getCurrentPosition(
-                position => {
-                    const latitud = position.coords.latitude;
-                    const longitud = position.coords.longitude;
-                    resolve({latitud, longitud})
-                }, 
-                error=>{
-                    resolve({message: error.message})
-                    // reject(error)
-                }, 
-                options);
-        } else{
-            reject("No se pudo obtener la ubicacion")
+
+export const getCurrentLocation = (intentos = 2) => {
+    return new Promise((resolve, reject) => {
+      function intento() {
+        if (intentos <= 0) {
+            reject("No se pudo obtener la geolocalización");
+            return;
         }
-    })
-}
+        navigator.geolocation.getCurrentPosition(
+          (posicion) => {
+                const latitud = posicion.coords.latitude;
+                const longitud = posicion.coords.longitude;
+                resolve({latitud, longitud})
+          },
+          (error) => {
+            console.log(`Intento fallido. Quedan ${intentos - 1} intentos.`);
+            getCurrentLocation(intentos - 1).then(resolve).catch(reject);
+          }
+        );
+      }
+  
+      intento(); // Empezamos el primer intento
+    });
+  }

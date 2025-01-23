@@ -36,3 +36,18 @@ export function getFormatShipDate_peru({fecha: fecha_date, moredays = 0}) {
   let y = fecha_date.getFullYear();
   return '' + (Number(d) <= 9 ? '0' + Number(d) : d) + '/' + m + '/' + y;
 }
+
+export function getCurrentDate(){
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // Month is 0-based, so add 1
+  const day = String(today.getDate()).padStart(2, '0'); // Ensure two digits
+  return `${year}-${month}-${day}`
+}
+export function getCurrentDate_day(fecha){
+  const today = new Date(fecha);
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // Month is 0-based, so add 1
+  const day = String(today.getDate()).padStart(2, '0'); // Ensure two digits
+  return `${day}-${month}-${year}`
+}

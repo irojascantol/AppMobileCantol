@@ -1,3 +1,4 @@
+import { dsctEquiv, truncate } from "../../utils/math";
 
 
 export function mergeComments(str1, str2){
@@ -38,14 +39,17 @@ export function makeSaleOrderBody(saleOrder, location){
           Quantity: product?.cantidad,
           TaxCode: product?.impuesto?.codigo,
           UnitPrice: product?.precio,
-          DiscountPercent: product?.dsct_porcentaje,
           U_MSSC_NV1: product?.dsct_porcentaje,
-          U_MSSC_NV2: 0,
+          U_MSSC_NV2: product?.dsct_porcentaje2 || 0,
           U_MSSC_NV3: 0,
-          U_MSSC_DSC: product?.dsct_porcentaje,
+          U_MSSC_DSC: truncate(dsctEquiv(product?.dsct_porcentaje, product?.dsct_porcentaje2), 2),
+          DiscountPercent: truncate(dsctEquiv(product?.dsct_porcentaje, product?.dsct_porcentaje2), 2),
           U_MSS_ITEMBONIF: ('tipo' in product)?'Y':'N',
           U_MSSC_BONI: ('tipo' in product)?'Y':'N',
         }))
     }
     return body
 }
+
+// //   U_MSSC_DSC: product?.dsct_porcentaje,
+// //   DiscountPercent: product?.dsct_porcentaje,
