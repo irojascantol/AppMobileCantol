@@ -24,9 +24,33 @@ function ComercialContext({children}) {
     const [showInputTextModal, setShowInputTextModal] = useState({show: false, modalTitle: '', returnedValue: undefined, options: [], tipomodal:null, operacion:null});
     const [isClientChanged, setClienteChange] = useState({active: false, dsct: false});
     //orden de pedido
-    const [nuevoPedido, setNuevoPedido] =  useState({cliente_codigo: null, numero:null, ruc:null, razonsocial:null, telefono: null, fcontable: null, fentrega: null, direccionentrega:null, 
-      ructransporte: null, moneda:null, codigogrupo: null, condicionpago:null, comentarios:{vendedor: null, nota_anticipo: null}, products: [], institucional: null, montos: {valor_venta: 0, descuento: 0, impuesto: 0, total_cred_anti: 0, total: 0,
-        unidad: null, anticipo: 0, nota_credito: 0,}})
+    const [nuevoPedido, setNuevoPedido] =  useState({
+          cliente_codigo: null, 
+          numero:null, 
+          ruc:null, 
+          razonsocial:null, 
+          telefono: null, 
+          fcontable: null, 
+          fentrega: null, 
+          direccionentrega:null, 
+          ructransporte: null, 
+          moneda:null, 
+          codigogrupo: null, 
+          condicionpago:null, 
+          comentarios:{vendedor: null, nota_anticipo: null}, 
+          products: [], 
+          institucional: null, 
+          montos: {valor_venta: 0, descuento: 0, impuesto: 0, total_cred_anti: 0, total: 0, unidad: null, anticipo: 0, nota_credito: 0,}
+      })
+    
+    //estado descuento, nuevo formato 01/02/2025
+    const [dsctFormato, setDsctFormato] = useState({
+      dsctDoc: { 
+      dsct1: {selected: null, min: 0.0, max: 0.0},
+      dsctFP: {value: 0.0, enabled: false}
+              }, 
+      promociones: {enabled: true}
+      });
     // const [nuevoPedido, setNuevoPedido] =  useState(!!sessionStorage.getItem("CDTToken") && {products: [], montos: {valor_venta: 0, descuento: 0, impuesto: 0, total_cred_anti: 0, total: 0, unidad: null, anticipo: 0, nota_credito: 0,}})
     
     //handlers
@@ -34,6 +58,10 @@ function ComercialContext({children}) {
     const handleShow = () => setShowSecurity(true);
     const handleClose = () => setShowSecurity(false);
     //manejo seguridad
+          
+    //manejo descuento, nuevo formato 01/02/2025
+    const handleDescuento = (obj) => setDsctFormato({...dsctFormato, ...obj});
+    const handleDescuentoDoc = (obj) => setDsctFormato({...dsctFormato, dsctDoc: {...dsctFormato.dsctDoc, ...obj}});
 
     const handleLogo = (logo_) => setLogo_C(logos[logo_]);
     const handleUser = (name) => setUserName(name);
@@ -42,7 +70,8 @@ function ComercialContext({children}) {
     //handler buscar modal
     const handleSearchModal = (obj) => setSearchclientModalOpen({...searchClientModal, ...obj})
     //handler nuevo pedido
-    const handleNewSaleOrder = (obj) =>{let variable = {...nuevoPedido, ...obj}; setNuevoPedido(variable);} 
+    const handleNewSaleOrder = (obj) =>{let variable = {...nuevoPedido, ...obj}; setNuevoPedido(variable);}
+    const handleNewSaleMontos = (obj) => setNuevoPedido({...nuevoPedido, montos: {...nuevoPedido.montos, ...obj}});
     //handler setear nuevoPedido a cero
     // const handleSaleOrder2Init = () => setNuevoPedido({cliente_codigo: null, numero:null, ruc:null, razonsocial:null, telefono: null, fcontable: null, fentrega: null, direccionentrega:null, 
     //   ructransporte: null, moneda:null, codigogrupo: null, condicionpago:null, comentarios:{vendedor: null, nota_anticipo: null}, products: [], institucional: null, montos: {valor_venta: 0, descuento: 0, impuesto: 0, total_cred_anti: 0, total: 0,
@@ -66,6 +95,7 @@ function ComercialContext({children}) {
         showInputTextModal,
         isClientChanged,
         nuevoPedido,
+        dsctFormato,
         setLoading,
         handleShow,
         handleClose,
@@ -82,7 +112,11 @@ function ComercialContext({children}) {
         //handler text modales
         handleInputTextModal,
         //handler update client
-        handleClienteChange
+        handleClienteChange,
+        //handler nuevo descuento
+        handleDescuento,
+        handleDescuentoDoc,
+        handleNewSaleMontos
       }
     }>
         {children}

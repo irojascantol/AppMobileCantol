@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
+import PropTypes from 'prop-types';
 import Button from 'react-bootstrap/Button';
 import { ListGroup } from 'react-bootstrap'
 import { BsArchive, BsArrowClockwise, BsArrowRightShort, BsBootstrap, BsCalendar3, BsChatLeftText, BsCurrencyExchange, BsExclamationTriangleFill, BsFileEarmarkPerson, BsFillPeopleFill, BsList, BsPlusSquareFill, BsSearch, BsTextWrap, BsTrash, BsTrash3Fill, BsX } from 'react-icons/bs';
@@ -6,8 +7,17 @@ import { commercialContext } from '../../../context/ComercialContext';
 import { getCurrentDate, getFormatShipDate, getFormatShipDate_peru, getHumanDateFormat, getHumanDateFormat_plus } from '../../../utils/humandateformat';
 import { addOneDecimal, dsctEquiv, truncate } from '../../../utils/math';
 import { getProductosBonificacion, postaplicarDescuento } from '../../../services/pedidoService';
-import '../../../style/inputform.css'
 import { InputNumberSpinner } from '../../../componentes/globales/input';
+import { DiscountOvDialog } from '../componentes/DiscountOvDialog'; 
+import '../../../style/inputform.css'
+
+
+//Cofiguracion para discount dialog
+// DiscountOvDialog.propTypes = {
+//     onClose: PropTypes.func.isRequired,
+//     open: PropTypes.bool.isRequired,
+// };
+
 
 const retornaDatos = (data, key) => {
     if (!!data){
@@ -242,16 +252,36 @@ function NuevoPedidoCabecera({data}) {
 
 function NuevoPedidoProductos(){
     //maneja la apertura de modal de busqueda de productos
-    const {nuevoPedido, handleSearchModal, handleNewSaleOrder, handleInputTextModal, showInputTextModal: modalValues, handleClienteChange, isClientChanged, handleShow} = useContext(commercialContext);
+    //apertura del comercialcontext
+    const {nuevoPedido, 
+            handleSearchModal, 
+            handleNewSaleOrder, 
+            handleInputTextModal, 
+            showInputTextModal: modalValues, 
+            handleClienteChange,
+            handleDescuento, 
+            isClientChanged, 
+            handleShow,
+            handleNewSaleMontos,
+            dsctFormato} = useContext(commercialContext);
+
     // //activate los botones para eliminar productos
     const [deleteMode,  setDeleteMode] = useState(false);
     const [isFirstRender, setIsFirstRender] = useState(true);
+    
+    /**
+     * Estados para el Discount Dialog
+     */
+    const [open, setOpen] = useState({show: false, accepted: false});
+    const handleShowDsctDialog = (obj) => setOpen({...open, ...obj});
+    /** */
+
     
     // //verifica cliente agregado en cabecera
     const isClientExits = !!nuevoPedido?.ruc && !!nuevoPedido?.razonsocial;
     const largo_productos = nuevoPedido?.products?.length;
 
-    // //activa solo cuando se modifica la tabla productos
+    //activa solo cuando se modifica la tabla productos
     useEffect(()=>{
         !!largo_productos && calcularTotal()
         !largo_productos && setearCero()
@@ -267,9 +297,8 @@ function NuevoPedidoProductos(){
         }
     }, [modalValues.returnedValue])
 
-    // //quita descueno y bonificacion cuando cambia cliente
+    //quita descuento y bonificacion cuando cambia cliente
     useEffect(()=>{
-        // console.log("Ingresa aqui")
         if (isFirstRender) {
             setIsFirstRender(false);
             return; // No hacer nada en el primer renderizado
@@ -278,6 +307,14 @@ function NuevoPedidoProductos(){
           }
     }, [isClientChanged.active])
 
+    //Despues de aplicar descuento en DiscountOvDialog (APLICAR!!!!)
+    useEffect(()=>{
+        if(!open.show && open.accepted){
+            console.log('Aplica descuento')
+            aplicarDescuento()
+        }
+    },[open.show])
+    // },[open.show, nuevoPedido.products])
     
     const eliminarProducto = (item) => {
         let deleted_index = nuevoPedido?.products.findIndex((element)=>(element.codigo === item.codigo && element?.tipo === item?.tipo))
@@ -326,50 +363,65 @@ function NuevoPedidoProductos(){
     }
 
     const aplicarDescuento = async() => {
-        // console.log('Llega a esta parte')
-        let response = null
-        //obtener cuerpo para aplicar descuentos
-        let productos_ = nuevoPedido?.products?.filter((x)=>(!('tipo' in x)))
-        let requestBody = {
-            codigo_cliente: nuevoPedido?.cliente_codigo,
-            ubicacion_cliente: Number(nuevoPedido?.ubicacion),
-            grupo_familiar:  nuevoPedido?.grupo_familia,
-            fecha_promocion: getCurrentDate(),
-            productos: productos_?.map((x)=>({
-                "codigo_articulo": x?.codigo,
-                "codigo_familia": x?.codigo_familia,
-                "codigo_subfamilia": x?.codigo_subfamilia,
-                "cantidad": x?.cantidad,
-                "precio": x?.precio,
-            }))}
+        //1-Primero, solo elimina descuentos, no bonificados
+        //SIRVE PARA DESCUENTOS DE PROMOCIONES
+            // eliminar_Dsct_Bonificado(true)
 
-        //consulta descuentos solo si hay productos en lista
-        //descuento: es el total descuento
-        //dsct_porcentaje: el el porcentaje % por und
-       
-        if(!!(productos_?.length)){
-            response = await postaplicarDescuento(requestBody)
-            response === 406 && handleShow()
-            if(response !== 406 && !!response?.length){
-                // //aca se agrega la actualizacion
-                let ghost_products = [...nuevoPedido?.products]
-                    for( const objRes of response){
-                        ghost_products.forEach((item, index) => {
-                            if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
-                                // item.descuento = objRes?.total_descuento_n1 || "0";
-                                item.descuento = Number(objRes?.total_descuento_n1 || 0);
-                                item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
-                                // item.descuento2 = objRes?.total_descuento_n2 || "0";
-                                item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
-                                item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
+        //2-Aplica descuento al documento
+            let dsctCateCliente = !!dsctFormato.dsctDoc.dsct1.selected ? parseFloat(dsctFormato.dsctDoc.dsct1.selected) : 0.0
+            let dsctCondPago = !!dsctFormato.dsctDoc.dsctFP.enabled ? dsctFormato.dsctDoc.dsctFP.value : 0.0
+            let dsctDocTotal = dsctCateCliente + dsctCondPago
+
+            // handleNewSaleMontos({descuento: dsctDocTotal})
+
+        //3-Aplica promociones al detalle de productos
+            if(!!dsctFormato?.promociones?.enabled){
+                let response = null
+                //obtener cuerpo para aplicar descuentos
+                let productos_ = nuevoPedido?.products?.filter((x)=>(!('tipo' in x)))
+                let requestBody = {
+                    codigo_cliente: nuevoPedido?.cliente_codigo,
+                    ubicacion_cliente: Number(nuevoPedido?.ubicacion),
+                    grupo_familiar:  nuevoPedido?.grupo_familia,
+                    fecha_promocion: getCurrentDate(),
+                    productos: productos_?.map((x)=>({
+                        "codigo_articulo": x?.codigo,
+                        "codigo_familia": x?.codigo_familia,
+                        "codigo_subfamilia": x?.codigo_subfamilia,
+                        "cantidad": x?.cantidad,
+                        "precio": x?.precio,
+                    }))}
+        
+                //consulta descuentos solo si hay productos en lista
+                //descuento: es el total descuento
+                //dsct_porcentaje: el el porcentaje % por und
+            
+                if(!!(productos_?.length)){
+                    response = await postaplicarDescuento(requestBody)
+                    response === 406 && handleShow()
+                    if(response !== 406 && !!response?.length){
+                        // //aca se agrega la actualizacion
+                        let ghost_products = [...nuevoPedido?.products]
+                            for( const objRes of response){
+                                ghost_products.forEach((item, index) => {
+                                    if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
+                                        // item.descuento = objRes?.total_descuento_n1 || "0";
+                                        item.descuento = Number(objRes?.total_descuento_n1 || 0);
+                                        item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
+                                        // item.descuento2 = objRes?.total_descuento_n2 || "0";
+                                        item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
+                                        item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
+                                    }
+                                })
                             }
-                        })
+                        //el calculo desl descuento subtotal va en la parte del  map
+                        handleNewSaleOrder({products: [...ghost_products], montos: {...nuevoPedido?.montos, ...{descuento: dsctDocTotal}}})
+                        // isClientChanged.dsct ? handleClienteChange({active: false}): handleClienteChange({dsct: true})
                     }
-                    //el calculo desl descuento subtotal va en la parte del  map
-                handleNewSaleOrder({products: [...ghost_products]})
-                // isClientChanged.dsct ? handleClienteChange({active: false}): handleClienteChange({dsct: true})
+                }
+            }else{
+                eliminar_Dsct_Bonificado(true, dsctDocTotal)
             }
-        }
     }
 
     const calcularValorVenta = () => {
@@ -434,6 +486,7 @@ function NuevoPedidoProductos(){
         if (largo_productos){
             // let descuentoTotal = nuevoPedido?.products.reduce((acc, item)=>((((item?.precio)*((item?.dsct_porcentaje || 0)* 0.01)*((nuevoPedido?.montos?.descuento || 0)* 0.01)) * item?.cantidad) + acc), 0);
             let descuentoTotal = (sum_valorventa * ((nuevoPedido?.montos?.descuento || 0)* 0.01))
+
             // descuentoTotal = truncate(descuentoTotal, 2)
             // descuentoTotal = descuentoTotal
             //revisa que todos los productos esten con la misma unidad de moneda
@@ -504,16 +557,29 @@ function NuevoPedidoProductos(){
             handleNewSaleOrder({comentarios: {...nuevoPedido.comentarios, nota_anticipo: comentarios}, montos: temporal_montos})
             //comentarios, montos: temporal_montos
         }
-
-        const eliminar_Dsct_Bonificado = () => {
+        
+        /**
+         * Quita descuentos y bonificaciones de la lista de productos
+         * @param {bool} soloDescuento 
+         */
+        const eliminar_Dsct_Bonificado = (soloDescuento=false, dsctTotal=undefined) => {
             // console.log(nuevoPedido)
             // //elimina descuento de no bonificados
             let itemsSinDescuento = nuevoPedido?.products.map((item)=>(!('tipo' in item)?{...item, ...{descuento: 0, dsct_porcentaje: 0, descuento2: 0, dsct_porcentaje2: 0}}:{...item}))
-            
-            // //elimina bonificados
-            let itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item))
-            // console.log({products: [...itemsNoBonificados]})
-            handleNewSaleOrder({products: [...itemsNoBonificados]})
+            let itemsNoBonificados = []
+            if (!soloDescuento){
+                //Mantiene toda la lista de no bonificados, elimina bonificados
+                itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item))
+                handleDescuento({promociones: {enabled: false}})
+            }else{
+                //Mantiene toda la lista completa, bonificados y no bonificados
+                itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item) || !!('tipo' in item))
+            }
+            handleNewSaleOrder({products: [...itemsNoBonificados], montos: {...nuevoPedido?.montos, ...{descuento: dsctTotal}}})
+            // if(!!dsctTotal){ //recibe dsctTotal desde aplicarDescuento
+            // }else{
+            //     handleNewSaleOrder({products: [...itemsNoBonificados]})
+            // }
         }
 
         const handleInputSpinner = (action, itemCode, value) => {
@@ -538,7 +604,7 @@ function NuevoPedidoProductos(){
                 <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>handleSearchModal({show: true, modalTitle: 'Buscar producto', returnedValue: null, operacion: 'Producto', options: [{cliente_codigo: nuevoPedido?.cliente_codigo, products: nuevoPedido?.products}], placeholder: 'Ingrese nombre o codigo de producto'})}>
                     <BsPlusSquareFill size={22}/>
                 </button>
-                <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={eliminar_Dsct_Bonificado}>
+                <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>eliminar_Dsct_Bonificado()}>
                     <BsTextWrap size={22}/>
                 </button>
                 <button variant="danger" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>{!!(largo_productos) && setDeleteMode(!deleteMode)}}>
@@ -605,11 +671,12 @@ function NuevoPedidoProductos(){
                 <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.valor_venta), 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
-                <div className='myFontFamily tw-font-medium'>Desct. por producto:</div>
+                {/* <div className='myFontFamily tw-font-medium'>Desct. por producto:</div> */}
+                <div className='myFontFamily tw-font-medium'>Desct. por promoción:</div>
                 <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.dsctProductos || 0), 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
-                <div className='myFontFamily tw-font-medium'>Desct. por F. Pago:</div>
+                <div className='myFontFamily tw-font-medium'>Desct. por (F. Pago + Ctg. Cliente):</div>
                 {/* <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.valor_venta)*(nuevoPedido?.montos?.descuento * 0.01), 2)}</d)iv> */}
                 <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.dsctDoc), 2))}</div>
             </ListGroup.Item>
@@ -633,7 +700,7 @@ function NuevoPedidoProductos(){
                 <button className='button-4 tw-w-full' disabled={!isClientExits?true:false} onClick={()=>{aplicarBonificacion()}}>
                     Aplicar bonificación
                 </button>
-                <button className='button-4 tw-w-full tw-flex tw-justify-center tw-items-center tw-gap-2' disabled={!isClientExits?true:false} onClick={()=>{aplicarDescuento();}}>
+                <button className='button-4 tw-w-full tw-flex tw-justify-center tw-items-center tw-gap-2' disabled={!isClientExits?true:false} onClick={()=>{handleShowDsctDialog({show: true});}}>
                     <span>Aplicar descuento</span>
                     {/* {isClientChanged?.active && (<span className=''><BsExclamationTriangleFill/></span>)} */}
                 </button>
@@ -642,7 +709,12 @@ function NuevoPedidoProductos(){
                     Aplicar anticipos y notas de creditos
                 </button>
             </ListGroup.Item>
-            {/* {isClientExits && (<hr></hr>)} */}
+                <DiscountOvDialog
+                    dsctObj={dsctFormato}
+                    open={open}
+                    handleShowDsctDialog={handleShowDsctDialog}
+                    handleDescuento={handleDescuento}
+                />
         </>
     )
 }

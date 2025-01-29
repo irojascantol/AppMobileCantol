@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dropdown, DropdownButton, Form, ListGroup, Spinner } from "react-bootstrap";
+import { Dropdown, Form, ListGroup, Spinner } from "react-bootstrap";
 import { BsFillWalletFill, BsListCheck, BsTruck } from "react-icons/bs"
 import { obtenerEntregaDetalle, obtenerRegistro, registrarEntrega } from "../../../services/entregaService";
 import { truncate } from "../../../utils/math";
@@ -174,7 +174,8 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
     //body state
     const [body, setBody] = useState({entrega: null , liquidacion: null, tipopago: null, monto: null, nrooperacion: '', comentarios: '', docTotal: 0});
     const [loading, setLoading] = useState(false);
-    
+    const [isPending, setIsPending] = useState(false); //Para condicion incial de estado de entrega
+
     //handler body
     const handleBody = (obj) => setBody({...body, ...obj})
     
@@ -217,14 +218,24 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                 docTotal: response?.DocTotal,
                 monto: (response?.U_MSS_MONLIQ || 0)
             })
+            setIsPending(response?.U_MSS_ESTRA === '1') //Condicion inicial de estado de entrega
         }
         obtenerDatos();
         }, [])
 
-     //guardar
+    //guardar
      const guardarRegistro = async() =>
-        {
-            let currentLocation = await getCurrentLocation();
+            {
+            let currentLocation = null
+
+            if (isPending){ //Valida que sea el cambio del primer estado: Pendiente
+                try{
+                    currentLocation = await getCurrentLocation(2);
+                }catch(error){
+                    console.log('Localizacion desactivada en navegador: ', error.message)
+                }
+            }
+
             if(body?.entrega !== null){
                 let body_ = {
                     DocEntry: modalDetalle?.options?.DocEntry || null,
@@ -269,11 +280,11 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                                         {estado_entrega[body?.entrega] || 'Estado entrega'}
                                     </Dropdown.Toggle>
                                     <Dropdown.Menu className="tw-w-full" style={{ backgroundColor: '#f8f9fa', color: '#000' }}>
-                                        <Dropdown.Item eventKey="1">Pendiente</Dropdown.Item>
-                                        <Dropdown.Item eventKey="2">Despacho sin cobranza</Dropdown.Item>
-                                        <Dropdown.Item eventKey="3">Despacho con cobranza</Dropdown.Item>
-                                        <Dropdown.Item eventKey="4">Despacho a courier</Dropdown.Item>
-                                        <Dropdown.Item eventKey="5">No despachado</Dropdown.Item>
+                                        <Dropdown.Item eventKey="1" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Pendiente</Dropdown.Item>
+                                        <Dropdown.Item eventKey="2" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Despacho sin cobranza</Dropdown.Item>
+                                        <Dropdown.Item eventKey="3" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Despacho con cobranza</Dropdown.Item>
+                                        <Dropdown.Item eventKey="4" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Despacho a courier</Dropdown.Item>
+                                        <Dropdown.Item eventKey="5" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>No despachado</Dropdown.Item>
                                     </Dropdown.Menu>
                                 </Dropdown>
                                 </Form.Group>

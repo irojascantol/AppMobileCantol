@@ -32,7 +32,6 @@ export default function Operacion() {
     // }else if(estado === 'pendientechofer'){
     if(estado === 'pendientechofer' && !!username){
       response = await obtenerEntregaPendiente(body)
-      console.log("llega hasta aqui")
       Array.isArray(response) && setDataList([...response])
     }
 }

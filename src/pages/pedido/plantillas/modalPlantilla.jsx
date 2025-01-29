@@ -61,6 +61,8 @@ const fillData = {
         montos: {...nuevoPedido.montos, total_cred_anti: nuevoPedido.montos.total, anticipo: 0, nota_credito: 0},
         canal_familia: {codigo_canal: item?.codigo_canal_cliente, nombre_canal: item?.canal_cliente},
         ubicacion: item?.ubicacion_cliente,
+        dsctMin: item?.minimo || 0,
+        dsctMax: item?.maximo || 0,
         ructransporte: !item?.codigo_transportista ? null : { //aqui se agrega los datos del transportista cuando es zona Lima
             codigo_transporte: item?.codigo_transportista,
             nombre_transporte: item?.nombre_transporte,
@@ -128,7 +130,7 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
     const [isSpinner,  setIsSpinner] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
     const [debounceTextFilter] = useDebounce(textFilter, 500);
-    const {handleInputTextModal, showInputTextModal, nuevoPedido, isClientChanged, handleClienteChange, handleClose} = useContext(commercialContext)
+    const {handleInputTextModal, showInputTextModal, nuevoPedido, isClientChanged, handleClienteChange, handleClose, dsctFormato, handleDescuento} = useContext(commercialContext)
     const prevState = useRef(false)
 
     useEffect(()=>{
@@ -169,8 +171,6 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
     
     const agregarItem = async (item) => {
 
-        console.log(item)
-
         //revisar si el producto ya esta agregado
         if(buscarModalValues?.operacion === 'Producto') {
             let tmpList = buscarModalValues.options[0]?.products;
@@ -179,7 +179,6 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                 handleInputTextModal({show: true, modalTitle: 'Ingrese cantidad', tipomodal: 'text', operacion: 'agregarProducto', returnedValue: null, options: {stock: item.stock}})
                 //graba el item seleccionado para grabar cantidad en useeffect
                 setCurrentItem(item)
-
         }else{alert("El producto ya se encuentra agregado");}
         }else if(buscarModalValues?.operacion === 'Cliente'){
             let tmpCliente = fillData[buscarModalValues?.operacion](item, nuevoPedido)
@@ -189,8 +188,16 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                     PaymentGroupCode: (tmpCliente?.condicionpago[0]?.PaymentGroupCode).toString(),
                     codigo_canal_cliente: (tmpCliente?.canal_familia?.codigo_canal).toString(),
                 }
-                // console.log(typeof(body.PaymentGroupCode))
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
+                
+                //Actualiza descuento por forma de pago, tambien descuento minimo y maximo por categoria cliente
+                handleDescuento({
+                    dsctDoc: {
+                        dsct1: {selected: null, min: parseFloat(tmpCliente?.dsctMin), max: parseFloat(tmpCliente?.dsctMax)},  //por categoria cliente
+                        dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
+                            },
+                })
+
                 descuentoDoc === 406 && handleClose() //Si retorna 406, activa ventana bloqueo 
                 
                 if (descuentoDoc !== 406 && !!descuentoDoc){ //Verifica que exista data en consulta descuento_documento
@@ -201,7 +208,8 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                     handleClienteChange({active: !isClientChanged.active}) //revisar para que existe esta parte
 
                     handleNewSaleOrder({...fillData[buscarModalValues?.operacion](item, nuevoPedido), montos: {...nuevoPedido.montos,
-                        descuento: descuentoDoc?.descuento_documento, 
+                        // descuento: descuentoDoc?.descuento_documento, //esto se reemplaza por nuevo codigo, inicia en 0.0
+                        descuento: 0.0, 
                         anticipo: 0, nota_credito: 0, 
                         total_cred_anti: (nuevoPedido?.montos.total || 0)},
                         comentarios: {...nuevoPedido.comentarios, nota_anticipo: ''},
@@ -320,7 +328,8 @@ function IngresarFecha({nuevopedido, modalValues, handleInputTextModal, handleNe
     )
 }
 
-function SelectorCombo({modalValues, handleInputTextModal, handleNewSaleOrder, type}){
+function SelectorCombo({modalValues, handleInputTextModal, handleNewSaleOrder, type, handleDescuentoDoc}){
+    const {dsctFormato} = useContext(commercialContext)
     return(
     <Form.Select aria-label="Default select example" onChange={async (x)=>{
         let tmpObj = {}
@@ -334,13 +343,17 @@ function SelectorCombo({modalValues, handleInputTextModal, handleNewSaleOrder, t
                     PaymentGroupCode: (tmpObj?.condicionpago[0]?.PaymentGroupCode).toString(),
                     codigo_canal_cliente: (modalValues?.data?.canal_familia?.codigo_canal).toString(),
                 }
-                // console.log(typeof(body.PaymentGroupCode))
+
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
                 descuentoDoc === 406 && handleClose()
                 //formato de llegada {"descuento_documento": valor}
                 //seteo del descuento para todo el documento
                 if (descuentoDoc !== 406 && !!descuentoDoc){
-                    handleNewSaleOrder({...tmpObj, montos: {...modalValues?.data?.montos, descuento: descuentoDoc?.descuento_documento}});
+                    let dsctReducir = dsctFormato?.dsctDoc?.dsctFP?.enabled ? dsctFormato?.dsctDoc?.dsctFP?.value : 0
+                    handleNewSaleOrder({...tmpObj, 
+                        montos: {...modalValues?.data?.montos, 
+                            descuento: (modalValues?.data?.montos?.descuento - dsctReducir)}}); //Quita descuento F. Pago al descuento total documento, mantiene por categoria
+                    handleDescuentoDoc({dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}})
                     handleInputTextModal({show: false});
                 }else if(descuentoDoc !== 406){
                     handleNewSaleOrder(tmpObj);

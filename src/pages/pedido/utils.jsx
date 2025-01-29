@@ -13,7 +13,7 @@ export function mergeComments(str1, str2){
     }
 }
 
-export function makeSaleOrderBody(saleOrder, location){
+export function makeSaleOrderBody(saleOrder, location, dsctFormato){
     let body = {
         CardCode: saleOrder?.cliente_codigo,
         DocDueDate: saleOrder?.fentrega,
@@ -34,6 +34,8 @@ export function makeSaleOrderBody(saleOrder, location){
         ubicacion: saleOrder?.ubicacion,
         U_DIS_LATITU: location?.latitud?.toString() || null,
         U_DIS_LONGIT: location?.longitud?.toString() || null,
+        U_DST_DESOTO: dsctFormato?.dsctDoc?.dsct1?.selected || 0.0,
+        U_DST_PERCENT: dsctFormato?.dsctDoc?.dsctFP?.enabled ? dsctFormato?.dsctDoc?.dsctFP?.value || 0.0 : 0.0,
         DocumentLines: saleOrder?.products?.map((product)=>({
           ItemCode: product?.codigo,
           Quantity: product?.cantidad,
@@ -51,5 +53,15 @@ export function makeSaleOrderBody(saleOrder, location){
     return body
 }
 
-// //   U_MSSC_DSC: product?.dsct_porcentaje,
-// //   DiscountPercent: product?.dsct_porcentaje,
+
+/**
+ * Funcion que retorna lista de descuentos con resolucion step,
+ * descuentos dentro del intervalo de min y max
+ */
+export function generarDiscountNv1List(minVal, maxVal, step) {
+    const resultado = [0];
+    for (let i = minVal; i <= maxVal; i += step) {
+        resultado.push(i);
+    }
+    return resultado;
+}

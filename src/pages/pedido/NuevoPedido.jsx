@@ -17,10 +17,10 @@ import { delay } from '../../utils/delay';
 
 const tipoModal = {
   text: (nuevopedido, modalValues, handlemodal, setSaleOrder, isQuotation)=>(<IngresarTexto nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} type={'number'} isQuotation={isQuotation}/>),
-  combo: (nuevopedido, modalValues, handlemodal, setSaleOrder)=>(<SelectorCombo nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} type={'text'}/>),
-  date: (nuevopedido, modalValues, handlemodal, setSaleOrder)=>(<IngresarFecha nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} type={'date'}/>),
-  Anticipo_Credito: (nuevopedido, modalValues, handlemodal, setSaleOrder, tipo)=>(<Anticipo_Credito nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} />),
-  Institucional_Campos: (nuevopedido, modalValues, handlemodal, setSaleOrder, tipo)=>(<Institucional_Campo nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} />),
+  combo: (nuevopedido, modalValues, handlemodal, setSaleOrder, tipo, handleDescuentoDoc)=>(<SelectorCombo nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} type={'text'} handleDescuentoDoc={handleDescuentoDoc}/>),
+  date: (nuevopedido, modalValues, handlemodal, setSaleOrder, tipo, handleDescuentoDoc)=>(<IngresarFecha nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} type={'date'}/>),
+  Anticipo_Credito: (nuevopedido, modalValues, handlemodal, setSaleOrder, tipo, handleDescuentoDoc)=>(<Anticipo_Credito nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} />),
+  Institucional_Campos: (nuevopedido, modalValues, handlemodal, setSaleOrder, tipo, handleDescuentoDoc)=>(<Institucional_Campo nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} />),
 }
 // Final_Pedido: (nuevopedido, modalValues, handlemodal, setSaleOrder)=>(<Final_Pedido nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder}/>)
 
@@ -48,6 +48,11 @@ export default function NuevoPedido() {
           handleInputTextModal,
           //secure shield
           handleShow,
+          //descuento estado
+          dsctFormato,
+          //manejo nueva politica descuento 27/01/25
+          handleDescuento,
+          handleDescuentoDoc
         } = useContext(commercialContext);
   
   const tipo =  useParams().tipo in tipoPedido ? tipoPedido[useParams().tipo] : null;
@@ -117,7 +122,7 @@ export default function NuevoPedido() {
                 setLocation(!!currentLocation)
                 setIsLoading(true);
                 // await delay(1000)
-                let body = makeSaleOrderBody(nuevoPedido, currentLocation)
+                let body = makeSaleOrderBody(nuevoPedido, currentLocation, dsctFormato)
     
                 const [response, status] = !!tipo_root ? await grabarCuerpo[tipo_root](body): [null, 206];
                 // //
@@ -161,7 +166,7 @@ export default function NuevoPedido() {
       {/* modal general para tipo combo / text field / date */}
       {!!modalValues.tipomodal && (
         <PedidoModal tipomodal={modalValues.tipomodal} size={modalValues.size} modalTitle={modalValues.modalTitle} handleClose={()=>handleInputTextModal({show: false})} show={modalValues.show}>
-          {tipoModal[modalValues.tipomodal](nuevoPedido, modalValues, handleInputTextModal, handleNewSaleOrder, tipo_root==='oferta')}
+          {tipoModal[modalValues.tipomodal](nuevoPedido, modalValues, handleInputTextModal, handleNewSaleOrder, tipo_root==='oferta', handleDescuentoDoc)}
         </PedidoModal>
       )}
       <h6 className='tw-text-center bg-secondary tw-text-white tw-rounded-md' style={{marginBottom: 0, padding: "5px 0"}}>{tipo? `NUEVA ${tipo}`:'*************'}</h6>

@@ -1,98 +1,174 @@
-// import * as React from 'react';
-import PropTypes from 'prop-types';
-import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
-import PersonIcon from '@mui/icons-material/Person';
-import AddIcon from '@mui/icons-material/Add';
-import { blue } from '@mui/material/colors';
-import { useState } from 'react';
+import { Checkbox, FormControl, FormControlLabel, ListItemIcon, Radio, RadioGroup } from '@mui/material';
+import { useEffect, useState } from 'react';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import { generarDiscountNv1List } from '../utils';
+import Divider from '@mui/material/Divider';
+import lgoLogo from '../../login/assets/lgo.png';
 
-const emails = ['username@gmail.com', 'user02@gmail.com'];
 
-function SimpleDialog(props) {
-  const { onClose, selectedValue, open } = props;
+function DiscountOvDialog(props) {
+  const { handleShowDsctDialog, open, dsctObj, handleDescuento} = props;
+  const [dsctFormato, setDsctFormato] = useState({...dsctObj});
 
-  const handleClose = () => {
-    onClose(selectedValue);
+  /**
+   * handle dsct format
+   */
+  const handleDsctFormat = (obj) => setDsctFormato({...dsctFormato, ...obj})
+
+  /**
+   * Controla que salida sea sin clickear backdrop
+   */
+  const handleClose = (event, reason) => {
+    if (reason && reason === "backdropClick")
+      return;
+    // Evitar cierre al presionar "Esc"
+    if (event && event.key === 'Escape') return;
+    handleShowDsctDialog({show:false, accepted: false});
   };
 
-  const handleListItemClick = (value) => {
-    onClose(value);
-  };
+  /**
+   * Zona de handlers
+   */
+  const handleAccept = () => {
+    handleDescuento({...dsctFormato});
+    handleShowDsctDialog({show: false, accepted: true});
+    }
+
+  const handlePromociones = (value) => {
+    handleDsctFormat({promociones: {enabled: !value}})
+  }
+  
+  const handleFormaPago = (value_) => {
+    handleDsctFormat({dsctDoc: {dsct1: {...dsctFormato.dsctDoc.dsct1}, dsctFP: {value: dsctFormato.dsctDoc.dsctFP.value, enabled: !value_}}})
+  }
+
+  const handleDsctCategoria = (event) =>{
+    handleDsctFormat({dsctDoc: {dsct1: {selected: (event.target.value).toString(), min: dsctFormato.dsctDoc.dsct1.min, max: dsctFormato.dsctDoc.dsct1.max}, dsctFP: {...dsctFormato.dsctDoc.dsctFP}}})
+  }
+
+  /**
+   * Primer render
+   */
+  useEffect(() => {
+    if(open.show)
+      setDsctFormato({...dsctObj}) // condicion inicial, copia obj dsctuento
+      handleShowDsctDialog({accepted: false}) // condicion inicial accepted: false
+    }, [open.show]);
 
   return (
-    <Dialog onClose={handleClose} open={open}>
-      <DialogTitle>Set backup account</DialogTitle>
+    <Dialog onClose={handleClose} open={open.show} >
+      {
+        //evalua que dsct min y maximo sean diferentes, en caso sea min y max 0.0 no muestra opcion de dsct categoria cliente
+        !(dsctFormato?.dsctDoc?.dsct1?.min === dsctFormato?.dsctDoc?.dsct1?.max) && (
+          <>
+            <DialogTitle className='tw-pt-2 tw-pb-0 tw-px-5 tw-text-center'>Dsct. Categoria cliente</DialogTitle>
+            <FormControl className='tw-h-40 tw-overflow-y-scroll'>
+            <RadioGroup 
+              value={dsctFormato?.dsctDoc?.dsct1?.selected}
+              onChange={handleDsctCategoria}
+            >
+              {
+                generarDiscountNv1List(dsctFormato.dsctDoc.dsct1.min, dsctFormato.dsctDoc.dsct1.max, 0.5).map((value, idx)=>(
+                  <FormControlLabel key={idx.toString()} value={value.toString()} control={<Radio />} label={
+                    <div className={`tw-w-24 tw-flex tw-justify-${value >= 15.5 ? 'between': 'center'} tw-items-center`}>
+                      {/* {idx === 1 && (
+                        <div className={`tw-absolute tw-left-${value >= 15.5 ? '10': '5'}`}>➡</div>
+                      )} */}
+                      { value >= 15.5 ? (
+                        <img
+                          className="tw-w-7"
+                          src={lgoLogo}
+                          alt="logo"
+                        />
+                      ) : (<p>&nbsp;</p>)
+                      }
+                      {
+                        `${value.toFixed(2).toString()} %`
+                      }
+                    </div>
+                  }sx={{ display: 'flex', flexDirection: 'row-reverse', justifyContent: 'space-between', paddingLeft: '35px', paddingRight: '25px'}} />
+                )
+                )
+              }
+            </RadioGroup>
+            </FormControl>
+          </>
+        )
+      }
+
+      {
+        !!dsctFormato?.dsctDoc?.dsctFP?.value && (
+          <>
+            <Divider sx={{ borderBottomWidth: 3, borderColor: 'gray' }}/>
+            <DialogTitle className='tw-pt-1 tw-pb-0 tw-text-center'>Dsct. Forma de pago</DialogTitle>
+            <List sx={{ pt: 0 }}>
+            {[dsctFormato.dsctDoc.dsctFP.value].map((value) => {
+              const labelId = `checkbox-list-label-${value}`;
+              return (
+                  <ListItem
+                    key={value}
+                    disablePadding
+                  >
+                    <ListItemButton role={undefined} 
+                    onClick={()=>handleFormaPago(dsctFormato.dsctDoc.dsctFP.enabled)}
+                    className='tw-py-0 tw-my-0 tw-h-8'>
+                      <ListItemText className='tw-ml-9' primary={`${value} %`} sx={{fontSize: '25px'}} />
+                      <ListItemIcon>
+                        <Checkbox
+                          edge="start"
+                          checked={dsctFormato.dsctDoc.dsctFP.enabled}
+                          tabIndex={-1}
+                          disableRipple
+                          inputProps={{ 'aria-labelledby': labelId }}
+                        />
+                      </ListItemIcon>
+                    </ListItemButton>
+                  </ListItem>
+              );
+            })}
+            </List>
+          </>
+        )
+      }
+
+      <Divider sx={{ borderBottomWidth: 3, borderColor: 'gray' }}/>
+      <DialogTitle className='tw-pt-1 tw-pb-0 tw-text-center'>Promociones</DialogTitle>
       <List sx={{ pt: 0 }}>
-        {emails.map((email) => (
-          <ListItem disablePadding key={email}>
-            <ListItemButton onClick={() => handleListItemClick(email)}>
-              <ListItemAvatar>
-                <Avatar sx={{ bgcolor: blue[100], color: blue[600] }}>
-                  <PersonIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={email} />
+        <ListItem className='tw-py-0'>
+            <ListItemButton 
+              role={undefined} 
+              onClick={()=>handlePromociones(dsctFormato?.promociones?.enabled)}
+              className='tw-flex tw-justify-between tw-my-0 tw-py-0 tw-h-8 tw-px-3'>
+              <ListItemText className='tw-ml-3'id={'checkbox-list-label-Activar'} primary={'Activar'} />
+              <ListItemIcon className='tw-pr-0'>
+                <Checkbox
+                  edge="end"
+                  checked={dsctFormato?.promociones?.enabled}
+                  tabIndex={-1}
+                  disableRipple
+                  inputProps={{ 'aria-labelledby': 'checkbox-list-label-Activar' }}
+                />
+              </ListItemIcon>
             </ListItemButton>
-          </ListItem>
-        ))}
-        <ListItem disablePadding>
-          <ListItemButton
-            autoFocus
-            onClick={() => handleListItemClick('addAccount')}
-          >
-            <ListItemAvatar>
-              <Avatar>
-                <AddIcon />
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText primary="Add account" />
-          </ListItemButton>
         </ListItem>
       </List>
+      <ButtonGroup variant="contained" aria-label="Basic button group" fullWidth >
+        <button className='button-4 tw-w-1/2 tw-bg-red-300 tw-mr-1' onClick={handleClose}>
+                    <span>Cancelar</span>
+        </button>
+        <button className='button-4 tw-w-1/2 tw-bg-green-300 tw-ml-1' onClick={(handleAccept)}>
+                    <span>Aplicar</span>
+        </button>
+      </ButtonGroup>
     </Dialog>
   );
 }
 
-SimpleDialog.propTypes = {
-  onClose: PropTypes.func.isRequired,
-  open: PropTypes.bool.isRequired,
-  selectedValue: PropTypes.string.isRequired,
-};
-
-function DiscountOv() {
-  const [open, setOpen] = useState(false);
-  const [selectedValue, setSelectedValue] = useState(emails[1]);
-
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = (value) => {
-    console.log(value)
-    setOpen(false);
-    setSelectedValue(value);
-  };
-
-  return (
-    <div>
-      <Button variant="outlined" onClick={handleClickOpen}>
-        Open simple dialog
-      </Button>
-      <SimpleDialog
-        selectedValue={selectedValue}
-        open={open}
-        onClose={handleClose}
-      />
-    </div>
-  );
-}
-
-export default DiscountOv
+export {DiscountOvDialog}
