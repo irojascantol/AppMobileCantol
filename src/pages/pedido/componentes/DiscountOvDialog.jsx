@@ -75,7 +75,7 @@ function DiscountOvDialog(props) {
               onChange={handleDsctCategoria}
             >
               {
-                generarDiscountNv1List(dsctFormato.dsctDoc.dsct1.min, dsctFormato.dsctDoc.dsct1.max, 0.5).map((value, idx)=>(
+                generarDiscountNv1List(dsctFormato.dsctDoc.dsct1.min, dsctFormato.dsctDoc.dsct1.max, 0.5, 13.0, 15.0).map((value, idx)=>(
                   <FormControlLabel key={idx.toString()} value={value.toString()} control={<Radio />} label={
                     <div className={`tw-w-24 tw-flex tw-justify-${value >= 15.5 ? 'between': 'center'} tw-items-center`}>
                       {/* {idx === 1 && (

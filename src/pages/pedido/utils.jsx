@@ -58,10 +58,13 @@ export function makeSaleOrderBody(saleOrder, location, dsctFormato){
  * Funcion que retorna lista de descuentos con resolucion step,
  * descuentos dentro del intervalo de min y max
  */
-export function generarDiscountNv1List(minVal, maxVal, step) {
+export function generarDiscountNv1List(minVal, maxVal, step, minIgnore, maxIgnore) {
     const resultado = [0];
     for (let i = minVal; i <= maxVal; i += step) {
-        resultado.push(i);
+        // Filtrar los valores dentro del intervalo [minIgnore, maxIgnore]
+        if (i < minIgnore || i > maxIgnore) {
+            resultado.push(i);
+        }
     }
     return resultado;
 }
