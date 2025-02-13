@@ -367,11 +367,11 @@ function NuevoPedidoProductos(){
         //1-Primero, solo elimina descuentos, no bonificados
         //SIRVE PARA DESCUENTOS DE PROMOCIONES
             // eliminar_Dsct_Bonificado(true)
-
-        //2-Aplica descuento al documento
+            //2-Aplica descuento al documento
             let dsctCateCliente = !!dsctFormato.dsctDoc.dsct1.selected ? parseFloat(dsctFormato.dsctDoc.dsct1.selected) : 0.0
             let dsctCondPago = !!dsctFormato.dsctDoc.dsctFP.enabled ? dsctFormato.dsctDoc.dsctFP.value : 0.0
-            let dsctDocTotal = dsctCateCliente + dsctCondPago
+            // let dsctDocTotal = dsctCateCliente + dsctCondPago  // DSCT CATEGORIA A NIVEL DE DOCUMENTO
+            let dsctDocTotal = dsctCondPago //aqui desactivamos el descuento por categoria, solo queda por FP
 
             // handleNewSaleMontos({descuento: dsctDocTotal})
 
@@ -379,7 +379,7 @@ function NuevoPedidoProductos(){
             if(!!dsctFormato?.promociones?.enabled){
                 let response = null
                 //obtener cuerpo para aplicar descuentos
-                let productos_ = nuevoPedido?.products?.filter((x)=>(!('tipo' in x)))
+                let productos_ = nuevoPedido?.products?.filter((x)=>(!('tipo' in x))) // filtra los que no son bonificados
                 let requestBody = {
                     codigo_cliente: nuevoPedido?.cliente_codigo,
                     ubicacion_cliente: Number(nuevoPedido?.ubicacion),
@@ -412,6 +412,7 @@ function NuevoPedidoProductos(){
                                         // item.descuento2 = objRes?.total_descuento_n2 || "0";
                                         item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
                                         item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
+                                        // item.dsct_categoria = 
                                     }
                                 })
                             }

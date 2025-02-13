@@ -89,18 +89,20 @@ export default function NuevoPedido() {
         // if(!!sessionStorage.getItem('draft_order') && !recoverOrder.current){
         // if(!!sessionStorage.getItem('draft_order')){
         if(false){
-            let resultado = confirm("Existe un pedido en curso\n¿Desea restablecerlo?");
-            recoverOrder.current = true
-            if (resultado){
-              console.log('Si entra aqui 1')
-              let draft_order = JSON.parse(sessionStorage.getItem('draft_order'));
-              console.log(draft_order)
-              handleNewSaleOrder(draft_order)
-              sessionStorage.removeItem('draft_order')
-          }else{
-            sessionStorage.removeItem('draft_order')
-            await setInitialcondition()
-          }
+          console.log('Proceso para continuar una OV pendiente')
+          //ESTOOOOO ES PARA GUARDAR UNA OV QUE ESTA EN PROCESO
+          //   let resultado = confirm("Existe un pedido en curso\n¿Desea restablecerlo?");
+          //   recoverOrder.current = true
+          //   if (resultado){
+          //     console.log('Si entra aqui 1')
+          //     let draft_order = JSON.parse(sessionStorage.getItem('draft_order'));
+          //     console.log(draft_order)
+          //     handleNewSaleOrder(draft_order)
+          //     sessionStorage.removeItem('draft_order')
+          // }else{
+          //   sessionStorage.removeItem('draft_order')
+          //   await setInitialcondition()
+          // }
         }else{
           // if (!recoverOrder.current){
             // console.log('Si entra aqui 2')
