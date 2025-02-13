@@ -5,6 +5,7 @@ import { decodeJWT } from '../../utils/decode';
 import { obtenerEntregaCompleto, obtenerEntregaPendiente } from '../../services/entregaService';
 import EntregaModal from '../../componentes/modal/entregaModal';
 import { DetalleEntrega, RegistrarCobro, Selector } from './plantillas/modalPlantilla';
+import { InputField_lIcon } from '../../componentes/inputfields';
 
 const tipoModal = {
   selector: (modalValues, handlemodal, handleModal_Detalle)=>(<Selector modalValues={modalValues} handleModal={handlemodal} handleModalDetalle={handleModal_Detalle}/>),
@@ -15,11 +16,17 @@ const tipoModal = {
 export default function Operacion() {
   const { estado } = useParams();
   const [dataList, setDataList] = useState([])
+  const [dataFiltered, setDataFiltered] = useState([])
   //modal values
   const [modalValues, setModalValues] = useState({show: false, modalTitle: '', size: 'sm', returnedValue: undefined, options: [], tipomodal:null, operacion:null});
   const [modalDetalle, setModalDetalle] = useState({show: false, modalTitle: '', size: 'sm', returnedValue: undefined, options: [], tipomodal:null, operacion:null, success: false});
   const handleModal = (obj) => {setModalValues({...modalValues, ...obj})}
   const handleModalDetalle = (obj) => {setModalDetalle({...modalDetalle, ...obj})}
+  const [searchInput, setSearchInput] = useState('')
+
+  //ESTADOS DERIVADOS
+  // dataListSearched = null
+
 
   const fetchList = async () => {
     let response = [];
@@ -33,6 +40,8 @@ export default function Operacion() {
     if(estado === 'pendientechofer' && !!username){
       response = await obtenerEntregaPendiente(body)
       Array.isArray(response) && setDataList([...response])
+      Array.isArray(response) && setDataFiltered([...response])
+      Array.isArray(response) && setSearchInput('')
     }
 }
 
@@ -48,6 +57,16 @@ export default function Operacion() {
       fetchList()
     }
   }, [modalDetalle.success])
+
+  //DETECTA CAMBIO EN EL INPUT FIELD DEL BUSCADOR DE ENTREGAS
+  const handleSearchInputChange = (e) => {
+    let upperPattern = e.target.value.toUpperCase();
+    let filtered = dataList.filter(item => 
+      `${item?.ruc} ${item?.razon_social} ${item?.numero_guia}`.includes(upperPattern)
+    );
+    setSearchInput(e.target.value) //Actualiza patron de busqueda
+    setDataFiltered(filtered) //Actualiza lista filtrada
+    }
 
 
   return (
@@ -66,7 +85,8 @@ export default function Operacion() {
       )}
 
       <div>
-        <MyListGroup data={dataList} plantilla={estado} modalValues={modalValues} handleModal={handleModal}/>
+        <InputField_lIcon searchValue={searchInput} setSearchValue={handleSearchInputChange}/> {/* buscador */}
+        <MyListGroup data={dataFiltered} plantilla={estado} modalValues={modalValues} handleModal={handleModal}/>
       </div>
     </>
   )

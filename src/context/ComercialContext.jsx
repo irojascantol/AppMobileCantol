@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createContext } from 'react'
 import meLogo from '../pages/login/assets/cantol_black.png'
 import tecnoLogo from '../pages/login/assets/tecnopress_alt.png'
@@ -46,7 +46,7 @@ function ComercialContext({children}) {
     //estado descuento, nuevo formato 01/02/2025
     const [dsctFormato, setDsctFormato] = useState({
       dsctDoc: { 
-      dsct1: {selected: null, min: 0.0, max: 0.0},
+      dsct1: {selected: null, min: 0.0, max: 0.0, default:0.0, catName:null},
       dsctFP: {value: 0.0, enabled: false}
               }, 
       promociones: {enabled: true}
@@ -81,7 +81,12 @@ function ComercialContext({children}) {
     //hanlder actualizacion de cliente
     const handleClienteChange = (obj) => {setClienteChange({...isClientChanged, ...obj})}
 
-  
+  //se guarda el pedido pendiente de generar en caso sale de la ventana
+  // useEffect(()=>{
+  //   !!nuevoPedido?.cliente_codigo && sessionStorage.setItem('draft_order', JSON.stringify(nuevoPedido))
+  // }, [nuevoPedido])
+
+
   return (
     <commercialContext.Provider value={
       {
@@ -116,7 +121,8 @@ function ComercialContext({children}) {
         //handler nuevo descuento
         handleDescuento,
         handleDescuentoDoc,
-        handleNewSaleMontos
+        handleNewSaleMontos,
+        setNuevoPedido
       }
     }>
         {children}

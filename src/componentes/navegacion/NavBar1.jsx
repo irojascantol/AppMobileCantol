@@ -32,7 +32,11 @@ const codigo_permisos = {
     oferta: {direccion: '/main/nuevopedido/oferta', codigo: 'COMOFR'},
     pendiente: {direccion: '/main/pedido/pendiente' , codigo: 'COMRPT'},
     aprobado: {direccion: '/main/pedido/aprobado' , codigo: 'COMRPT'},
-    rechazado: {direccion: '/main/pedido/rechazado' , codigo: 'COMRPT'}, 
+    rechazado: {direccion: '/main/pedido/rechazado' , codigo: 'COMRPT'},
+    facturado: {direccion: '/main/pedido/facturado' , codigo: 'COMRPT'}
+  },
+  oferta: {
+    pendiente: {direccion: '/main/oferta/pendiente' , codigo: 'COMRPT'},
   },
   cliente: {
     estadocuenta: {direccion: '/main/cliente/estadocuenta' , codigo: 'COMEST'},
@@ -51,12 +55,14 @@ const NavBar1 = () => {
       handleTabPedido,
     } = useContext(commercialContext)
 
-    const innerNavigate = (path) => {
+    const innerNavigate = (path, tipo) => {
+      console.log(path, tipo)
       setExpanded(false)
-      navigate(path)
+      !tipo && navigate(path)
+      !!tipo && navigate(path, { state: { tipo } }) // para identficar si es pedido u oferta
     }
 
-    const navigate2Path = async (path) => {
+    const navigate2Path = async (path, tipo) => {
       //filtra el query paramater
       let route = path.split('?')[0]
       const codigo_modulo = await getCodigo(codigo_permisos, route);
@@ -71,7 +77,7 @@ const NavBar1 = () => {
         // console.log("muestrame acceso:",acceso)
         // if(1){
         if(!!acceso){
-          innerNavigate(path)
+          innerNavigate(path, tipo)
         }else{
           alert('No cuenta con permisos para ingresar');
           setExpanded(false);
@@ -132,20 +138,28 @@ const NavBar1 = () => {
                     </div>
                   </NavItem>
                   <NavDropdown title="Estados" id="basic-nav-dropdown" className='nav-dropdown-custom-height'>
-                      {/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/aprobado?page=lista')}}> */}
+                    <NavDropdown title="Pedidos" id="basic-nav-dropdown" className='nav-dropdown-custom-height'>
                       <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/aprobado?page=lista')}}>
                         <NavDropdown.Item href="#">Aprobados</NavDropdown.Item>
                       </div>
                       <NavDropdown.Divider />
-                      {/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/pendiente?page=lista')}}> */}
                       <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/pendiente?page=lista')}}>
                         <NavDropdown.Item href="#">Pendientes</NavDropdown.Item>
                       </div>
                       <NavDropdown.Divider />
-                      {/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/rechazado?page=lista')}}> */}
                       <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/rechazado?page=lista')}}>
                         <NavDropdown.Item href="#">Rechazados</NavDropdown.Item>
                       </div>
+                      <NavDropdown.Divider />
+                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/facturado?page=lista')}}>
+                        <NavDropdown.Item href="#">Facturados</NavDropdown.Item>
+                      </div>
+                    </NavDropdown>
+                    <NavDropdown title="Cotizaciones" id="basic-nav-dropdown" className='nav-dropdown-custom-height'>
+                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/oferta/pendiente?page=lista', 'ofertas')}}>
+                        <NavDropdown.Item href="#">Pendientes</NavDropdown.Item>
+                      </div>
+                    </NavDropdown>
                   </NavDropdown>
               </NavDropdown>
               <hr className='tw-my-0'/>
@@ -179,3 +193,8 @@ const NavBar1 = () => {
 }
 
 export { NavBar1 };
+
+
+{/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/aprobado?page=lista')}}> */}
+{/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/pendiente?page=lista')}}> */}
+{/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/rechazado?page=lista')}}> */}

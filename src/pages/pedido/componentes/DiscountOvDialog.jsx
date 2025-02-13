@@ -50,7 +50,16 @@ function DiscountOvDialog(props) {
   }
 
   const handleDsctCategoria = (event) =>{
-    handleDsctFormat({dsctDoc: {dsct1: {selected: (event.target.value).toString(), min: dsctFormato.dsctDoc.dsct1.min, max: dsctFormato.dsctDoc.dsct1.max}, dsctFP: {...dsctFormato.dsctDoc.dsctFP}}})
+    handleDsctFormat({
+        dsctDoc: {dsct1: {
+        selected: (event.target.value).toString(), 
+        min: dsctFormato.dsctDoc.dsct1.min, 
+        max: dsctFormato.dsctDoc.dsct1.max,
+        default: dsctFormato.dsctDoc.dsct1.default,
+        catName: dsctFormato.dsctDoc.dsct1.catName,
+      }, 
+        dsctFP: {...dsctFormato.dsctDoc.dsctFP}}
+      })
   }
 
   /**
@@ -69,31 +78,40 @@ function DiscountOvDialog(props) {
         !(dsctFormato?.dsctDoc?.dsct1?.min === dsctFormato?.dsctDoc?.dsct1?.max) && (
           <>
             <DialogTitle className='tw-pt-2 tw-pb-0 tw-px-5 tw-text-center'>Dsct. Categoria cliente</DialogTitle>
-            <FormControl className='tw-h-40 tw-overflow-y-scroll'>
+            <FormControl className='tw-h-48 tw-overflow-y-scroll'>
             <RadioGroup 
               value={dsctFormato?.dsctDoc?.dsct1?.selected}
               onChange={handleDsctCategoria}
             >
               {
-                generarDiscountNv1List(dsctFormato.dsctDoc.dsct1.min, dsctFormato.dsctDoc.dsct1.max, 0.5, 13.0, 15.0).map((value, idx)=>(
-                  <FormControlLabel key={idx.toString()} value={value.toString()} control={<Radio />} label={
-                    <div className={`tw-w-24 tw-flex tw-justify-${value >= 15.5 ? 'between': 'center'} tw-items-center`}>
-                      {/* {idx === 1 && (
-                        <div className={`tw-absolute tw-left-${value >= 15.5 ? '10': '5'}`}>➡</div>
-                      )} */}
+                generarDiscountNv1List(
+                { minVal:dsctFormato.dsctDoc.dsct1.min, 
+                  maxVal:dsctFormato.dsctDoc.dsct1.max, 
+                  step:0.5, 
+                  minIgnore:13.0, 
+                  maxIgnore:15.0, 
+                  threshold:dsctFormato.dsctDoc.dsct1.default
+                }).map(([value, color], idx)=>(
+                  <>
+                  <FormControlLabel key={(idx+10).toString()} value={value.toString()} control={<Radio />} label={
+                    <div className={`tw-w-[103px] tw-flex tw-justify-${value >= 15.5 ? 'between': 'center'} tw-items-center`}>
                       { value >= 15.5 ? (
                         <img
                           className="tw-w-7"
                           src={lgoLogo}
-                          alt="logo"
+                          alt="logo" // agrega el logo de la marca LGO
                         />
                       ) : (<p>&nbsp;</p>)
                       }
-                      {
-                        `${value.toFixed(2).toString()} %`
-                      }
+                      <div className='tw-text-sm tw-font-bold'>
+                        {
+                          `${value === 0.0 ? 'Sin descuento' : value.toFixed(2).toString() + '%'}`
+                        }
+                      </div>
                     </div>
-                  }sx={{ display: 'flex', flexDirection: 'row-reverse', justifyContent: 'space-between', paddingLeft: '35px', paddingRight: '25px'}} />
+                  }sx={{  display: 'flex', flexDirection: 'row-reverse', justifyContent: 'space-between', 
+                          paddingLeft: '35px', paddingRight: '25px', marginRight: '0px', backgroundColor: `${color ? 'rgb(255,186,186)' : 'rgb(255,255,255)'}`}} />
+                  </>
                 )
                 )
               }
@@ -109,11 +127,11 @@ function DiscountOvDialog(props) {
             <Divider sx={{ borderBottomWidth: 3, borderColor: 'gray' }}/>
             <DialogTitle className='tw-pt-1 tw-pb-0 tw-text-center'>Dsct. Forma de pago</DialogTitle>
             <List sx={{ pt: 0 }}>
-            {[dsctFormato.dsctDoc.dsctFP.value].map((value) => {
+            {[dsctFormato.dsctDoc.dsctFP.value].map((value, idx) => {
               const labelId = `checkbox-list-label-${value}`;
               return (
                   <ListItem
-                    key={value}
+                    key={(idx+20).toString()}
                     disablePadding
                   >
                     <ListItemButton role={undefined} 

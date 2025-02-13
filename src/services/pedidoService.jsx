@@ -4,16 +4,26 @@ import { mainURL } from "../constants/globals";
 const rutas_reportes = {
     pendiente: '/listarpedidopendiente',
     aprobado: '/listarpedidoaprobado',
-    rechazado: '/listarpedidorechazado'
+    rechazado: '/listarpedidorechazado',
+    facturado: '/listarpedidofacturado',
 }
 
-const rutas = (tipoPedido, tab) => (`${mainURL}/comercial/ventas/pedido/listar${tipoPedido}${tab}`)
+const rutas_ofertas = {
+    pendiente: '/listarofertapendiente',
+}
 
-async function getPedido(innerParams, state) {
+const rutas = (tipoPedido, tab, tipoDoc) => (`${mainURL}/comercial/ventas/${!!tipoDoc ? tipoDoc : 'pedido'}/listar${tipoPedido}${tab}`)
+
+async function getPedido(innerParams, state, tipo) {
     axios.defaults.withCredentials = true;
     try{
-        if(state in rutas_reportes){
-            let ruta = `${mainURL}/comercial/ventas/pedido${rutas_reportes[state]}`
+        if(state in rutas_reportes || state in rutas_ofertas){
+            let ruta = ''
+            if(!tipo)
+                ruta = `${mainURL}/comercial/ventas/pedido${rutas_reportes[state]}`
+            else
+                ruta = `${mainURL}/comercial/ventas/${tipo}${rutas_ofertas[state]}`
+            
             const response = await axios(ruta, {
                 withCredentials: true,
                 params: innerParams,
@@ -34,10 +44,11 @@ async function getPedido(innerParams, state) {
     }
 }
 
-async function getDetallePedidoGeneral(innerParams, tipoPedido) {
+async function getDetallePedidoGeneral(innerParams, tipoPedido, tipoDoc) {
     axios.defaults.withCredentials = true;
     try{
-        const response = await axios(rutas(tipoPedido,'general'), {
+        console.log(rutas(tipoPedido,'general', tipoDoc))
+        const response = await axios(rutas(tipoPedido,'general', tipoDoc), {
             withCredentials: true,
             params: innerParams
         });
@@ -53,10 +64,10 @@ async function getDetallePedidoGeneral(innerParams, tipoPedido) {
     }
 }
 
-async function getDetallePedidoLogistica(innerParams, tipoPedido) {
+async function getDetallePedidoLogistica(innerParams, tipoPedido, tipoDoc) {
     axios.defaults.withCredentials = true;
     try{
-        const response = await axios(rutas(tipoPedido,'logistica'), {
+        const response = await axios(rutas(tipoPedido,'logistica', tipoDoc), {
             withCredentials: true,
             params: innerParams
         });
@@ -72,10 +83,10 @@ async function getDetallePedidoLogistica(innerParams, tipoPedido) {
     }
 }
 
-async function getDetallePedidoFinanzas(innerParams, tipoPedido) {
+async function getDetallePedidoFinanzas(innerParams, tipoPedido, tipoDoc) {
     axios.defaults.withCredentials = true;
     try{
-        const response = await axios(rutas(tipoPedido,'finanzas'), {
+        const response = await axios(rutas(tipoPedido,'finanzas', tipoDoc), {
             withCredentials: true,
             params: innerParams
         });
@@ -91,10 +102,10 @@ async function getDetallePedidoFinanzas(innerParams, tipoPedido) {
     }
 }
 
-async function getDetallePedidoContenido(innerParams, tipoPedido) {
+async function getDetallePedidoContenido(innerParams, tipoPedido, tipoDoc) {
     axios.defaults.withCredentials = true;
     try{
-        const response = await axios(rutas(tipoPedido,'contenido'), {
+        const response = await axios(rutas(tipoPedido,'contenido', tipoDoc), {
             withCredentials:  true,
             params: innerParams
         });

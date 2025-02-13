@@ -41,7 +41,6 @@ const LoginForm = () => {
     responseJson = await Login(inputUsername, inputPassword, inputCompany);
     await delay(200);
     setLoading(false);
-
     // if(capchaToken && inputUsername && inputPassword && inputCompany){
     // }
 
@@ -54,8 +53,8 @@ const LoginForm = () => {
         handleLogo(inputCompany)
         setShow(false);
         navigate('/main/home')
-      } else {            
-        setShow(true); 
+      } else {
+        setShow(true);
       }
     }
   };
@@ -145,11 +144,10 @@ const LoginForm = () => {
             <span className="tw-text-sm">INGRESAR</span>
           </Button>
         ) : (
-            // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={false}>
-            // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
-            <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={false}>
+          // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
+          <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={false}>
               <span className="tw-text-sm">INGRESANDO....</span>
-            </Button>
+          </Button>
         )}
         <div className="d-grid justify-content-end">
           <Button

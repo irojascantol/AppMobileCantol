@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import PropTypes from 'prop-types';
 import Button from 'react-bootstrap/Button';
 import { ListGroup } from 'react-bootstrap'
-import { BsArchive, BsArrowClockwise, BsArrowRightShort, BsBootstrap, BsCalendar3, BsChatLeftText, BsCurrencyExchange, BsExclamationTriangleFill, BsFileEarmarkPerson, BsFillPeopleFill, BsList, BsPlusSquareFill, BsSearch, BsTextWrap, BsTrash, BsTrash3Fill, BsX } from 'react-icons/bs';
+import { BsArchive, BsArrowClockwise, BsArrowRightShort, BsBootstrap, BsCalendar3, BsChatLeftText, BsCurrencyExchange, BsExclamationTriangleFill, BsFileEarmarkPerson, BsFillPeopleFill, BsFillPersonBadgeFill, BsList, BsPlusSquareFill, BsSearch, BsTextWrap, BsTrash, BsTrash3Fill, BsX } from 'react-icons/bs';
 import { commercialContext } from '../../../context/ComercialContext';
 import { getCurrentDate, getFormatShipDate, getFormatShipDate_peru, getHumanDateFormat, getHumanDateFormat_plus } from '../../../utils/humandateformat';
 import { addOneDecimal, dsctEquiv, truncate } from '../../../utils/math';
@@ -143,7 +143,7 @@ function NuevoPedidoCabecera({data}) {
             >
             <div className="tw-ml-2 tw-mr-5  tw-flex tw-justify-between tw-w-full">
                 <div className='tw-min-w-[310px]'>
-                    <div className="header_section_title">RUC transportista (*):</div>
+                    <div className="header_section_title">RUC transportista <span className='tw-text-red-500 tw-font-bold'>(*)</span>:</div>
                     <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "ructransporte")?.nombre_transporte || '&nbsp'};`}}/>
                     <div className='tw-text-xs tw-font-semibold' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "ructransporte")?.documento_transporte || '&nbsp'}&nbsp;`}}/>
                 </div>
@@ -303,11 +303,12 @@ function NuevoPedidoProductos(){
             setIsFirstRender(false);
             return; // No hacer nada en el primer renderizado
           }else{
-              eliminar_Dsct_Bonificado()
+              eliminar_Dsct_Bonificado(false, dsctFormato?.dsctDoc?.dsct1?.selected, false)
           }
     }, [isClientChanged.active])
 
     //Despues de aplicar descuento en DiscountOvDialog (APLICAR!!!!)
+    //Ahora tambien va pasar cuando cambiemos el c
     useEffect(()=>{
         if(!open.show && open.accepted){
             console.log('Aplica descuento')
@@ -562,15 +563,19 @@ function NuevoPedidoProductos(){
          * Quita descuentos y bonificaciones de la lista de productos
          * @param {bool} soloDescuento 
          */
-        const eliminar_Dsct_Bonificado = (soloDescuento=false, dsctTotal=undefined) => {
-            // console.log(nuevoPedido)
-            // //elimina descuento de no bonificados
+        const eliminar_Dsct_Bonificado = (soloDescuento=false, dsctTotal=undefined, isInit = true) => {
+            //elimina descuento de no bonificados
             let itemsSinDescuento = nuevoPedido?.products.map((item)=>(!('tipo' in item)?{...item, ...{descuento: 0, dsct_porcentaje: 0, descuento2: 0, dsct_porcentaje2: 0}}:{...item}))
             let itemsNoBonificados = []
             if (!soloDescuento){
-                //Mantiene toda la lista de no bonificados, elimina bonificados
-                itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item))
-                handleDescuento({promociones: {enabled: false}})
+                    itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item)) //Elimina bonificados
+                    if(isInit){
+                        handleDescuento({
+                        dsctDoc:{
+                            dsct1: {...dsctFormato.dsctDoc.dsct1, ...{selected: 0.0}},
+                            dsctFP: {...dsctFormato.dsctDoc.dsctFP, ...{enabled: false}}},
+                            promociones: {enabled: false}})
+                    }
             }else{
                 //Mantiene toda la lista completa, bonificados y no bonificados
                 itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item) || !!('tipo' in item))
@@ -598,18 +603,24 @@ function NuevoPedidoProductos(){
         <>
             <ListGroup.Item
             as="li"
-            className="d-flex justify-content-end align-items-start active:tw-border-yellow-400 tw-pl-1 tw-gap-2"
-            // variant="secondary"
+            className="d-flex tw-justify-between tw-items-center active:tw-border-yellow-400 tw-gap-2 tw-pl-2"
             >
-                <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>handleSearchModal({show: true, modalTitle: 'Buscar producto', returnedValue: null, operacion: 'Producto', options: [{cliente_codigo: nuevoPedido?.cliente_codigo, products: nuevoPedido?.products}], placeholder: 'Ingrese nombre o codigo de producto'})}>
-                    <BsPlusSquareFill size={22}/>
-                </button>
-                <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>eliminar_Dsct_Bonificado()}>
-                    <BsTextWrap size={22}/>
-                </button>
-                <button variant="danger" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>{!!(largo_productos) && setDeleteMode(!deleteMode)}}>
-                    {(!deleteMode) ?(<BsTrash3Fill size={22}/>):(<BsArrowClockwise size={22}/>)} 
-                </button>
+                <div className='tw-flex tw-items-center tw-border-1 tw-border-blue-500'>
+                    {!!dsctFormato?.dsctDoc?.dsct1?.catName && <BsFillPersonBadgeFill />}
+                    <h6 className='tw-font-semibold tw-text-black tw-my-0 tw-p-1 tw-rounded-md'>{dsctFormato?.dsctDoc?.dsct1?.catName}</h6>
+                </div>
+
+                <div className='d-flex tw-justify-center tw-gap-2'>
+                    <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>handleSearchModal({show: true, modalTitle: 'Buscar producto', returnedValue: null, operacion: 'Producto', options: [{cliente_codigo: nuevoPedido?.cliente_codigo, products: nuevoPedido?.products}], placeholder: 'Ingrese nombre o codigo de producto'})}>
+                        <BsPlusSquareFill size={22}/>
+                    </button>
+                    <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>eliminar_Dsct_Bonificado()}>
+                        <BsTextWrap size={22}/>
+                    </button>
+                    <button variant="danger" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>{!!(largo_productos) && setDeleteMode(!deleteMode)}}>
+                        {(!deleteMode) ?(<BsTrash3Fill size={22}/>):(<BsArrowClockwise size={22}/>)} 
+                    </button>
+                </div>
             </ListGroup.Item>
             {/* <ListGroup.Item className='tw-px-1 tw-border-2 tw-border-gray-500 tw-rounded-md tw-mb-2' variant='secondary'> */}
             <ListGroup.Item className='tw-px-1 tw-border-2 tw-border-gray-500 tw-mb-2' variant='secondary'>
@@ -672,11 +683,11 @@ function NuevoPedidoProductos(){
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
                 {/* <div className='myFontFamily tw-font-medium'>Desct. por producto:</div> */}
-                <div className='myFontFamily tw-font-medium'>Desct. por promoción:</div>
+                <div className='myFontFamily tw-font-medium'>Desc. por promoción:</div>
                 <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.dsctProductos || 0), 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
-                <div className='myFontFamily tw-font-medium'>Desct. por (F. Pago + Ctg. Cliente):</div>
+                <div className='myFontFamily tw-font-medium'>Desc. por (F. Pago + Ctg. Cliente):</div>
                 {/* <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.valor_venta)*(nuevoPedido?.montos?.descuento * 0.01), 2)}</d)iv> */}
                 <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.dsctDoc), 2))}</div>
             </ListGroup.Item>
@@ -697,8 +708,9 @@ function NuevoPedidoProductos(){
             className="d-flex tw-flex-col justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-gap-2"
             variant="no style"
             >
-                <button className='button-4 tw-w-full' disabled={!isClientExits?true:false} onClick={()=>{aplicarBonificacion()}}>
-                    Aplicar bonificación
+                {/* <button className='button-4 tw-w-full' disabled={true} onClick={()=>{aplicarBonificacion()}}> */}
+                <button className='button-4 tw-w-full' disabled={true} onClick={()=>{aplicarBonificacion()}}>
+                    Aplicar bonificación (Desactivado)
                 </button>
                 <button className='button-4 tw-w-full tw-flex tw-justify-center tw-items-center tw-gap-2' disabled={!isClientExits?true:false} onClick={()=>{handleShowDsctDialog({show: true});}}>
                     <span>Aplicar descuento</span>

@@ -7,6 +7,7 @@ import Tab from "react-bootstrap/Tab";
 import Tabs from "react-bootstrap/Tabs";
 import '../../../style/modalPlantillaEntrega.css'
 import { getCurrentLocation } from "../../../utils/location";
+import { delay } from "../../../utils/delay";
 // import 
 // import { GiConsoleController } from "react-icons/gi";
 
@@ -145,7 +146,6 @@ function DetalleEntrega({modalDetalle, handleModalDetalle}){
                     {'Regresar'}
                 </button>
                 </>
-
             )
         }
 
@@ -175,6 +175,7 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
     const [body, setBody] = useState({entrega: null , liquidacion: null, tipopago: null, monto: null, nrooperacion: '', comentarios: '', docTotal: 0});
     const [loading, setLoading] = useState(false);
     const [isPending, setIsPending] = useState(false); //Para condicion incial de estado de entrega
+    const [montoLiq, setMontoLiq] = useState('');
 
     //handler body
     const handleBody = (obj) => setBody({...body, ...obj})
@@ -218,6 +219,7 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                 docTotal: response?.DocTotal,
                 monto: (response?.U_MSS_MONLIQ || 0)
             })
+            setMontoLiq(response?.U_MSS_MONLIQ || 0)
             setIsPending(response?.U_MSS_ESTRA === '1') //Condicion inicial de estado de entrega
         }
         obtenerDatos();
@@ -241,9 +243,10 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                     DocEntry: modalDetalle?.options?.DocEntry || null,
                     U_MSS_TIPAG: body?.tipopago || null,
                     U_MSS_MONEDA: modalDetalle?.options?.tipo_moneda || null,
-                    U_MSS_MONLIQ: body?.monto || null,
+                    U_MSS_MONLIQ: parseFloat(montoLiq).toFixed(2) || null,
                     U_MSS_NUMOP: body?.nrooperacion  || null,
-                    U_MSS_ESLI: body?.liquidacion || null,
+                    // U_MSS_ESLI: body?.liquidacion || null, --esto se cambio
+                    U_MSS_ESLI: 1, //Estado 1 para que se puede visualizar entrega en AddOn Liquidaciones
                     U_MSS_ESTRA: body?.entrega || null,
                     U_MSS_ESTLIQ: body?.entrega || null,
                     U_MSSM_COM: body?.comentarios || null,
@@ -280,11 +283,16 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                                         {estado_entrega[body?.entrega] || 'Estado entrega'}
                                     </Dropdown.Toggle>
                                     <Dropdown.Menu className="tw-w-full" style={{ backgroundColor: '#f8f9fa', color: '#000' }}>
-                                        <Dropdown.Item eventKey="1" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Pendiente</Dropdown.Item>
-                                        <Dropdown.Item eventKey="2" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Despacho sin cobranza</Dropdown.Item>
-                                        <Dropdown.Item eventKey="3" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Despacho con cobranza</Dropdown.Item>
-                                        <Dropdown.Item eventKey="4" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Despacho a courier</Dropdown.Item>
-                                        <Dropdown.Item eventKey="5" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>No despachado</Dropdown.Item>
+                                        {/* <Dropdown.Item eventKey="1" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Pendiente</Dropdown.Item> */}
+                                        {/* <Dropdown.Item eventKey="2" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Despacho sin cobranza</Dropdown.Item> */}
+                                        {/* <Dropdown.Item eventKey="3" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Despacho con cobranza</Dropdown.Item> */}
+                                        {/* <Dropdown.Item eventKey="4" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>Despacho a courier</Dropdown.Item> */}
+                                        {/* <Dropdown.Item eventKey="5" disabled={estado_entrega[body?.entrega] !== 'Pendiente'}>No despachado</Dropdown.Item> */}
+                                        <Dropdown.Item eventKey="1">Pendiente</Dropdown.Item>
+                                        <Dropdown.Item eventKey="2">Despacho sin cobranza</Dropdown.Item>
+                                        <Dropdown.Item eventKey="3">Despacho con cobranza</Dropdown.Item>
+                                        <Dropdown.Item eventKey="4">Despacho a courier</Dropdown.Item>
+                                        <Dropdown.Item eventKey="5">No despachado</Dropdown.Item>
                                     </Dropdown.Menu>
                                 </Dropdown>
                                 </Form.Group>
@@ -332,13 +340,27 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
                             {(body?.tipopago == '1' || body?.tipopago == '2' ) && (
                                 <Form onSubmit={(event)=>{event.preventDefault()}}>
                                     <Form.Label>{`Monto a liquidar: (Max: ${body?.docTotal})`}</Form.Label>
-                                    <Form.Control type="number" placeholder="S/." value={(body?.monto || '').toString()} max={100} onChange={(e)=>{
-                                        if(Number(e.target.value) <= Number(body?.docTotal)){
-                                            handleBody({monto: Number(e.target.value)});
-                                        }else{
-                                            alert('Monto no puede ser mayor al total del documento');
-                                        }
-                                    }}/>   
+                                    {/* <Form.Control type="number" placeholder="S/." value={(body?.monto || '').toString()} max={100} onChange={(e)=>{ */}
+                                    <Form.Control 
+                                    type="number" 
+                                    placeholder="Ingresa tu nombre"
+                                    value={montoLiq || ''}
+                                    onChange={(e)=>{
+                                        // // console.log(parseFloat(e.target.value), parseFloat(body?.docTotal))
+                                        // handleBody({monto: e.target.value})
+                                        setMontoLiq(e.target.value)
+                                    }}
+                                    />
+                                 
+                                    {/* <Form.Control type='text' placeholder="S/." value={(body?.monto || '').toString()} onChange={(e)=>{
+                                        console.log(parseFloat(e.target.value), parseFloat(body?.docTotal))
+                                        handleBody({monto: parseFloat(e.target.value)});
+                                        // if(parseFloat(e.target.value) <= Number(body?.docTotal)){
+                                        // handleBody({monto: parseFloat(e.target.value)});
+                                        // }else{
+                                        //     alert('Monto no puede ser mayor al total del documento');
+                                        // }
+                                    }}/>    */}
                                 </Form>
                                 )
                             }

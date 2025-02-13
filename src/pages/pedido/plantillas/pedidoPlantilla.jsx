@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import Badge from 'react-bootstrap/Badge';
 import { getHumanDateFormat, getHumanDateReporte } from '../../../utils/humandateformat';
 import { ListGroup } from 'react-bootstrap'
-import { BsBootstrap } from 'react-icons/bs';
+import { BsBootstrap, BsTruck } from 'react-icons/bs';
 
 function Pendiente({item}) {
   return (
@@ -64,10 +64,32 @@ function Rechazado({item}) {
   )
 }
 
+function Facturado({item}) {
+  return (
+    <ListGroup.Item
+    as="li"
+    className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1"
+    >
+      <div className="ms-2 me-auto">
+        <div className="tw-font-semibold">{item.CardName}</div>
+        <div className='text-secondary tw-text-md'>RUC: {item.LicTradNum}</div>
+      </div>
+      <div className='tw-h-12 tw-flex tw-flex-col tw-justify-between'>
+        <Badge bg="secondary" pill>
+          S/.{item.DocTotal.toLocaleString()}
+        </Badge>
+        <div className='text-secondary'>{getHumanDateReporte(item.DocDueDate)}</div>
+      </div>
+    </ListGroup.Item>
+  )
+}
+
 function PendienteChofer({item}) {
 
-const pending = useMemo(()=>(<div className='tw-inline-block tw-w-2 tw-h-2 tw-rounded tw-rounded-full tw-bg-yellow-400 tw-ml-1'/>))
-const completed = useMemo(()=>(<div className='tw-inline-block tw-w-2 tw-h-2 tw-rounded tw-rounded-full tw-bg-green-600 tw-ml-1'/>))
+// const pending = useMemo(()=>(<div className='tw-inline-block tw-w-2 tw-h-2 tw-rounded tw-rounded-full tw-bg-yellow-400 tw-ml-1'/>))
+// const completed = useMemo(()=>(<div className='tw-inline-block tw-w-2 tw-h-2 tw-rounded tw-rounded-full tw-bg-green-600 tw-ml-1'/>))
+const pending = useMemo(()=>(<div className='tw-inline-block tw-w-3 tw-h-3 tw-ml-1 tw-bg-yellow-400 tw-relative'><BsTruck color='black' className='tw-absolute tw-bottom-[-4px]'/></div>))
+// const completed = useMemo(()=>(<div className='tw-inline-block tw-w-2 tw-h-2  tw-ml-1'><BsTruck color='black'/></div>))
 
 return (
     <ListGroup.Item
@@ -78,7 +100,8 @@ return (
         className="d-flex justify-content-between align-items-start active:tw-border-yellow-400"
       >
       <div className="ms-2 me-auto">
-        <div className="tw-font-semibold">{item.razon_social}{Number(item?.estado)?pending:completed}</div>
+        {/* <div className="tw-font-semibold">{item.razon_social}{Number(item?.estado)?pending:completed}</div> */}
+        <div className="tw-font-semibold">{item.razon_social}{pending}</div>
         <div className='text-secondary tw-text-md'>RUC: {item.ruc}</div>
       </div>
       <div className='tw-h-12 tw-flex tw-flex-col tw-justify-between tw-gap-0'>
@@ -118,7 +141,6 @@ function CompletoChofer({item}) {
 
 function Contenido_Articulos({item}) {
   return (
-
     <ListGroup.Item
         as="li"
         className="tw-grid tw-grid-cols-7 tw-px-1 tw-mb-1 tw-border-t-2 tw-relative"
@@ -135,7 +157,9 @@ function Contenido_Articulos({item}) {
           </div>
         </div>
 
-        <div className="ms-2 me-auto tw-col-span-2 tw-flex tw-flex-col tw-items-end tw-justify-between">
+        {/* <div className="ms-2 me-auto tw-col-span-2 tw-flex tw-flex-col tw-items-end tw-justify-end"> */}
+        <div className="ms-2 me-auto tw-col-span-2 tw-flex tw-justify-end">
+          <div>
           <div className='tw-flex tw-flex-col tw-items-end'>
             <div className="tw-font-normal text-dark">Cantidad:</div>
             <div className='text-secondary tw-text-md'>{item?.cantidad || 'NO PRECISA'}</div>
@@ -143,6 +167,7 @@ function Contenido_Articulos({item}) {
           <div className='tw-flex tw-flex-col tw-items-end'>
             <div className="tw-font-normal text-dark">Precio Total:</div>
             <div className='text-secondary tw-text-md'>S/.{item?.total_linea || '0'}</div>
+          </div>
           </div>
         </div>
 
@@ -154,6 +179,6 @@ function Contenido_Articulos({item}) {
   )
 }
 
-export { Pendiente, Aprobado, Rechazado, Contenido_Articulos, PendienteChofer, CompletoChofer}
+export { Pendiente, Aprobado, Rechazado, Facturado, Contenido_Articulos, PendienteChofer, CompletoChofer}
 
 //CREATE BUTTON REACT jsx?

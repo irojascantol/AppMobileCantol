@@ -14,6 +14,7 @@ export function mergeComments(str1, str2){
 }
 
 export function makeSaleOrderBody(saleOrder, location, dsctFormato){
+    // PayToCode: 'DOMICILIO_FISCAL',
     let body = {
         CardCode: saleOrder?.cliente_codigo,
         DocDueDate: saleOrder?.fentrega,
@@ -22,10 +23,11 @@ export function makeSaleOrderBody(saleOrder, location, dsctFormato){
         Comments: mergeComments(saleOrder?.comentarios.vendedor, saleOrder?.comentarios.nota_anticipo),
         PaymentGroupCode: saleOrder?.condicionpago[0]?.PaymentGroupCode,
         FederalTaxID: saleOrder?.ruc || '',
-        PayToCode: 'DOMICILIO_FISCAL',
+        PayToCode: saleOrder?.direccionentrega[0]?.identificador_direccion || '',
         ShipToCode: saleOrder?.direccionentrega[0]?.direccion_codigo || '',
         U_MSSL_RTR: saleOrder?.ructransporte?.documento_transporte || '',
         U_MSSL_NTR: saleOrder?.ructransporte?.nombre_transporte || '',
+        U_MSSL_DTR: saleOrder?.ructransporte?.direccion_transportista || '',
         U_MSSF_CEX1: saleOrder?.institucional?.cmp1,
         U_MSSF_CEX2: saleOrder?.institucional?.cmp2,
         U_MSSF_CEX3: saleOrder?.institucional?.cmp3,
@@ -36,10 +38,13 @@ export function makeSaleOrderBody(saleOrder, location, dsctFormato){
         U_DIS_LONGIT: location?.longitud?.toString() || null,
         U_DST_DESOTO: dsctFormato?.dsctDoc?.dsct1?.selected || 0.0,
         U_DST_PERCENT: dsctFormato?.dsctDoc?.dsctFP?.enabled ? dsctFormato?.dsctDoc?.dsctFP?.value || 0.0 : 0.0,
+        U_MSS_CATESN: saleOrder?.dsctCateCode || null,
+        // U_MSSL_SECL: saleOrder?.segmentacion_cliente || null, //segmento del cliente
         DocumentLines: saleOrder?.products?.map((product)=>({
           ItemCode: product?.codigo,
           Quantity: product?.cantidad,
           TaxCode: product?.impuesto?.codigo,
+          WarehouseCode: product?.almacen,
           UnitPrice: product?.precio,
           U_MSSC_NV1: product?.dsct_porcentaje,
           U_MSSC_NV2: product?.dsct_porcentaje2 || 0,
@@ -58,13 +63,27 @@ export function makeSaleOrderBody(saleOrder, location, dsctFormato){
  * Funcion que retorna lista de descuentos con resolucion step,
  * descuentos dentro del intervalo de min y max
  */
-export function generarDiscountNv1List(minVal, maxVal, step, minIgnore, maxIgnore) {
-    const resultado = [0];
+export function generarDiscountNv1List({
+    minVal=null, maxVal=null, step=null, minIgnore=null, maxIgnore=null, threshold=null
+}) {
+    const resultado = [[0.0, false]];  // Valor inicial [0.0, false]
+    
     for (let i = minVal; i <= maxVal; i += step) {
         // Filtrar los valores dentro del intervalo [minIgnore, maxIgnore]
         if (i < minIgnore || i > maxIgnore) {
-            resultado.push(i);
+            // Agregar el número y el booleano según el parámetro threshold
+            resultado.push([i, i > threshold]);
         }
     }
     return resultado;
 }
+// export function generarDiscountNv1List(minVal, maxVal, step, minIgnore, maxIgnore) {
+//     const resultado = [0];
+//     for (let i = minVal; i <= maxVal; i += step) {
+//         // Filtrar los valores dentro del intervalo [minIgnore, maxIgnore]
+//         if (i < minIgnore || i > maxIgnore) {
+//             resultado.push(i);
+//         }
+//     }
+//     return resultado;
+// }

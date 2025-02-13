@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     //target: 'esnext' //browsers can handle the latest ES features
-    chunkSizeWarningLimit: 1600,
+    chunkSizeWarningLimit: 2000,
     target:'esnext'
   },
 })

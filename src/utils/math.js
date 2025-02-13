@@ -14,5 +14,7 @@ export function dsctEquiv(dsct1, dsct2){
 }
 
 export function addOneDecimal(number){
-    return number.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+    // console.log(parseFloat(number).toFixed(2))
+    // return number.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+    return parseFloat(number).toFixed(2)
 }

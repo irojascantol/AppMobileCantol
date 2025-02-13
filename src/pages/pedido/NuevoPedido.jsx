@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import Accordion from 'react-bootstrap/Accordion';
 import { MyListGroup } from './componentes/MyListGroup';
 import '../../style/accordion.css'
@@ -13,6 +13,7 @@ import { getCurrentLocation } from '../../utils/location';
 import { makeSaleOrderBody } from './utils';
 import { useNavigate, useParams } from 'react-router-dom';
 import { delay } from '../../utils/delay';
+import { ServerError } from '@azure/msal-browser';
 // import { delay } from '../../utils/delay';
 
 const tipoModal = {
@@ -52,49 +53,74 @@ export default function NuevoPedido() {
           dsctFormato,
           //manejo nueva politica descuento 27/01/25
           handleDescuento,
-          handleDescuentoDoc
+          handleDescuentoDoc,
+          setNuevoPedido
         } = useContext(commercialContext);
   
   const tipo =  useParams().tipo in tipoPedido ? tipoPedido[useParams().tipo] : null;
   const tipo_root = useParams().tipo in tipoPedido ? useParams().tipo : null;
   const [isLoading, setIsLoading] = useState(false)
   const [location, setLocation] = useState(false)
+  const recoverOrder = useRef(false)
   const navigate = useNavigate();
+
   
+  const setInitialcondition = async () => {
+    const data_token = await decodeJWT();
+    const response = await getNuevoPedidoClave({usuario_codigo: data_token.username});
+    // //secure shield
+    response === 406 && handleShow()
+    // //
+    if(response !== 406 && !!response){
+      handleNewSaleOrder({cliente_codigo: null, comentarios: {vendedor: '', nota_anticipo: ''}, numero: response.code_sale, 
+      fcontable: response.fecha, ruc:'', razonsocial:'', telefono: '',
+      fentrega: getFormatShipDate({fechacontable: new Date(response.fecha), moredays: 1}), direccionentrega:'', ructransporte: '', moneda:'', 
+      codigogrupo: '', condicionpago:'', products: [], grupo_familia: null, ubicacion: null, montos: {anticipo: 0, descuento: 0, impuesto: 0, nota_credito: 0, total: 0, total_cred_anti: 0,
+      unidad: '', valor_venta: 0}, institucional: {cmp1: '', cmp2: '', cmp3: '', oc: ''}})
+    }else if(response !== 406 && !response){
+      alert('Error durante ejecución, contactar con TI')
+    }
+  }
+
   //primera vez y cuando cambio en la ruta
   useEffect(()=>{
     const doFetch = async () => 
       {
-        const data_token = await decodeJWT();
-        const response = await getNuevoPedidoClave({usuario_codigo: data_token.username});
-        // //secure shield
-        response === 406 && handleShow()
-        // //
-        if(response !== 406 && !!response){
-          handleNewSaleOrder({cliente_codigo: null, comentarios: {vendedor: '', nota_anticipo: ''}, numero: response.code_sale, 
-          fcontable: response.fecha, ruc:'', razonsocial:'', telefono: '',
-          fentrega: getFormatShipDate({fechacontable: new Date(response.fecha), moredays: 1}), direccionentrega:'', ructransporte: '', moneda:'', 
-          codigogrupo: '', condicionpago:'', products: [], grupo_familia: null, ubicacion: null, montos: {anticipo: 0, descuento: 0, impuesto: 0, nota_credito: 0, total: 0, total_cred_anti: 0,
-          unidad: '', valor_venta: 0}, institucional: {cmp1: '', cmp2: '', cmp3: '', oc: ''}})
-        //   if(!nuevoPedido?.numero){ //sirve para generar code_sale
-        // }
-        }else if(response !== 406 && !response){
-          alert('Error durante ejecución, contactar con TI')
+        // if(!!sessionStorage.getItem('draft_order') && !recoverOrder.current){
+        // if(!!sessionStorage.getItem('draft_order')){
+        if(false){
+            let resultado = confirm("Existe un pedido en curso\n¿Desea restablecerlo?");
+            recoverOrder.current = true
+            if (resultado){
+              console.log('Si entra aqui 1')
+              let draft_order = JSON.parse(sessionStorage.getItem('draft_order'));
+              console.log(draft_order)
+              handleNewSaleOrder(draft_order)
+              sessionStorage.removeItem('draft_order')
+          }else{
+            sessionStorage.removeItem('draft_order')
+            await setInitialcondition()
+          }
+        }else{
+          // if (!recoverOrder.current){
+            // console.log('Si entra aqui 2')
+            await setInitialcondition()
         }
       }
-
-    //verifica que la ruta sea venta u oferta
-    if(tipo){
+      //verifica que la ruta sea venta u oferta
+      if(tipo){
         //obtiene clave  mobile y fecha contable
         doFetch();
-    }else{
-      console.log("Si entra aqui")
-      //aqui deberia enviar al apagina 404
-      //deberia en condicion de inicial el cuerpo del context
-      navigate('/main/home')
-    }
-  },[tipo])
+      }else{
+        //aqui deberia enviar al apagina 404
+        //deberia en condicion de inicial el cuerpo del context
+        navigate('/main/home')
+      }
+    },[tipo])
 
+    // useEffect(()=>{
+    // }, [])
+    
   /**
    * Equivalente a un F5
    */
@@ -114,17 +140,17 @@ export default function NuevoPedido() {
               try{
                 //Logica que solicita dos veces los permisos de geolocalizacion
                 let currentLocation = null
+                setIsLoading(true); //Bloqueo ventana antes de pedir geolocalizacion
                 try{
                   currentLocation = await getCurrentLocation(2);
                 }catch(error){
                   console.log('Localizacion desactivada en navegador: ', error.message)
                 }
-                setLocation(!!currentLocation)
-                setIsLoading(true);
-                // await delay(1000)
+                setLocation(!!currentLocation) //esto para enviar el cuadrado negro en frond
                 let body = makeSaleOrderBody(nuevoPedido, currentLocation, dsctFormato)
-    
                 const [response, status] = !!tipo_root ? await grabarCuerpo[tipo_root](body): [null, 206];
+                // const [response, status] = ['OV Creada!', 200];
+                // await delay(2000)
                 // //
                 status === 406 && handleShow()
                 //aca se devuelve una respuesta cuando concluye el proceso
@@ -132,12 +158,15 @@ export default function NuevoPedido() {
                 status !== 200 && alert(response)
                 if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) === 'number'){
                   alert('¡Orden de venta y borrador creados!\nRedireccion a pedidos pendientes')
+                  sessionStorage.removeItem('draft_order')
                   navigate('/main/pedido/pendiente')
                 }else if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) !== 'number'){
                   alert('¡Borrador creado!\nRedireccion a pedidos pendientes')
+                  sessionStorage.removeItem('draft_order')
                   navigate('/main/pedido/pendiente')
                 }else if(status === 200 && typeof(response) === 'string'){
                   alert(response)
+                  sessionStorage.removeItem('draft_order')
                   refreshPage() // aqui se refresca la pagina cuando se crea un nuevo pedido
                 }
               }catch(error){

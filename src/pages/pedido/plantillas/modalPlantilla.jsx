@@ -19,6 +19,7 @@ import { mergeComments } from '../utils';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentLocation } from '../../../utils/location';
 import { addOneDecimal } from '../../../utils/math';
+import { direccion_entrega_cambio } from '../../../utils/emergencia';
 
 
 const fetchFunctions = {
@@ -56,17 +57,22 @@ const fillData = {
         razonsocial: item.razon_social,
         telefono: item.telefono,
         moneda: item.tipo_moneda,
-        direccionentrega: item.direccion_entrega,
+        direccionentrega: item?.direccion_entrega,
         grupo_familia: item.grupo_familia,
         montos: {...nuevoPedido.montos, total_cred_anti: nuevoPedido.montos.total, anticipo: 0, nota_credito: 0},
         canal_familia: {codigo_canal: item?.codigo_canal_cliente, nombre_canal: item?.canal_cliente},
         ubicacion: item?.ubicacion_cliente,
-        dsctMin: item?.minimo || 0,
-        dsctMax: item?.maximo || 0,
+        dsctMin: item?.minimo || 0.0,
+        dsctMax: item?.maximo || 0.0,
+        dsctCateDefault: item?.dsctCategoria || 0.0,
+        dsctCateName: item?.categoria_cliente || '',
+        dsctCateCode: item?.categoria_cliente_codigo || null,
+        segmentacion_cliente: item?.segmentacion_cliente || null,
         ructransporte: !item?.codigo_transportista ? null : { //aqui se agrega los datos del transportista cuando es zona Lima
             codigo_transporte: item?.codigo_transportista,
             nombre_transporte: item?.nombre_transporte,
             documento_transporte: item?.ruc_transportista,
+            direccion_transportista: item?.direccion_trasnportista
         }
     }),
     SoloCliente: (item, nuevoPedido)=>({
@@ -82,11 +88,10 @@ const fillData = {
             codigo_transporte: item?.codigo_trasnportista,
             nombre_transporte: item?.nombre_transporte,
             documento_transporte: item?.ruc_transportista,
+            direccion_transportista: item?.direccion_trasnportista
             }
         })
     }
-
-    
 
 function CustomToggle({ children, eventKey, isCollapse, setIsCollapse, prevState}) {
     const buttonRef = useRef(null);
@@ -140,9 +145,9 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                 setIsSpinner(true)
                 let response = []
                 response = await fetchFunctions[buscarModalValues.operacion]({usuario_codigo: value?.username, filtro: textFilter, cliente_codigo: buscarModalValues?.options[0]?.cliente_codigo}, isQuotation)
-                setDataSearch([...response.slice(0, 14)])
+                setDataSearch([...response.slice(0, 100)])
                 setIsSpinner(false)
-                if(!![...response.slice(0, 14)].length && !!textFilter){
+                if(!![...response.slice(0, 100)].length && !!textFilter){
                     if(!!isCollapse.state){prevState.current = isCollapse.state;}
                     setIsCollapse({toggle: !isCollapse.toggle, state: true});
                 }else{
@@ -170,7 +175,6 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
     },[showInputTextModal.returnedValue])
     
     const agregarItem = async (item) => {
-
         //revisar si el producto ya esta agregado
         if(buscarModalValues?.operacion === 'Producto') {
             let tmpList = buscarModalValues.options[0]?.products;
@@ -193,7 +197,13 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                 //Actualiza descuento por forma de pago, tambien descuento minimo y maximo por categoria cliente
                 handleDescuento({
                     dsctDoc: {
-                        dsct1: {selected: null, min: parseFloat(tmpCliente?.dsctMin), max: parseFloat(tmpCliente?.dsctMax)},  //por categoria cliente
+                        dsct1: {
+                            selected: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,  
+                            min: parseFloat(tmpCliente?.dsctMin) || 0.0, 
+                            max: parseFloat(tmpCliente?.dsctMax) || 0.0,
+                            catName: tmpCliente?.dsctCateName || '',
+                            default: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,
+                        },  //por categoria cliente
                         dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
                             },
                 })
@@ -253,7 +263,8 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                 </div>
                 {/* </Card.Header> */}
                 <Accordion.Collapse eventKey="0">
-                    <ListGroup>
+                    {/* Aca se va colocar la altura del scroll */}
+                    <ListGroup className='tw-max-h-[800px] tw-overflow-y-scroll'> 
                         {dataSearch.map((item, index)=>(
                             <ListGroup.Item key={(index+3).toString()} className='active:tw-border-yellow-400 active:tw-border-2'>
                                 <div className="ms-0 me-auto" onClick={()=>{
@@ -298,11 +309,11 @@ function IngresarTexto({modalValues, handleInputTextModal, handleNewSaleOrder, t
                         handleNewSaleOrder({comentarios: {...modalValues?.options, vendedor: value.toString().trim()}}); 
                         handleInputTextModal({show: false});
                     }else if(modalValues.operacion === 'agregarProducto'){
-                        handleInputTextModal({show: false, returnedValue: value});
-                        // if(value > modalValues?.options?.stock && !isQuotation){ ||RETORNAR!!
-                        //     alert('La cantidad debe ser menor al stock')
-                        // }else{
-                        // }
+                        if(value > modalValues?.options?.stock && !isQuotation){
+                            alert('La cantidad debe ser menor al stock')
+                        }else{
+                            handleInputTextModal({show: false, returnedValue: value});
+                        }
                     }else{
                         handleNewSaleOrder({ructransporte: value}); 
                         handleInputTextModal({show: false});
@@ -437,7 +448,8 @@ function Anticipo_Credito({nuevopedido, modalValues, handleInputTextModal, handl
 }
 
 function Institucional_Campo(params){
-    const [input, setinput] = useState({oc: '', cmp1: '', cmp2: '', cmp3: ''});
+    const {oc, cmp1, cmp2, cmp3} = params?.nuevopedido?.institucional
+    const [input, setinput] = useState({oc: oc || '', cmp1: cmp1 || '', cmp2: cmp2 || '', cmp3: cmp3 || ''});
     const handleInput = (obj) => setinput({...input, ...obj})
 
     const guardarDatosInstitucional = () => {
