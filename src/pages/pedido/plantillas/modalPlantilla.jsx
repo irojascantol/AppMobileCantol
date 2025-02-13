@@ -72,7 +72,8 @@ const fillData = {
             codigo_transporte: item?.codigo_transportista,
             nombre_transporte: item?.nombre_transporte,
             documento_transporte: item?.ruc_transportista,
-            direccion_transportista: item?.direccion_trasnportista
+            direccion_transportista: item?.direccion_trasnportista,
+            distrito_transportista: item?.distrito_transportista
         }
     }),
     SoloCliente: (item, nuevoPedido)=>({
@@ -88,7 +89,8 @@ const fillData = {
             codigo_transporte: item?.codigo_trasnportista,
             nombre_transporte: item?.nombre_transporte,
             documento_transporte: item?.ruc_transportista,
-            direccion_transportista: item?.direccion_trasnportista
+            direccion_transportista: item?.direccion_trasnportista,
+            distrito_transportista: item?.distrito_trasnportista
             }
         })
     }
