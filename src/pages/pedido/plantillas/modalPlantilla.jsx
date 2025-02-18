@@ -90,7 +90,7 @@ const fillData = {
             nombre_transporte: item?.nombre_transporte,
             documento_transporte: item?.ruc_transportista,
             direccion_transportista: item?.direccion_trasnportista,
-            distrito_transportista: item?.distrito_trasnportista
+            distrito_transportista: item?.distrito_transportista
             }
         })
     }
@@ -177,15 +177,18 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
     },[showInputTextModal.returnedValue])
     
     const agregarItem = async (item) => {
+        console.log(item)
         //revisar si el producto ya esta agregado
         if(buscarModalValues?.operacion === 'Producto') {
+            
             let tmpList = buscarModalValues.options[0]?.products;
             if(tmpList.findIndex((item_list)=>(item_list.codigo === item.codigo)) === -1){
                 //abre el modal para ingresar la cantidad
                 handleInputTextModal({show: true, modalTitle: 'Ingrese cantidad', tipomodal: 'text', operacion: 'agregarProducto', returnedValue: null, options: {stock: item.stock}})
                 //graba el item seleccionado para grabar cantidad en useeffect
                 setCurrentItem(item)
-        }else{alert("El producto ya se encuentra agregado");}
+            }else{alert("El producto ya se encuentra agregado");}
+
         }else if(buscarModalValues?.operacion === 'Cliente'){
             let tmpCliente = fillData[buscarModalValues?.operacion](item, nuevoPedido)
             //obtener por primera vez el descuento por documento

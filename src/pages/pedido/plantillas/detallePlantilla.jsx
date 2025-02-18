@@ -170,7 +170,6 @@ function DetallePlantillaGeneral({data, tipoPedido, tipoDoc}) {
 
   // console.log(data, tipoPedido, tipoDoc)
 
-
   useEffect(()=>{
     const getDetalleGeneral = async () => {
       // console.log(tipoPedido, tabActivePedido, indexPedidoCarusel, data?.DocEntry, tipoDoc)
@@ -294,16 +293,44 @@ function DetallePlantillaGeneral({data, tipoPedido, tipoDoc}) {
           <div className='text-secondary tw-text-base'>{tipoPedido === 'facturado'? `${getHumanDateReporte(componentData?.fecha_contable)} ${componentData?.hora}` : getHumanDateReporte(componentData?.fecha_contable)}</div>
         </div>
       </ListGroup.Item>
-      <ListGroup.Item
-        as="li"
-        className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px] tw-py-[2px]"
-        variant='No style'
-      >
-        <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
-          <div className="tw-font-semibold text-dark">Fecha de vencimiento:</div>
-          <div className='text-secondary tw-text-base'>{getHumanDateReporte(componentData?.fecha_vencimiento)}</div>
-        </div>
-      </ListGroup.Item>
+
+      {tipoPedido === 'facturado' ? (
+        <>
+          <ListGroup.Item
+            as="li"
+            className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px] tw-py-[2px]"
+            variant='No style'
+          >
+            <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
+              <div className="tw-font-semibold text-dark">Fecha SN:</div>
+              <div className='text-secondary tw-text-base'>{componentData?.fecha_entrega_socio && getHumanDateReporte(componentData?.fecha_entrega_socio)}&nbsp;</div>
+            </div>
+          </ListGroup.Item>
+          
+          <ListGroup.Item
+            as="li"
+            className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px] tw-py-[2px]"
+            variant='No style'
+          >
+            <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
+              <div className="tw-font-semibold text-dark">Fecha recepción:</div>
+              <div className='text-secondary tw-text-base'>{componentData?.fecha_entrega_chofer && getHumanDateReporte(componentData?.fecha_entrega_chofer)}&nbsp;</div>
+            </div>
+          </ListGroup.Item>
+      </>
+      ):(
+        <ListGroup.Item
+          as="li"
+          className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-border-t-2 tw-mb-[1px] tw-py-[2px]"
+          variant='No style'
+        >
+          <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
+            <div className="tw-font-semibold text-dark">Fecha de vencimiento:</div>
+            <div className='text-secondary tw-text-base'>{getHumanDateReporte(componentData?.fecha_vencimiento)}</div>
+          </div>
+        </ListGroup.Item>
+      ) }
+
       {tipoPedido !== 'facturado' && ( // aqui se muestra la seccion de la hora creacion cuando no es facturado
         <ListGroup.Item
           as="li"

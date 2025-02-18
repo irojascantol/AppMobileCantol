@@ -28,7 +28,7 @@ export function makeSaleOrderBody(saleOrder, location, dsctFormato){
         U_MSSL_RTR: saleOrder?.ructransporte?.documento_transporte || '',
         U_MSSL_NTR: saleOrder?.ructransporte?.nombre_transporte || '',
         U_MSSL_DTR: saleOrder?.ructransporte?.direccion_transportista || '',
-        U_MSSL_ITR: saleOrder?.distrito_transportista,
+        U_MSSL_ITR: saleOrder?.ructransporte?.distrito_transportista,
         U_MSSF_CEX1: saleOrder?.institucional?.cmp1,
         U_MSSF_CEX2: saleOrder?.institucional?.cmp2,
         U_MSSF_CEX3: saleOrder?.institucional?.cmp3,

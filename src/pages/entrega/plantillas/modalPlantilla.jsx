@@ -230,13 +230,14 @@ function RegistrarCobro({modalDetalle, handleModalDetalle}){
             {
             let currentLocation = null
 
-            if (isPending){ //Valida que sea el cambio del primer estado: Pendiente
-                try{
-                    currentLocation = await getCurrentLocation(2);
-                }catch(error){
-                    console.log('Localizacion desactivada en navegador: ', error.message)
-                }
+            try{
+                currentLocation = await getCurrentLocation(2);
+            }catch(error){
+                console.log('Localizacion desactivada en navegador: ', error.message)
             }
+
+            // if (isPending){ //Valida que sea el cambio del primer estado: Pendiente
+            // } //DESACTIVADO POR EL MOMENTO
 
             if(body?.entrega !== null){
                 let body_ = {

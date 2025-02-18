@@ -155,7 +155,7 @@ export default function NuevoPedido() {
                 status === 406 && handleShow()
                 //aca se devuelve una respuesta cuando concluye el proceso
                 setIsLoading(false);
-                status !== 200 && alert(response)
+                status !== 200 && alert(JSON.stringify(response))
                 if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) === 'number'){
                   alert('¡Orden de venta y borrador creados!\nRedireccion a pedidos pendientes')
                   sessionStorage.removeItem('draft_order')
@@ -187,6 +187,7 @@ export default function NuevoPedido() {
 
   return (
     <div className='tw-relative'>
+      {console.log(nuevoPedido)}
       {/* modal buscar cliente y buscar producto */}
       <PedidoModal modalTitle={buscarModalValues.modalTitle} handleClose={()=>handleSearchModal({show: false})} show={buscarModalValues.show}>
         <BuscarModal buscarModalValues={buscarModalValues} handleNewSaleOrder={handleNewSaleOrder} handleCloseModal={()=>handleSearchModal({show: false})} isQuotation={tipo_root==='oferta'}/>
