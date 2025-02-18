@@ -62,10 +62,14 @@ const fillData = {
         montos: {...nuevoPedido.montos, total_cred_anti: nuevoPedido.montos.total, anticipo: 0, nota_credito: 0},
         canal_familia: {codigo_canal: item?.codigo_canal_cliente, nombre_canal: item?.canal_cliente},
         ubicacion: item?.ubicacion_cliente,
-        dsctMin: item?.minimo || 0.0,
-        dsctMax: item?.maximo || 0.0,
-        dsctCateDefault: item?.dsctCategoria || 0.0,
-        dsctCateName: item?.categoria_cliente || '',
+
+        descuento: item?.descuento,
+        
+        // dsctMin: item?.minimo || 0.0,
+        // dsctMax: item?.maximo || 0.0,
+        // dsctCateDefault: item?.dsctCategoria || 0.0,
+
+        dsctCateName: item?.descuento?.categoria_cliente || '',
         dsctCateCode: item?.categoria_cliente_codigo || null,
         segmentacion_cliente: item?.segmentacion_cliente || null,
         ructransporte: !item?.codigo_transportista ? null : { //aqui se agrega los datos del transportista cuando es zona Lima
@@ -185,7 +189,9 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                 setCurrentItem(item)
         }else{alert("El producto ya se encuentra agregado");}
         }else if(buscarModalValues?.operacion === 'Cliente'){
+            console.log(item)
             let tmpCliente = fillData[buscarModalValues?.operacion](item, nuevoPedido)
+            console.log(tmpCliente)
             //obtener por primera vez el descuento por documento
             if (!!tmpCliente?.condicionpago[0] && tmpCliente?.canal_familia){
                 let body = {
