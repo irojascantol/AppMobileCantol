@@ -61,7 +61,8 @@ const fillData = {
         grupo_familia: item.grupo_familia,
         montos: {...nuevoPedido.montos, total_cred_anti: nuevoPedido.montos.total, anticipo: 0, nota_credito: 0},
         canal_familia: {codigo_canal: item?.codigo_canal_cliente, nombre_canal: item?.canal_cliente},
-        ubicacion: item?.ubicacion_cliente,
+        // ubicacion: item?.ubicacion_cliente,
+        ubicacion: null,
         dsctMin: item?.minimo || 0.0,
         dsctMax: item?.maximo || 0.0,
         dsctCateDefault: item?.dsctCategoria || 0.0,
@@ -177,7 +178,6 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
     },[showInputTextModal.returnedValue])
     
     const agregarItem = async (item) => {
-        console.log(item)
         //revisar si el producto ya esta agregado
         if(buscarModalValues?.operacion === 'Producto') {
             

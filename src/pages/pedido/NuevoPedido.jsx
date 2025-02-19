@@ -187,7 +187,7 @@ export default function NuevoPedido() {
 
   return (
     <div className='tw-relative'>
-      {console.log(nuevoPedido)}
+      {/* {console.log(nuevoPedido)} */}
       {/* modal buscar cliente y buscar producto */}
       <PedidoModal modalTitle={buscarModalValues.modalTitle} handleClose={()=>handleSearchModal({show: false})} show={buscarModalValues.show}>
         <BuscarModal buscarModalValues={buscarModalValues} handleNewSaleOrder={handleNewSaleOrder} handleCloseModal={()=>handleSearchModal({show: false})} isQuotation={tipo_root==='oferta'}/>
