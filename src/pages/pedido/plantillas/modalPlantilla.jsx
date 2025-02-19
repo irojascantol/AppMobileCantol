@@ -63,8 +63,30 @@ const fillData = {
         canal_familia: {codigo_canal: item?.codigo_canal_cliente, nombre_canal: item?.canal_cliente},
         ubicacion: item?.ubicacion_cliente,
 
-        descuento: item?.descuento,
-        
+        descuento: {
+            categoria: {
+                nombre: 'REGIONAL',
+                cate_cliente_codigo: '06',
+                min: 11.5,
+                max: 12.5,
+                dft: 11.5
+            },
+            marca: {
+                // cate_cliente_codigo: '06'
+                nombre: 'LGO',
+                min: 15.5,
+                max: 18.5,
+                dft: 15.5,
+            },
+            familia: {
+                // cate_cliente_codigo: '06'
+                nombre: 'SOBREPONER',
+                min: 15.5,
+                max: 18.5,
+                dft: 15.5,
+            }
+        },
+
         // dsctMin: item?.minimo || 0.0,
         // dsctMax: item?.maximo || 0.0,
         // dsctCateDefault: item?.dsctCategoria || 0.0,
@@ -191,7 +213,7 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
         }else if(buscarModalValues?.operacion === 'Cliente'){
             console.log(item)
             let tmpCliente = fillData[buscarModalValues?.operacion](item, nuevoPedido)
-            console.log(tmpCliente)
+            
             //obtener por primera vez el descuento por documento
             if (!!tmpCliente?.condicionpago[0] && tmpCliente?.canal_familia){
                 let body = {
@@ -199,20 +221,44 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                     codigo_canal_cliente: (tmpCliente?.canal_familia?.codigo_canal).toString(),
                 }
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
+
+
+                //ESTA PARTE DEFINE LAS CONDICIONES INICIALES DE LOS DESCUENTOS QUE NO SON DE CATEGORIA
+                let { categoria, ...restoDesc} = tmpCliente.descuento;
+                // Iterar sobre las propiedades de descuento y agregar el campo "selected"
+                for (let key in restoDesc) {
+                    if (restoDesc[key].hasOwnProperty('dft')) {
+                        restoDesc[key].selected = restoDesc[key].dft;
+                    }
+                }
                 
-                //Actualiza descuento por forma de pago, tambien descuento minimo y maximo por categoria cliente
+                //Actualiza tres tipos de descuento, categoria cliente, detalle producto y forma de pago
                 handleDescuento({
                     dsctDoc: {
                         dsct1: {
-                            selected: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,  
-                            min: parseFloat(tmpCliente?.dsctMin) || 0.0, 
-                            max: parseFloat(tmpCliente?.dsctMax) || 0.0,
-                            catName: tmpCliente?.dsctCateName || '',
-                            default: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,
-                        },  //por categoria cliente
+                            selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
+                            min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
+                            max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
+                            catName: tmpCliente?.descuento?.categoria?.nombre || '',
+                            default: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
+                        },  //por categoria cliente general
                         dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
-                            },
+                        ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
+                        }
                 })
+
+                // handleDescuento({
+                //     dsctDoc: {
+                //         dsct1: {
+                //             selected: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,  
+                //             min: parseFloat(tmpCliente?.dsctMin) || 0.0, 
+                //             max: parseFloat(tmpCliente?.dsctMax) || 0.0,
+                //             catName: tmpCliente?.dsctCateName || '',
+                //             default: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,
+                //         },  //por categoria cliente
+                //         dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
+                //             },
+                // })
 
                 descuentoDoc === 406 && handleClose() //Si retorna 406, activa ventana bloqueo 
                 
@@ -315,11 +361,16 @@ function IngresarTexto({modalValues, handleInputTextModal, handleNewSaleOrder, t
                         handleNewSaleOrder({comentarios: {...modalValues?.options, vendedor: value.toString().trim()}}); 
                         handleInputTextModal({show: false});
                     }else if(modalValues.operacion === 'agregarProducto'){
-                        if(value > modalValues?.options?.stock && !isQuotation){
-                            alert('La cantidad debe ser menor al stock')
-                        }else{
-                            handleInputTextModal({show: false, returnedValue: value});
-                        }
+                        handleInputTextModal({show: false, returnedValue: value});
+                        // if(value > modalValues?.options?.stock && !isQuotation){
+                        //     alert('La cantidad debe ser menor al stock')
+                        // }else{
+                        // }
+                        // if(value > modalValues?.options?.stock && !isQuotation){
+                        //     alert('La cantidad debe ser menor al stock')
+                        // }else{
+                        //     handleInputTextModal({show: false, returnedValue: value});
+                        // }
                     }else{
                         handleNewSaleOrder({ructransporte: value}); 
                         handleInputTextModal({show: false});

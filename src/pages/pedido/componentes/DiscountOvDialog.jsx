@@ -15,6 +15,9 @@ import lgoLogo from '../../login/assets/lgo.png';
 
 function DiscountOvDialog(props) {
   const { handleShowDsctDialog, open, dsctObj, handleDescuento} = props;
+
+  // console.log(dsctObj)
+
   const [dsctFormato, setDsctFormato] = useState({...dsctObj});
 
   /**
@@ -77,7 +80,7 @@ function DiscountOvDialog(props) {
         //evalua que dsct min y maximo sean diferentes, en caso sea min y max 0.0 no muestra opcion de dsct categoria cliente
         !(dsctFormato?.dsctDoc?.dsct1?.min === dsctFormato?.dsctDoc?.dsct1?.max) && (
           <>
-            <DialogTitle className='tw-pt-2 tw-pb-0 tw-px-5 tw-text-center'>Dsct. Categoria cliente</DialogTitle>
+            <DialogTitle className='tw-pt-2 tw-pb-0 tw-px-5 tw-text-center tw-text-base'>Dsct. Categoria cliente</DialogTitle>
             <FormControl className='tw-h-48 tw-overflow-y-scroll'>
             <RadioGroup 
               value={dsctFormato?.dsctDoc?.dsct1?.selected}
@@ -120,6 +123,20 @@ function DiscountOvDialog(props) {
           </>
         )
       }
+
+      {
+        !!dsctFormato?.dsctDoc?.restoDesc && (
+            Object.keys(dsctFormato?.dsctDoc?.restoDesc).map((tipo_name)=>(
+              <>
+                <Divider sx={{ borderBottomWidth: 3, borderColor: 'gray' }}/>
+                <DialogTitle className='tw-my-0 tw-py-0 tw-text-center tw-text-base'>{`Dsct. x ${tipo_name.charAt(0).toUpperCase() + tipo_name.slice(1)}`} - <span className='tw-text-sm tw-font-semibold'>{dsctFormato?.dsctDoc?.restoDesc[tipo_name].nombre}</span></DialogTitle>
+                <RadioControlComponent dsct_unico={dsctFormato?.dsctDoc?.restoDesc[tipo_name]}/>
+              </>
+            ))
+        )
+      }
+
+
 
       {
         !!dsctFormato?.dsctDoc?.dsctFP?.value && (
@@ -190,3 +207,61 @@ function DiscountOvDialog(props) {
 }
 
 export {DiscountOvDialog}
+
+
+
+function RadioControlComponent ({dsct_unico = {}}){
+  console.log(
+    generarDiscountNv1List(
+      { minVal:dsct_unico.min, 
+        maxVal:dsct_unico.max, 
+        step:0.5,
+        threshold:dsct_unico.dft
+      })
+  )
+
+  return (
+    <div>
+      hola
+    </div>
+  )
+  return(
+    <FormControl className='tw-h-48 tw-overflow-y-scroll'>
+      <RadioGroup 
+        value={dsct_unico.selected}
+        onChange={()=>{console.log('Cambia radio')}}
+      >
+        {
+          generarDiscountNv1List(
+          { minVal:dsct_unico.min, 
+            maxVal:dsct_unico.max, 
+            step:0.5,
+            threshold:dsct_unico.dft
+          }).map(([value, color], idx)=>(
+            <>
+            <FormControlLabel key={(idx+10).toString()} value={value.toString()} control={<Radio />} label={
+              <div className={`tw-w-[103px] tw-flex tw-justify-${value >= 15.5 ? 'between': 'center'} tw-items-center`}>
+                { value >= 15.5 ? (
+                  <img
+                    className="tw-w-7"
+                    src={lgoLogo}
+                    alt="logo" // agrega el logo de la marca LGO
+                  />
+                ) : (<p>&nbsp;</p>)
+                }
+                <div className='tw-text-sm tw-font-bold'>
+                  {
+                    `${value === 0.0 ? 'Sin descuento' : value.toFixed(2).toString() + '%'}`
+                  }
+                </div>
+              </div>
+            }sx={{  display: 'flex', flexDirection: 'row-reverse', justifyContent: 'space-between', 
+                    paddingLeft: '35px', paddingRight: '25px', marginRight: '0px', backgroundColor: `${color ? 'rgb(255,186,186)' : 'rgb(255,255,255)'}`}} />
+            </>
+          )
+          )
+        }
+      </RadioGroup>
+    </FormControl>
+  )
+}
