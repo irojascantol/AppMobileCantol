@@ -51,9 +51,12 @@ async function getTransportistaPorFiltro(innerParams) {
     let data_body = {...innerParams}
     delete data_body['usuario_codigo']
     try{
-        const response = await axios(`${mainURL}/comercial/ventas/pedido/listatransportistasporfiltro`, {
         // const response = await axiosInstance(`${mainURL}/comercial/ventas/pedido/listatransportistasporfiltro`, {
-            params: innerParams
+        // headers: {
+        //     'Content-Type': 'application/json; charset=utf-8'
+        // }
+        const response = await axios(`${mainURL}/comercial/ventas/pedido/listatransportistasporfiltro`, {
+            params: innerParams,
         });
         if (!!response.data && response.status === 200){
             return response.data;
