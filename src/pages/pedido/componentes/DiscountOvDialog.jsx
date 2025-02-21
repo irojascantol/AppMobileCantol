@@ -24,6 +24,7 @@ function DiscountOvDialog(props) {
    * handle dsct format
    */
   const handleDsctFormat = (obj) => setDsctFormato({...dsctFormato, ...obj})
+  const handleRestoDesc = (obj) => setDsctFormato({...dsctFormato, ...{dsctDoc: {...dsctFormato.dsctDoc, ...{restoDesc: {...dsctFormato.dsctDoc.restoDesc, ...obj}}}}})
 
   /**
    * Controla que salida sea sin clickear backdrop
@@ -49,20 +50,44 @@ function DiscountOvDialog(props) {
   }
   
   const handleFormaPago = (value_) => {
-    handleDsctFormat({dsctDoc: {dsct1: {...dsctFormato.dsctDoc.dsct1}, dsctFP: {value: dsctFormato.dsctDoc.dsctFP.value, enabled: !value_}}})
+    handleDsctFormat({dsctDoc: {
+                      dsct1: {...dsctFormato.dsctDoc.dsct1}, 
+                      dsctFP: {value: dsctFormato.dsctDoc.dsctFP.value, enabled: !value_},
+                      restoDesc: {...dsctFormato.dsctDoc.restoDesc}
+                    }})
   }
 
   const handleDsctCategoria = (event) =>{
     handleDsctFormat({
-        dsctDoc: {dsct1: {
+      dsctDoc: {dsct1: {
         selected: (event.target.value).toString(), 
         min: dsctFormato.dsctDoc.dsct1.min, 
         max: dsctFormato.dsctDoc.dsct1.max,
         default: dsctFormato.dsctDoc.dsct1.default,
         catName: dsctFormato.dsctDoc.dsct1.catName,
       }, 
-        dsctFP: {...dsctFormato.dsctDoc.dsctFP}}
+      restoDesc: {...dsctFormato.dsctDoc.restoDesc},
+      dsctFP: {...dsctFormato.dsctDoc.dsctFP}}
       })
+  }
+
+  const handleDsctRest = (event) => {
+    const { name, value } = event.target;
+    if (name === "marca") {
+      handleRestoDesc({
+        marca:{
+          ...dsctFormato.dsctDoc.restoDesc.marca,
+          selected: value.toString()
+        }
+      })
+    }else if(name === 'familia'){
+      handleRestoDesc({
+        familia:{
+          ...dsctFormato.dsctDoc.restoDesc.familia,
+          selected: value.toString()
+        }
+      })
+    }
   }
 
   /**
@@ -91,8 +116,8 @@ function DiscountOvDialog(props) {
                 { minVal:dsctFormato.dsctDoc.dsct1.min, 
                   maxVal:dsctFormato.dsctDoc.dsct1.max, 
                   step:0.5, 
-                  minIgnore:13.0, 
-                  maxIgnore:15.0, 
+                  // minIgnore:13.0, 
+                  // maxIgnore:15.0, 
                   threshold:dsctFormato.dsctDoc.dsct1.default
                 }).map(([value, color], idx)=>(
                   <>
@@ -129,12 +154,27 @@ function DiscountOvDialog(props) {
             Object.keys(dsctFormato?.dsctDoc?.restoDesc).map((tipo_name)=>(
               <>
                 <Divider sx={{ borderBottomWidth: 3, borderColor: 'gray' }}/>
-                <DialogTitle className='tw-my-0 tw-py-0 tw-text-center tw-text-base'>{`Dsct. x ${tipo_name.charAt(0).toUpperCase() + tipo_name.slice(1)}`} - <span className='tw-text-sm tw-font-semibold'>{dsctFormato?.dsctDoc?.restoDesc[tipo_name].nombre}</span></DialogTitle>
-                <RadioControlComponent dsct_unico={dsctFormato?.dsctDoc?.restoDesc[tipo_name]}/>
+                <DialogTitle className='tw-my-0 tw-py-0 tw-text-center tw-text-base'>
+                  {`Dsct. x ${tipo_name.charAt(0).toUpperCase() + tipo_name.slice(1)}`} -&nbsp;
+                  {tipo_name === 'marca' && (
+                    <img
+                      className="tw-w-7"
+                      src={lgoLogo}
+                      alt="logo" // agrega el logo de la marca LGO
+                    />
+                  )}
+                  {
+                    tipo_name !== 'marca' && (
+                      <span className='tw-text-sm tw-font-semibold'>{dsctFormato?.dsctDoc?.restoDesc[tipo_name].nombre}</span>
+                    )
+                  }
+                </DialogTitle>
+                <RadioControlComponent dsct_unico={dsctFormato?.dsctDoc?.restoDesc[tipo_name]} manejaCambio={handleDsctRest} name={tipo_name}/>
               </>
             ))
         )
       }
+      
 
 
 
@@ -210,26 +250,13 @@ export {DiscountOvDialog}
 
 
 
-function RadioControlComponent ({dsct_unico = {}}){
-  console.log(
-    generarDiscountNv1List(
-      { minVal:dsct_unico.min, 
-        maxVal:dsct_unico.max, 
-        step:0.5,
-        threshold:dsct_unico.dft
-      })
-  )
-
-  return (
-    <div>
-      hola
-    </div>
-  )
+function RadioControlComponent ({dsct_unico = {}, name, manejaCambio}){
   return(
     <FormControl className='tw-h-48 tw-overflow-y-scroll'>
       <RadioGroup 
         value={dsct_unico.selected}
-        onChange={()=>{console.log('Cambia radio')}}
+        onChange={(e)=>{manejaCambio(e)}}
+        name={name}
       >
         {
           generarDiscountNv1List(
@@ -239,16 +266,17 @@ function RadioControlComponent ({dsct_unico = {}}){
             threshold:dsct_unico.dft
           }).map(([value, color], idx)=>(
             <>
-            <FormControlLabel key={(idx+10).toString()} value={value.toString()} control={<Radio />} label={
-              <div className={`tw-w-[103px] tw-flex tw-justify-${value >= 15.5 ? 'between': 'center'} tw-items-center`}>
-                { value >= 15.5 ? (
+            <FormControlLabel key={(idx+30).toString()} value={value.toString()} control={<Radio />} label={
+              // <div className={`tw-w-[103px] tw-flex tw-justify-${value >= 15.5 ? 'between': 'center'} tw-items-center`}>
+              <div className={`tw-w-[103px] tw-flex tw-justify-center tw-items-center`}>
+                {/* { value >= 15.5 ? (
                   <img
                     className="tw-w-7"
                     src={lgoLogo}
                     alt="logo" // agrega el logo de la marca LGO
                   />
                 ) : (<p>&nbsp;</p>)
-                }
+                } */}
                 <div className='tw-text-sm tw-font-bold'>
                   {
                     `${value === 0.0 ? 'Sin descuento' : value.toFixed(2).toString() + '%'}`

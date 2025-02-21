@@ -283,10 +283,14 @@ function NuevoPedidoProductos(){
 
     //activa solo cuando se modifica la tabla productos
     useEffect(()=>{
-        !!largo_productos && calcularTotal()
-        !largo_productos && setearCero()
-        //desactiva el boton de eliminar
-        !largo_productos && setDeleteMode(false)
+        // actualizarDescuentoLinea() //Actualiza descuentos de la linea en tiempo real
+
+
+
+        // !!largo_productos && calcularTotal()
+        // !largo_productos && setearCero()
+        // //desactiva el boton de eliminar
+        // !largo_productos && setDeleteMode(false)
     }, [nuevoPedido.products, nuevoPedido.montos.descuento])
 
     //aplica el descuento por anticipo y nota de credito
@@ -303,12 +307,13 @@ function NuevoPedidoProductos(){
             setIsFirstRender(false);
             return; // No hacer nada en el primer renderizado
           }else{
-              eliminar_Dsct_Bonificado(false, dsctFormato?.dsctDoc?.dsct1?.selected, false)
+            //   eliminar_Dsct_Bonificado(false, dsctFormato?.dsctDoc?.dsct1?.selected, false)
+              eliminar_Dsct_Bonificado(false, 0.0, false)
           }
     }, [isClientChanged.active])
 
     //Despues de aplicar descuento en DiscountOvDialog (APLICAR!!!!)
-    //Ahora tambien va pasar cuando cambiemos el c
+    //Ahora tambien va pasar cuando cambiemos el cliente
     useEffect(()=>{
         if(!open.show && open.accepted){
             console.log('Aplica descuento')
@@ -363,67 +368,196 @@ function NuevoPedidoProductos(){
         }
     }
 
+    
+    const actualizarDescuentoLinea = () => {
+        let ghost_products = [...nuevoPedido.products]
+        //Descuento nivel 1 - Categoria cliente
+        let dsctCateCliente = !!dsctFormato.dsctDoc.dsct1.selected ? parseFloat(dsctFormato.dsctDoc.dsct1.selected) : 0.0
+
+        let dsctMarcaProducto = null
+        let marca_nombre = null
+        let dsctFamiliaProducto = null
+        let familia_nombre = null
+        
+
+        console.log(dsctFormato.dsctDoc.restoDesc)
+        //Descuento nivel 1 - Por marca o familia
+        if('marca' in dsctFormato.dsctDoc.restoDesc)
+            {
+                dsctMarcaProducto = parseFloat(dsctFormato.dsctDoc.restoDesc.marca.selected) || 0.0
+                marca_nombre = dsctFormato?.dsctDoc?.restoDesc?.marca?.nombre
+            }
+        if('familia' in dsctFormato.dsctDoc.restoDesc)
+            {
+                dsctFamiliaProducto = parseFloat(dsctFormato.dsctDoc.restoDesc.familia.selected) || 0.0
+                familia_nombre = dsctFormato?.dsctDoc?.restoDesc?.familia?.nombre
+            }
+
+        ghost_products.forEach((item, index) => {
+                            
+            if(!('tipo' in item) && ('marca' in item)){
+                // if ('marca' in item)// se agregar el descuento nivel 1, primero evalua por marca y luego por categoria de cliente
+                // item.descuento = objRes?.total_descuento_n1 || "0";
+                if (item?.marca === marca_nombre){
+                    // item.descuento = Number(objRes?.total_descuento_n1 || 0);
+                    // item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
+                    item.descuento = null;
+                    item.dsct_porcentaje = dsctMarcaProducto;
+                }
+                else{
+                    // item.descuento = Number(objRes?.total_descuento_n1 || 0);
+                    // item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
+                    item.descuento = null;
+                    item.dsct_porcentaje = dsctCateCliente;
+                }
+            }
+            else{
+                // item.descuento = Number(objRes?.total_descuento_n1 || 0);
+                // item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
+                item.descuento = null;
+                item.dsct_porcentaje = dsctCateCliente;
+            }
+                
+            if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
+                    // item.descuento2 = objRes?.total_descuento_n2 || "0";
+                    // item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
+                    item.descuento2 = null;
+                    item.dsct_porcentaje2 = 0.0;
+            }
+
+            //desactivar promocione y avisas para que lo vuelvan aplicar
+
+            // if(!!dsctFormato?.promociones?.enabled){   ///aqui solo se aplica las promociones de nivel2
+            //     if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
+            //             // item.descuento2 = objRes?.total_descuento_n2 || "0";
+            //             item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
+            //             item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
+            //     }
+            // }else{
+            //     if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
+            //             // item.descuento2 = objRes?.total_descuento_n2 || "0";
+            //             item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
+            //             item.dsct_porcentaje2 = 0.0;
+            //     }
+            // }                                       ///aqui termina las promociones de nivel 2
+            })
+
+        console.log(ghost_products)
+    }    
+    
+    
     const aplicarDescuento = async() => {
         //1-Primero, solo elimina descuentos, no bonificados
         //SIRVE PARA DESCUENTOS DE PROMOCIONES
-            // eliminar_Dsct_Bonificado(true)
-            //2-Aplica descuento al documento
-            let dsctCateCliente = !!dsctFormato.dsctDoc.dsct1.selected ? parseFloat(dsctFormato.dsctDoc.dsct1.selected) : 0.0
-            let dsctCondPago = !!dsctFormato.dsctDoc.dsctFP.enabled ? dsctFormato.dsctDoc.dsctFP.value : 0.0
-            // let dsctDocTotal = dsctCateCliente + dsctCondPago  // DSCT CATEGORIA A NIVEL DE DOCUMENTO
-            let dsctDocTotal = dsctCondPago //aqui desactivamos el descuento por categoria, solo queda por FP
+        // eliminar_Dsct_Bonificado(true)
+        //2-Aplica descuento al documento
 
-            // handleNewSaleMontos({descuento: dsctDocTotal})
+        //Descuento nivel 1 - Categoria cliente
+        let dsctCateCliente = !!dsctFormato.dsctDoc.dsct1.selected ? parseFloat(dsctFormato.dsctDoc.dsct1.selected) : 0.0
+        let dsctMarcaProducto = null
+        let marca_nombre = null
+        let dsctFamiliaProducto = null
+        let familia_nombre = null
+        
+        //Descuento nivel 1 - Por marca o familia
+        if('marca' in dsctFormato.dsctDoc.restoDesc)
+            {
+                dsctMarcaProducto = parseFloat(dsctFormato.dsctDoc.restoDesc.marca.selected) || 0.0
+                marca_nombre = dsctFormato?.dsctDoc?.restoDesc?.marca?.nombre
+            }
+        if('familia' in dsctFormato.dsctDoc.restoDesc)
+            {
+                dsctFamiliaProducto = parseFloat(dsctFormato.dsctDoc.restoDesc.familia.selected) || 0.0
+                familia_nombre = dsctFormato?.dsctDoc?.restoDesc?.familia?.nombre
+            }
+
+        //Descuento condicion de pago
+        let dsctCondPago = !!dsctFormato.dsctDoc.dsctFP.enabled ? dsctFormato.dsctDoc.dsctFP.value : 0.0
+
+        // let dsctDocTotal = dsctCateCliente + dsctCondPago  // DSCT CATEGORIA A NIVEL DE DOCUMENTO
+        let dsctDocTotal = dsctCondPago //Descuento documento
+
+        // handleNewSaleMontos({descuento: dsctDocTotal})
 
         //3-Aplica promociones al detalle de productos
-            if(!!dsctFormato?.promociones?.enabled){
-                let response = null
-                //obtener cuerpo para aplicar descuentos
-                let productos_ = nuevoPedido?.products?.filter((x)=>(!('tipo' in x))) // filtra los que no son bonificados
-                let requestBody = {
-                    codigo_cliente: nuevoPedido?.cliente_codigo,
-                    ubicacion_cliente: Number(nuevoPedido?.ubicacion),
-                    grupo_familiar:  nuevoPedido?.grupo_familia,
-                    fecha_promocion: getCurrentDate(),
-                    productos: productos_?.map((x)=>({
-                        "codigo_articulo": x?.codigo,
-                        "codigo_familia": x?.codigo_familia,
-                        "codigo_subfamilia": x?.codigo_subfamilia,
-                        "cantidad": x?.cantidad,
-                        "precio": x?.precio,
-                    }))}
+            // if(!!dsctFormato?.promociones?.enabled){
+            let response = null
+            //obtener cuerpo para aplicar descuentos
+            let productos_ = nuevoPedido?.products?.filter((x)=>(!('tipo' in x))) // filtra los que no son bonificados
+            let requestBody = {
+                codigo_cliente: nuevoPedido?.cliente_codigo,
+                ubicacion_cliente: Number(nuevoPedido?.ubicacion),
+                grupo_familiar:  nuevoPedido?.grupo_familia,
+                fecha_promocion: getCurrentDate(),
+                productos: productos_?.map((x)=>({
+                    "codigo_articulo": x?.codigo,
+                    "codigo_familia": x?.codigo_familia,
+                    "codigo_subfamilia": x?.codigo_subfamilia,
+                    "cantidad": x?.cantidad,
+                    "precio": x?.precio,
+                }))}
+    
+            //consulta descuentos solo si hay productos en lista
+            //descuento: es el total descuento
+            //dsct_porcentaje: el el porcentaje % por und
         
-                //consulta descuentos solo si hay productos en lista
-                //descuento: es el total descuento
-                //dsct_porcentaje: el el porcentaje % por und
-            
-                if(!!(productos_?.length)){
-                    response = await postaplicarDescuento(requestBody)
-                    response === 406 && handleShow()
-                    if(response !== 406 && !!response?.length){
-                        // //aca se agrega la actualizacion
-                        let ghost_products = [...nuevoPedido?.products]
-                            for( const objRes of response){
-                                ghost_products.forEach((item, index) => {
-                                    if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
-                                        // item.descuento = objRes?.total_descuento_n1 || "0";
-                                        item.descuento = Number(objRes?.total_descuento_n1 || 0);
-                                        item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
+            if(!!(productos_?.length)){
+                response = await postaplicarDescuento(requestBody)
+                response === 406 && handleShow()
+                if(response !== 406 && !!response?.length){
+                    console.log('Ingresa 1')
+                    // //aca se agrega la actualizacion
+                    let ghost_products = [...nuevoPedido?.products]
+                    for( const objRes of response){
+                        console.log('Ingresa 2')
+                        ghost_products.forEach((item, index) => {
+                                
+                            if(!('tipo' in item) && ('marca' in item)){
+                                // if ('marca' in item)// se agregar el descuento nivel 1, primero evalua por marca y luego por categoria de cliente
+                                // item.descuento = objRes?.total_descuento_n1 || "0";
+                                if (item?.marca === marca_nombre){
+                                    item.descuento = Number(objRes?.total_descuento_n1 || 0);
+                                    // item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
+                                    item.dsct_porcentaje = dsctMarcaProducto;
+                                }
+                                else{
+                                    item.descuento = Number(objRes?.total_descuento_n1 || 0);
+                                    // item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
+                                    item.dsct_porcentaje = dsctCateCliente;
+                                }
+                            }
+                            else{
+                                item.descuento = Number(objRes?.total_descuento_n1 || 0);
+                                // item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
+                                item.dsct_porcentaje = dsctCateCliente;
+                            }
+                                
+                            if(!!dsctFormato?.promociones?.enabled){   ///aqui solo se aplica las promociones de nivel2
+                                if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
                                         // item.descuento2 = objRes?.total_descuento_n2 || "0";
                                         item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
                                         item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
-                                        // item.dsct_categoria = 
-                                    }
-                                })
-                            }
-                        //el calculo desl descuento subtotal va en la parte del  map
-                        handleNewSaleOrder({products: [...ghost_products], montos: {...nuevoPedido?.montos, ...{descuento: dsctDocTotal}}})
-                        // isClientChanged.dsct ? handleClienteChange({active: false}): handleClienteChange({dsct: true})
-                    }
+                                }
+                            }else{
+                                if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
+                                        // item.descuento2 = objRes?.total_descuento_n2 || "0";
+                                        item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
+                                        item.dsct_porcentaje2 = 0.0;
+                                }
+                            }                                       ///aqui termina las promociones de nivel 2
+                            })
+                        }
+
+                    console.log(ghost_products)
+                    
+                    //el calculo desl descuento subtotal va en la parte del  map
+                    handleNewSaleOrder({products: [...ghost_products], montos: {...nuevoPedido?.montos, ...{descuento: dsctDocTotal}}})
+                    // isClientChanged.dsct ? handleClienteChange({active: false}): handleClienteChange({dsct: true})
                 }
-            }else{
-                eliminar_Dsct_Bonificado(true, dsctDocTotal)
             }
+            // }else{
+            //     eliminar_Dsct_Bonificado(true, dsctDocTotal)
+            // }
     }
 
     const calcularValorVenta = () => {
@@ -522,8 +656,6 @@ function NuevoPedidoProductos(){
         // if (largo_productos){
             let [sum_valorventa, unit, dsctProductos] = calcularValorVenta();
             if (!!sum_valorventa && !!unit){
-                // // console.log("Ingresa a qui")
-                // // console.log(nuevoPedido.products)
                 let sum_descuento = calcularDescuento(sum_valorventa - dsctProductos);
                 let sum_impuesto = calcularImpuestos();
                 let total = sum_valorventa - sum_descuento - dsctProductos + sum_impuesto;
@@ -566,21 +698,33 @@ function NuevoPedidoProductos(){
          */
         const eliminar_Dsct_Bonificado = (soloDescuento=false, dsctTotal=undefined, isInit = true) => {
             //elimina descuento de no bonificados
-            let itemsSinDescuento = nuevoPedido?.products.map((item)=>(!('tipo' in item)?{...item, ...{descuento: 0, dsct_porcentaje: 0, descuento2: 0, dsct_porcentaje2: 0}}:{...item}))
+            let itemsSinDescuento = nuevoPedido?.products.map((item)=>(!('tipo' in item)?{...item, ...{descuento: 0.0, dsct_porcentaje: 0.0, descuento2: 0.0, dsct_porcentaje2: 0.0}}:{...item}))
             let itemsNoBonificados = []
             if (!soloDescuento){
                     itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item)) //Elimina bonificados
                     if(isInit){
+                        
+                        let cero_resto = {...dsctFormato.dsctDoc.restoDesc}  //setea cero resto descuentos
+                        for (let key in cero_resto) {
+                            if (cero_resto[key].hasOwnProperty('selected')) {
+                                cero_resto[key].selected = 0;
+                            }
+                          }
+
                         handleDescuento({
                         dsctDoc:{
                             dsct1: {...dsctFormato.dsctDoc.dsct1, ...{selected: 0.0}},
-                            dsctFP: {...dsctFormato.dsctDoc.dsctFP, ...{enabled: false}}},
-                            promociones: {enabled: false}})
+                            dsctFP: {...dsctFormato.dsctDoc.dsctFP, ...{enabled: false}},
+                            restoDesc: cero_resto
+                        },
+                            promociones: {enabled: false}},
+                        )
                     }
             }else{
                 //Mantiene toda la lista completa, bonificados y no bonificados
                 itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item) || !!('tipo' in item))
             }
+
             handleNewSaleOrder({products: [...itemsNoBonificados], montos: {...nuevoPedido?.montos, ...{descuento: dsctTotal}}})
             // if(!!dsctTotal){ //recibe dsctTotal desde aplicarDescuento
             // }else{
@@ -636,12 +780,52 @@ function NuevoPedidoProductos(){
                         ):(
                             nuevoPedido?.products.map((itx, index) => (
                                 // <ListGroup.Item key={(index + 4).toString()} as="li" className="d-flex tw-flex-row tw-justify-start tw-gap-2 tw-pl-1 product_card tw-relative" style={{width: 'calc(100% - 20px);'}} variant="no style">
-                                <ListGroup.Item key={(index + 4).toString()} as="li" className="d-flex tw-flex-row tw-rounded-md tw-justify-start tw-gap-2 tw-pl-1 product_card tw-relative" style={{width: 'calc(100% - 5px)'}} variant="no style">
+                                <ListGroup.Item key={(index + 4).toString()} as="li" className="d-flex tw-flex-row tw-rounded-md tw-justify-start tw-gap-0 tw-pl-1 product_card tw-relative" style={{width: 'calc(100% - 5px)'}} variant="no style">
                                     <div className='tw-w-full tw-h-24'>
                                         <div className='tw-text-sm tw-font-medium tw-h-10'>{itx?.descripcion} - {itx?.codigo}</div>
+                                        
+
+
                                         <div className='tw-text-base'>
+                                            <span className='tw-text-sm'>P. Lista:</span>&nbsp;
+                                            <span className='tw-text-xs'>{itx?.unidad_moneda}</span> 
+                                            {addOneDecimal(itx?.precio)}
+                                        </div>
+                                        <div className='tw-flex tw-justify-between'>
+                                                <div className='tw-text-base'>
+                                                    <span className='tw-text-sm'>P. Venta:</span>&nbsp;
+                                                    <span className='tw-text-xs'>{itx?.unidad_moneda}</span> 
+                                                    {truncate((1.0 - dsctEquiv(itx?.dsct_porcentaje, itx?.dsct_porcentaje2, true)) * itx?.precio, 2)}
+                                                    &nbsp;&nbsp;
+                                                    <span className='tw-text-xs tw-font-semibold'>
+                                                        ({truncate(dsctEquiv(itx?.dsct_porcentaje, itx?.dsct_porcentaje2), 2)}%)
+                                                    </span>
+                                                    {/* {addOneDecimal(itx?.precio)} */}
+                                                
+                                                </div>
+                                                <div className={`tw-text-base tw-flex`}>
+                                                    <div>
+                                                        <span className='tw-text-sm'>Cant:</span>&nbsp;
+                                                    </div>
+                                                    {itx?.tipo === 'bonificado' ? 
+                                                    (
+                                                        <InputNumberSpinner min={0} max={itx?.maxLimit} value={itx?.cantidad} onChange={(action)=>{handleInputSpinner(action, itx?.codigo, itx?.cantidad)}}/>
+                                                    ):
+                                                        (<span>{itx?.cantidad}</span>)
+                                                    }
+                                                </div>
+                                            <div className='tw-text-base'>
+                                                <span className='tw-text-sm'>Subtotal:</span>&nbsp;
+                                                <span className='tw-text-xs'>{itx?.unidad_moneda}</span> 
+                                                {addOneDecimal(truncate(itx?.precio * itx?.cantidad, 2))}
+                                            </div>
+                                        </div>
+
+
+                                        {/* <div className='tw-text-base'>
                                             <span className='tw-text-sm'>Descuento:</span>&nbsp;
-                                            {truncate(dsctEquiv(itx?.dsct_porcentaje, itx?.dsct_porcentaje2), 2)}%</div>
+                                            {truncate(dsctEquiv(itx?.dsct_porcentaje, itx?.dsct_porcentaje2), 2)}%
+                                        </div>
                                         <div className='tw-flex tw-justify-between'>
                                                 <div className='tw-text-base'>
                                                     <span className='tw-text-sm'>Precio:</span>&nbsp;
@@ -664,7 +848,10 @@ function NuevoPedidoProductos(){
                                                 <span className='tw-text-xs'>{itx?.unidad_moneda}</span> 
                                                 {addOneDecimal(truncate(itx?.precio * itx?.cantidad, 2))}
                                             </div>
-                                        </div>
+                                        </div> */}
+
+
+
                                         <div className={`tw-absolute button-4 tw-right-[-0px] tw-top-[-0px] tw-px-0 tw-py-0 tw-bg-black tw-text-white item-delete ${!deleteMode? 'tw-invisible tw-opacity-0': 'tw-visible tw-opacity-100'}`} onClick={()=>{eliminarProducto(itx)}}>
                                                 <BsX size={20}/>
                                         </div>
@@ -683,12 +870,13 @@ function NuevoPedidoProductos(){
                 <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.valor_venta), 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
-                {/* <div className='myFontFamily tw-font-medium'>Desct. por producto:</div> */}
-                <div className='myFontFamily tw-font-medium'>Desc. por promoción:</div>
+                {/* <div className='myFontFamily tw-font-medium'>Desct. por promocion:</div> */}
+                <div className='myFontFamily tw-font-medium'>Desc. (Ctg. Cliente + promoción):</div>
                 <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.dsctProductos || 0), 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
-                <div className='myFontFamily tw-font-medium'>Desc. por (F. Pago + Ctg. Cliente):</div>
+                {/* <div className='myFontFamily tw-font-medium'>Desc. por (F. Pago + Ctg. Cliente):</div> */}
+                <div className='myFontFamily tw-font-medium'>Desc. forma de pago:</div>
                 {/* <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.valor_venta)*(nuevoPedido?.montos?.descuento * 0.01), 2)}</d)iv> */}
                 <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.dsctDoc), 2))}</div>
             </ListGroup.Item>

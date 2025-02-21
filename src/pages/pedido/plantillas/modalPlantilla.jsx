@@ -63,30 +63,32 @@ const fillData = {
         canal_familia: {codigo_canal: item?.codigo_canal_cliente, nombre_canal: item?.canal_cliente},
         ubicacion: item?.ubicacion_cliente,
 
-        descuento: {
-            categoria: {
-                nombre: 'REGIONAL',
-                cate_cliente_codigo: '06',
-                min: 11.5,
-                max: 12.5,
-                dft: 11.5
-            },
-            marca: {
-                // cate_cliente_codigo: '06'
-                nombre: 'LGO',
-                min: 15.5,
-                max: 18.5,
-                dft: 15.5,
-            },
-            familia: {
-                // cate_cliente_codigo: '06'
-                nombre: 'SOBREPONER',
-                min: 15.5,
-                max: 18.5,
-                dft: 15.5,
-            }
-        },
-
+        descuento: item?.descuento,
+        
+        // descuento: {
+        //     categoria: {
+        //         nombre: 'REGIONAL',
+        //         cate_cliente_codigo: '06',
+        //         min: 11.5,
+        //         max: 12.5,
+        //         dft: 11.5
+        //     },
+        //     marca: {
+        //         // cate_cliente_codigo: '06'
+        //         nombre: 'LGO',
+        //         min: 15.5,
+        //         max: 18.5,
+        //         dft: 15.5,
+        //     }
+        // },
+        
+        // familia: {
+        //     // cate_cliente_codigo: '06'
+        //     nombre: 'SOBREPONER',
+        //     min: 5.5,
+        //     max: 9.5,
+        //     dft: 5.5,
+        // }
         // dsctMin: item?.minimo || 0.0,
         // dsctMax: item?.maximo || 0.0,
         // dsctCateDefault: item?.dsctCategoria || 0.0,
@@ -211,7 +213,6 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                 setCurrentItem(item)
         }else{alert("El producto ya se encuentra agregado");}
         }else if(buscarModalValues?.operacion === 'Cliente'){
-            console.log(item)
             let tmpCliente = fillData[buscarModalValues?.operacion](item, nuevoPedido)
             
             //obtener por primera vez el descuento por documento
@@ -222,21 +223,21 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                 }
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
 
-
                 //ESTA PARTE DEFINE LAS CONDICIONES INICIALES DE LOS DESCUENTOS QUE NO SON DE CATEGORIA
                 let { categoria, ...restoDesc} = tmpCliente.descuento;
                 // Iterar sobre las propiedades de descuento y agregar el campo "selected"
                 for (let key in restoDesc) {
                     if (restoDesc[key].hasOwnProperty('dft')) {
-                        restoDesc[key].selected = restoDesc[key].dft;
+                        // restoDesc[key].selected = restoDesc[key].dft; //carga descuento por defecto
+                        restoDesc[key].selected = 0.0; //carga por defecto 0 sin descuento
                     }
                 }
-                
-                //Actualiza tres tipos de descuento, categoria cliente, detalle producto y forma de pago
-                handleDescuento({
+
+                console.log({
                     dsctDoc: {
                         dsct1: {
-                            selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
+                            // selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
+                            selected: 0.0,  
                             min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
                             max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
                             catName: tmpCliente?.descuento?.categoria?.nombre || '',
@@ -246,6 +247,27 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                         ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
                         }
                 })
+                
+                //Actualiza tres tipos de descuento, categoria cliente, detalle producto y forma de pago
+ 
+ 
+                handleDescuento({
+                    dsctDoc: {
+                        dsct1: {
+                            // selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
+                            selected: 0.0,  
+                            min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
+                            max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
+                            catName: tmpCliente?.descuento?.categoria?.nombre || '',
+                            default: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
+                        },  //por categoria cliente general
+                        dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
+                        ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
+                        }
+                })
+
+
+
 
                 // handleDescuento({
                 //     dsctDoc: {
@@ -414,13 +436,15 @@ function SelectorCombo({modalValues, handleInputTextModal, handleNewSaleOrder, t
 
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
                 descuentoDoc === 406 && handleClose()
+
                 //formato de llegada {"descuento_documento": valor}
                 //seteo del descuento para todo el documento
                 if (descuentoDoc !== 406 && !!descuentoDoc){
                     let dsctReducir = dsctFormato?.dsctDoc?.dsctFP?.enabled ? dsctFormato?.dsctDoc?.dsctFP?.value : 0
                     handleNewSaleOrder({...tmpObj, 
                         montos: {...modalValues?.data?.montos, 
-                            descuento: (modalValues?.data?.montos?.descuento - dsctReducir)}}); //Quita descuento F. Pago al descuento total documento, mantiene por categoria
+                        descuento: (modalValues?.data?.montos?.descuento - dsctReducir)}}); //Quita descuento F. Pago al descuento total documento, mantiene por categoria
+                        // descuento: (dsctReducir)}}); //Quita descuento F. Pago al descuento total documento, mantiene por categoria
                     handleDescuentoDoc({dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}})
                     handleInputTextModal({show: false});
                 }else if(descuentoDoc !== 406){
