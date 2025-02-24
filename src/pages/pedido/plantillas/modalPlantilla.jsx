@@ -383,16 +383,11 @@ function IngresarTexto({modalValues, handleInputTextModal, handleNewSaleOrder, t
                         handleNewSaleOrder({comentarios: {...modalValues?.options, vendedor: value.toString().trim()}}); 
                         handleInputTextModal({show: false});
                     }else if(modalValues.operacion === 'agregarProducto'){
-                        handleInputTextModal({show: false, returnedValue: value});
-                        // if(value > modalValues?.options?.stock && !isQuotation){
-                        //     alert('La cantidad debe ser menor al stock')
-                        // }else{
-                        // }
-                        // if(value > modalValues?.options?.stock && !isQuotation){
-                        //     alert('La cantidad debe ser menor al stock')
-                        // }else{
-                        //     handleInputTextModal({show: false, returnedValue: value});
-                        // }
+                        if(value > modalValues?.options?.stock && !isQuotation){
+                            alert('La cantidad debe ser menor al stock')
+                        }else{
+                            handleInputTextModal({show: false, returnedValue: value});
+                        }
                     }else{
                         handleNewSaleOrder({ructransporte: value}); 
                         handleInputTextModal({show: false});

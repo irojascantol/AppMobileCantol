@@ -62,6 +62,7 @@ function ComercialContext({children}) {
     //manejo descuento, nuevo formato 01/02/2025
     const handleDescuento = (obj) => setDsctFormato({...dsctFormato, ...obj});
     const handleDescuentoDoc = (obj) => setDsctFormato({...dsctFormato, dsctDoc: {...dsctFormato.dsctDoc, ...obj}});
+    const handleDescPromocion = (obj) => setDsctFormato({...dsctFormato, promociones: {...obj}});
 
     const handleLogo = (logo_) => setLogo_C(logos[logo_]);
     const handleUser = (name) => setUserName(name);
@@ -122,6 +123,7 @@ function ComercialContext({children}) {
         handleDescuento,
         handleDescuentoDoc,
         handleNewSaleMontos,
+        handleDescPromocion,
         setNuevoPedido
       }
     }>
