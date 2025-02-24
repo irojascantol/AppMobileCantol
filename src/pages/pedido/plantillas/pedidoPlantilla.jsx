@@ -65,6 +65,8 @@ function Rechazado({item}) {
 }
 
 function Facturado({item}) {
+  const pending = useMemo(()=>(<div className='tw-inline-block tw-w-3 tw-h-3 tw-ml-1 tw-bg-yellow-400 tw-relative'><BsTruck color='black' className='tw-absolute tw-bottom-[-4px]'/></div>))
+  
   return (
     <ListGroup.Item
     as="li"
@@ -72,7 +74,7 @@ function Facturado({item}) {
     >
       <div className="ms-2 me-auto">
         <div className="tw-font-semibold">{item.CardName}</div>
-        <div className='text-secondary tw-text-md'>RUC: {item.LicTradNum}</div>
+        <div className='text-secondary tw-text-md'>RUC: {item.LicTradNum} {!!item?.Status && (pending)}</div>
       </div>
       <div className='tw-h-12 tw-flex tw-flex-col tw-justify-between'>
         <Badge bg="secondary" pill>

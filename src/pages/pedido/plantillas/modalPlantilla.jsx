@@ -61,12 +61,38 @@ const fillData = {
         grupo_familia: item.grupo_familia,
         montos: {...nuevoPedido.montos, total_cred_anti: nuevoPedido.montos.total, anticipo: 0, nota_credito: 0},
         canal_familia: {codigo_canal: item?.codigo_canal_cliente, nombre_canal: item?.canal_cliente},
-        // ubicacion: item?.ubicacion_cliente,
-        ubicacion: null,
-        dsctMin: item?.minimo || 0.0,
-        dsctMax: item?.maximo || 0.0,
-        dsctCateDefault: item?.dsctCategoria || 0.0,
-        dsctCateName: item?.categoria_cliente || '',
+        ubicacion: item?.ubicacion_cliente,
+        descuento: item?.descuento,
+        
+        // descuento: {
+        //     categoria: {
+        //         nombre: 'REGIONAL',
+        //         cate_cliente_codigo: '06',
+        //         min: 11.5,
+        //         max: 12.5,
+        //         dft: 11.5
+        //     },
+        //     marca: {
+        //         // cate_cliente_codigo: '06'
+        //         nombre: 'LGO',
+        //         min: 15.5,
+        //         max: 18.5,
+        //         dft: 15.5,
+        //     }
+        // },
+        
+        // familia: {
+        //     // cate_cliente_codigo: '06'
+        //     nombre: 'SOBREPONER',
+        //     min: 5.5,
+        //     max: 9.5,
+        //     dft: 5.5,
+        // }
+        // dsctMin: item?.minimo || 0.0,
+        // dsctMax: item?.maximo || 0.0,
+        // dsctCateDefault: item?.dsctCategoria || 0.0,
+
+        dsctCateName: item?.descuento?.categoria_cliente || '',
         dsctCateCode: item?.categoria_cliente_codigo || null,
         segmentacion_cliente: item?.segmentacion_cliente || null,
         ructransporte: !item?.codigo_transportista ? null : { //aqui se agrega los datos del transportista cuando es zona Lima
@@ -191,6 +217,7 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
 
         }else if(buscarModalValues?.operacion === 'Cliente'){
             let tmpCliente = fillData[buscarModalValues?.operacion](item, nuevoPedido)
+            
             //obtener por primera vez el descuento por documento
             if (!!tmpCliente?.condicionpago[0] && tmpCliente?.canal_familia){
                 let body = {
@@ -198,20 +225,65 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                     codigo_canal_cliente: (tmpCliente?.canal_familia?.codigo_canal).toString(),
                 }
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
+
+                //ESTA PARTE DEFINE LAS CONDICIONES INICIALES DE LOS DESCUENTOS QUE NO SON DE CATEGORIA
+                let { categoria, ...restoDesc} = tmpCliente.descuento;
+                // Iterar sobre las propiedades de descuento y agregar el campo "selected"
+                for (let key in restoDesc) {
+                    if (restoDesc[key].hasOwnProperty('dft')) {
+                        // restoDesc[key].selected = restoDesc[key].dft; //carga descuento por defecto
+                        restoDesc[key].selected = 0.0; //carga por defecto 0 sin descuento
+                    }
+                }
+
+                console.log({
+                    dsctDoc: {
+                        dsct1: {
+                            // selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
+                            selected: 0.0,  
+                            min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
+                            max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
+                            catName: tmpCliente?.descuento?.categoria?.nombre || '',
+                            default: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
+                        },  //por categoria cliente general
+                        dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
+                        ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
+                        }
+                })
                 
-                //Actualiza descuento por forma de pago, tambien descuento minimo y maximo por categoria cliente
+                //Actualiza tres tipos de descuento, categoria cliente, detalle producto y forma de pago
+ 
+ 
                 handleDescuento({
                     dsctDoc: {
                         dsct1: {
-                            selected: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,  
-                            min: parseFloat(tmpCliente?.dsctMin) || 0.0, 
-                            max: parseFloat(tmpCliente?.dsctMax) || 0.0,
-                            catName: tmpCliente?.dsctCateName || '',
-                            default: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,
-                        },  //por categoria cliente
+                            // selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
+                            selected: 0.0,  
+                            min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
+                            max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
+                            catName: tmpCliente?.descuento?.categoria?.nombre || '',
+                            default: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
+                        },  //por categoria cliente general
                         dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
-                            },
+                        ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
+                        }
                 })
+
+
+
+
+                // handleDescuento({
+                //     dsctDoc: {
+                //         dsct1: {
+                //             selected: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,  
+                //             min: parseFloat(tmpCliente?.dsctMin) || 0.0, 
+                //             max: parseFloat(tmpCliente?.dsctMax) || 0.0,
+                //             catName: tmpCliente?.dsctCateName || '',
+                //             default: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,
+                //         },  //por categoria cliente
+                //         dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
+                //             },
+                // })
 
                 descuentoDoc === 406 && handleClose() //Si retorna 406, activa ventana bloqueo 
                 
@@ -362,13 +434,15 @@ function SelectorCombo({modalValues, handleInputTextModal, handleNewSaleOrder, t
 
                 let descuentoDoc = await obtenerDescuentoDocumento(body)
                 descuentoDoc === 406 && handleClose()
+
                 //formato de llegada {"descuento_documento": valor}
                 //seteo del descuento para todo el documento
                 if (descuentoDoc !== 406 && !!descuentoDoc){
                     let dsctReducir = dsctFormato?.dsctDoc?.dsctFP?.enabled ? dsctFormato?.dsctDoc?.dsctFP?.value : 0
                     handleNewSaleOrder({...tmpObj, 
                         montos: {...modalValues?.data?.montos, 
-                            descuento: (modalValues?.data?.montos?.descuento - dsctReducir)}}); //Quita descuento F. Pago al descuento total documento, mantiene por categoria
+                        descuento: (modalValues?.data?.montos?.descuento - dsctReducir)}}); //Quita descuento F. Pago al descuento total documento, mantiene por categoria
+                        // descuento: (dsctReducir)}}); //Quita descuento F. Pago al descuento total documento, mantiene por categoria
                     handleDescuentoDoc({dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}})
                     handleInputTextModal({show: false});
                 }else if(descuentoDoc !== 406){
