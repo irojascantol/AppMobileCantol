@@ -34,15 +34,15 @@ const LoginForm = () => {
     //aqui se tiene validar catpcha con el backend, falta implementar
     // const response = await validarCaptcha(capchaToken)
     
-    let responseJson = undefined;
-    // let responseJson = true;
+    // let responseJson = undefined;
+    let responseJson = true;
 
-    if(capchaToken && inputUsername && inputPassword && inputCompany){
-      setLoading(true);
-      responseJson = await Login(inputUsername, inputPassword, inputCompany);
-      await delay(200);
-      setLoading(false);
-    }
+    setLoading(true);
+    responseJson = await Login(inputUsername, inputPassword, inputCompany);
+    await delay(200);
+    setLoading(false);
+    // if(capchaToken && inputUsername && inputPassword && inputCompany){
+    // }
 
     if (responseJson !== undefined){
       if (!responseJson.detail) {
@@ -139,13 +139,13 @@ const LoginForm = () => {
           />
         </div>
         {!loading ? (
-          // <Button className="w-100 tw-mt-3" variant="dark" type="submit">
-          <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
+          // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
+          <Button className="w-100 tw-mt-3" variant="dark" type="submit">
             <span className="tw-text-sm">INGRESAR</span>
           </Button>
         ) : (
-          // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={false}>
-          <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
+          // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
+          <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={false}>
               <span className="tw-text-sm">INGRESANDO....</span>
           </Button>
         )}
