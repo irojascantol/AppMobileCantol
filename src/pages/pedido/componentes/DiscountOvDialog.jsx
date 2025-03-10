@@ -6,7 +6,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
 import { Checkbox, FormControl, FormControlLabel, ListItemIcon, Radio, RadioGroup } from '@mui/material';
 import { useEffect, useState } from 'react';
-import Button from '@mui/material/Button';
+// import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import { generarDiscountNv1List } from '../utils';
 import Divider from '@mui/material/Divider';
@@ -267,16 +267,7 @@ function RadioControlComponent ({dsct_unico = {}, name, manejaCambio}){
           }).map(([value, color], idx)=>(
             <>
             <FormControlLabel key={(idx+30).toString()} value={value.toString()} control={<Radio />} label={
-              // <div className={`tw-w-[103px] tw-flex tw-justify-${value >= 15.5 ? 'between': 'center'} tw-items-center`}>
               <div className={`tw-w-[103px] tw-flex tw-justify-center tw-items-center`}>
-                {/* { value >= 15.5 ? (
-                  <img
-                    className="tw-w-7"
-                    src={lgoLogo}
-                    alt="logo" // agrega el logo de la marca LGO
-                  />
-                ) : (<p>&nbsp;</p>)
-                } */}
                 <div className='tw-text-sm tw-font-bold'>
                   {
                     `${value === 0.0 ? 'Sin descuento' : value.toFixed(2).toString() + '%'}`

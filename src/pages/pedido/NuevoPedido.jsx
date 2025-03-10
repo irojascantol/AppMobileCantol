@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from 'react'
 import Accordion from 'react-bootstrap/Accordion';
 import { MyListGroup } from './componentes/MyListGroup';
 import '../../style/accordion.css'
-import PedidoModal from '../../componentes/modal/pedidoModal';
+import {PedidoModal, PedidoModal_Oferta} from '../../componentes/modal/pedidoModal';
 import { Anticipo_Credito, BuscarModal, IngresarFecha, IngresarTexto, SelectorCombo , Institucional_Campo } from './plantillas/modalPlantilla';
 import { commercialContext } from '../../context/ComercialContext';
 import { getNuevoPedidoClave, guardarNuevaOferta, guardarNuevoPedido } from '../../services/pedidoService';
@@ -14,6 +14,7 @@ import { makeSaleOrderBody } from './utils';
 import { useNavigate, useParams } from 'react-router-dom';
 import { delay } from '../../utils/delay';
 import { ServerError } from '@azure/msal-browser';
+import { BsGeoAltFill } from 'react-icons/bs';
 // import { delay } from '../../utils/delay';
 
 const tipoModal = {
@@ -61,6 +62,10 @@ export default function NuevoPedido() {
   const tipo_root = useParams().tipo in tipoPedido ? useParams().tipo : null;
   const [isLoading, setIsLoading] = useState(false)
   const [location, setLocation] = useState(false)
+
+  // //aqui se ve el tipo de cotizacion
+  const [showDialogCoti, setShowDialogCoti] = useState(false)
+  
   const recoverOrder = useRef(false)
   const navigate = useNavigate();
 
@@ -113,6 +118,8 @@ export default function NuevoPedido() {
       if(tipo){
         //obtiene clave  mobile y fecha contable
         doFetch();
+        //Activa consulta en cotización
+        tipo  === 'COTIZACIÓN' && setShowDialogCoti(true)
       }else{
         //aqui deberia enviar al apagina 404
         //deberia en condicion de inicial el cuerpo del context
@@ -120,16 +127,15 @@ export default function NuevoPedido() {
       }
     },[tipo])
 
-    // useEffect(()=>{
-    // }, [])
-    
   /**
    * Equivalente a un F5
    */
   const refreshPage = () => {
     window.location.reload()
   };
-  
+
+  // console.log(JSON.stringify(nuevoPedido, null, 2))
+  // console.log(JSON.stringify(nuevoPedido))
   //valida que todos los campos esten correctos OV antes de guardar
   const validarCampos = async () => {
     // verifica si registro cliente
@@ -150,6 +156,8 @@ export default function NuevoPedido() {
                 }
                 setLocation(!!currentLocation) //esto para enviar el cuadrado negro en frond
                 let body = makeSaleOrderBody(nuevoPedido, currentLocation, dsctFormato)
+                // console.log(body)
+                // await delay(2000)
                 const [response, status] = !!tipo_root ? await grabarCuerpo[tipo_root](body): [null, 206];
                 // const [response, status] = ['OV Creada!', 200];
                 // await delay(2000)
@@ -189,7 +197,9 @@ export default function NuevoPedido() {
 
   return (
     <div className='tw-relative'>
-      {/* {console.log(nuevoPedido)} */}
+
+      <PedidoModal_Oferta show={showDialogCoti} handleTipoCoti={(x)=>{setShowDialogCoti(false); handleNewSaleOrder({tipocotizacion: x || null});}}/>
+
       {/* modal buscar cliente y buscar producto */}
       <PedidoModal modalTitle={buscarModalValues.modalTitle} handleClose={()=>handleSearchModal({show: false})} show={buscarModalValues.show}>
         <BuscarModal buscarModalValues={buscarModalValues} handleNewSaleOrder={handleNewSaleOrder} handleCloseModal={()=>handleSearchModal({show: false})} isQuotation={tipo_root==='oferta'}/>
@@ -237,7 +247,13 @@ export default function NuevoPedido() {
       </div>
       {
       isLoading && (<div className='glass_layer'>
-        <h3>{`Grabando ${tipoPedido[tipo_root].toLowerCase()}...${location?'◾':''}`}</h3>
+        <div className='tw-flex tw-justify-center tw-items-start'>
+          <h3>{`Grabando ${tipoPedido[tipo_root].toLowerCase()}...`}</h3>
+          {location && (
+            <div><BsGeoAltFill color='black' size={20}/></div>
+          )}
+        </div>
+
       </div>)
       }
     </div>

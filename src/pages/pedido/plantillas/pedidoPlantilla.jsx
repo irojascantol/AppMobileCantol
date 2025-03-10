@@ -1,8 +1,26 @@
 import React, { useMemo } from 'react'
 import Badge from 'react-bootstrap/Badge';
 import { getHumanDateFormat, getHumanDateReporte } from '../../../utils/humandateformat';
-import { ListGroup } from 'react-bootstrap'
-import { BsBootstrap, BsTruck } from 'react-icons/bs';
+import { Button, ListGroup } from 'react-bootstrap'
+import { BsBootstrap, BsCartCheck, BsCashCoin, BsTruck } from 'react-icons/bs';
+
+let estados_ = {
+  "P": "warning",
+  "A": "success",
+  "R": "danger",
+}
+
+let estados = {
+  "P": 'tw-inline-block tw-w-3 tw-h-3 tw-ml-1 tw-border tw-rounded-sm tw-bg-yellow-400 tw-relative',
+  "A": 'tw-inline-block tw-w-3 tw-h-3 tw-ml-1 tw-border tw-rounded-sm tw-bg-green-600 tw-relative',
+  "R": 'tw-inline-block tw-w-3 tw-h-3 tw-ml-1 tw-border tw-rounded-sm tw-bg-red-600 tw-relative',
+}
+
+// let intensidad = {
+//   "P": "400",
+//   "A": "600",
+//   "R": "600",
+// }
 
 function Pendiente({item}) {
   return (
@@ -32,7 +50,11 @@ function Aprobado({item}) {
     >
       <div className="ms-2 me-auto">
         <div className="tw-font-semibold">{item.CardName}</div>
-        <div className='text-secondary tw-text-md'>RUC: {item.LicTradNum}</div>
+        <div className='tw-flex tw-gap-2 tw-items-center'>
+          <div className='text-secondary tw-text-md'>RUC: {item.LicTradNum}</div>
+          <Button variant={estados_[item?.Status_comercial] || ''} className='tw-w-1 tw-h-5 tw-relative tw-pointer-events-none'><BsCartCheck color='black' className='tw-absolute tw-top-[1px] tw-right-1'/></Button>
+          <Button variant={estados_[item?.Status_creditos] || ''} className='tw-w-1 tw-h-5 tw-relative tw-pointer-events-none'><BsCashCoin color='black' className='tw-absolute tw-top-[4px] tw-right-1'/></Button>
+        </div>
       </div>
       <div className='tw-h-12 tw-flex tw-flex-col tw-justify-between'>
         <Badge bg="secondary" pill>
@@ -65,8 +87,9 @@ function Rechazado({item}) {
 }
 
 function Facturado({item}) {
-  const pending = useMemo(()=>(<div className='tw-inline-block tw-w-3 tw-h-3 tw-ml-1 tw-bg-yellow-400 tw-relative'><BsTruck color='black' className='tw-absolute tw-bottom-[-4px]'/></div>))
-  
+
+  const pending = useMemo(()=>(<div className={estados[item?.Status]}><BsTruck color='black' className='tw-absolute tw-bottom-[-3px]'/></div>))
+
   return (
     <ListGroup.Item
     as="li"

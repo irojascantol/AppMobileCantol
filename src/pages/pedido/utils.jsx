@@ -42,6 +42,7 @@ export function makeSaleOrderBody(saleOrder, location, dsctFormato){
         U_DST_PERCENT: dsctFormato?.dsctDoc?.dsctFP?.enabled ? dsctFormato?.dsctDoc?.dsctFP?.value || 0.0 : 0.0,
         U_MSS_CATESN: saleOrder?.dsctCateCode || null,
         // U_MSSL_SECL: saleOrder?.segmentacion_cliente || null, //segmento del cliente
+        U_DIS_IDCOTI: saleOrder?.tipocotizacion || null,
         DocumentLines: saleOrder?.products?.map((product)=>({
           ItemCode: product?.codigo,
           Quantity: product?.cantidad,

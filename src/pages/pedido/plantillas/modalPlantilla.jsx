@@ -3,7 +3,7 @@ import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Spinner from 'react-bootstrap/Spinner';
 import Accordion from 'react-bootstrap/Accordion';
-import Button from 'react-bootstrap/Button';
+// import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { useAccordionButton } from 'react-bootstrap/AccordionButton';
@@ -14,12 +14,7 @@ import { BsSearch } from 'react-icons/bs';
 import { upSelectedOption } from '../../../utils/array';
 import { commercialContext } from '../../../context/ComercialContext';
 import { getCreditoAnticipo, obtenerDescuentoDocumento } from '../../../services/pedidoService';
-import { useAsyncError } from 'react-router-dom';
-import { mergeComments } from '../utils';
-import ReCAPTCHA from 'react-google-recaptcha';
-import { getCurrentLocation } from '../../../utils/location';
 import { addOneDecimal } from '../../../utils/math';
-import { direccion_entrega_cambio } from '../../../utils/emergencia';
 
 
 const fetchFunctions = {
@@ -63,38 +58,11 @@ const fillData = {
         canal_familia: {codigo_canal: item?.codigo_canal_cliente, nombre_canal: item?.canal_cliente},
         ubicacion: item?.ubicacion_cliente,
         descuento: item?.descuento,
-        
-        // descuento: {
-        //     categoria: {
-        //         nombre: 'REGIONAL',
-        //         cate_cliente_codigo: '06',
-        //         min: 11.5,
-        //         max: 12.5,
-        //         dft: 11.5
-        //     },
-        //     marca: {
-        //         // cate_cliente_codigo: '06'
-        //         nombre: 'LGO',
-        //         min: 15.5,
-        //         max: 18.5,
-        //         dft: 15.5,
-        //     }
-        // },
-        
-        // familia: {
-        //     // cate_cliente_codigo: '06'
-        //     nombre: 'SOBREPONER',
-        //     min: 5.5,
-        //     max: 9.5,
-        //     dft: 5.5,
-        // }
-        // dsctMin: item?.minimo || 0.0,
-        // dsctMax: item?.maximo || 0.0,
-        // dsctCateDefault: item?.dsctCategoria || 0.0,
-
         dsctCateName: item?.descuento?.categoria_cliente || '',
         dsctCateCode: item?.categoria_cliente_codigo || null,
         segmentacion_cliente: item?.segmentacion_cliente || null,
+        fecha_compra: item?.fecha_compra || null,
+        monto_facturado: item?.monto_facturado || null,
         ructransporte: !item?.codigo_transportista ? null : { //aqui se agrega los datos del transportista cuando es zona Lima
             codigo_transporte: item?.codigo_transportista,
             nombre_transporte: item?.nombre_transporte,
@@ -236,29 +204,28 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                     }
                 }
 
-                console.log({
-                    dsctDoc: {
-                        dsct1: {
-                            // selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
-                            selected: 0.0,  
-                            min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
-                            max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
-                            catName: tmpCliente?.descuento?.categoria?.nombre || '',
-                            default: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
-                        },  //por categoria cliente general
-                        dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
-                        ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
-                        }
-                })
-                
                 //Actualiza tres tipos de descuento, categoria cliente, detalle producto y forma de pago
- 
+
+                // console.log({
+                //     dsctDoc: {
+                //         dsct1: {
+                //             // selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
+                //             selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
+                //             min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
+                //             max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
+                //             catName: tmpCliente?.descuento?.categoria?.nombre || '',
+                //             default: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
+                //         },  //por categoria cliente general
+                //         dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
+                //         ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
+                //         }
+                // })
  
                 handleDescuento({
                     dsctDoc: {
                         dsct1: {
                             // selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
-                            selected: 0.0,  
+                            selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
                             min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
                             max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
                             catName: tmpCliente?.descuento?.categoria?.nombre || '',
@@ -268,21 +235,19 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                         ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
                         }
                 })
-
-
-
-
                 // handleDescuento({
                 //     dsctDoc: {
                 //         dsct1: {
-                //             selected: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,  
-                //             min: parseFloat(tmpCliente?.dsctMin) || 0.0, 
-                //             max: parseFloat(tmpCliente?.dsctMax) || 0.0,
-                //             catName: tmpCliente?.dsctCateName || '',
-                //             default: parseFloat(tmpCliente?.dsctCateDefault) || 0.0,
-                //         },  //por categoria cliente
+                //             // selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
+                //             selected: 0.0,  
+                //             min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
+                //             max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
+                //             catName: tmpCliente?.descuento?.categoria?.nombre || '',
+                //             default: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
+                //         },  //por categoria cliente general
                 //         dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
-                //             },
+                //         ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
+                //         }
                 // })
 
                 descuentoDoc === 406 && handleClose() //Si retorna 406, activa ventana bloqueo 
@@ -386,11 +351,17 @@ function IngresarTexto({modalValues, handleInputTextModal, handleNewSaleOrder, t
                         handleNewSaleOrder({comentarios: {...modalValues?.options, vendedor: value.toString().trim()}}); 
                         handleInputTextModal({show: false});
                     }else if(modalValues.operacion === 'agregarProducto'){
+
+                        //verifica si pedido es mayor al stock y si no es cotizacion
                         if(value > modalValues?.options?.stock && !isQuotation){
                             alert('La cantidad debe ser menor al stock')
                         }else{
-                            handleInputTextModal({show: false, returnedValue: value});
-                        }
+                            if(Number(value)<1)
+                                // verifica que no se negativo
+                                alert('La cantidad no debe ser menor a 1')
+                            else
+                                handleInputTextModal({show: false, returnedValue: value});
+                            }
                     }else{
                         handleNewSaleOrder({ructransporte: value}); 
                         handleInputTextModal({show: false});
@@ -580,76 +551,5 @@ function Institucional_Campo(params){
         </ListGroup>
     )
 }
-
-// // function Final_Pedido({
-// //     nuevopedido,
-// //     modalValues,
-// //     handleInputTextModal,
-// //     handleNewSaleOrder,
-// // }){
-    // const guardarOV = async () => {
-        //obtiene latitud y longitud
-        // let currentLocation = await getCurrentLocation();
-        // //crea cuerpo de post para enviar al SL
-        // let body = {
-        //     CardCode: nuevopedido?.cliente_codigo,
-        //     DocDueDate: nuevopedido?.fentrega,
-        //     U_MSSM_CLM: nuevopedido?.numero,
-        //     DiscountPercent: nuevopedido?.montos?.descuento || 0,
-        //     Comments: mergeComments(nuevopedido?.comentarios.vendedor, nuevopedido?.comentarios.nota_anticipo),
-        //     PaymentGroupCode: nuevopedido?.condicionpago[0]?.PaymentGroupCode,
-        //     FederalTaxID: nuevopedido?.ruc || '',
-        //     ShipToCode: nuevopedido?.direccionentrega[0]?.direccion_codigo || '',
-        //     U_MSSL_RTR: nuevopedido?.ructransporte?.documento_transporte || '',
-        //     U_MSSF_CEX1: nuevopedido?.institucional?.cmp1,
-        //     U_MSSF_CEX2: nuevopedido?.institucional?.cmp2,
-        //     U_MSSF_CEX3: nuevopedido?.institucional?.cmp3,
-        //     U_MSSF_ORDC: nuevopedido?.institucional?.oc,
-        //     grupo_familia: nuevopedido?.grupo_familia,
-        //     ubicacion: nuevopedido?.ubicacion,
-        //     U_DIS_LATITU: currentLocation?.latitud?.toString() || null,
-        //     U_DIS_LONGIT: currentLocation?.longitud?.toString() || null,
-        //     DocumentLines: nuevopedido?.products?.map((product)=>({
-        //       ItemCode: product?.codigo,
-        //       Quantity: product?.cantidad,
-        //       TaxCode: product?.impuesto?.codigo,
-        //       UnitPrice: product?.precio,
-        //       DiscountPercent: product?.dsct_porcentaje,
-        //       U_MSSC_NV1: product?.dsct_porcentaje,
-        //       U_MSSC_NV2: 0,
-        //       U_MSSC_NV3: 0,
-        //       U_MSSC_DSC: product?.dsct_porcentaje,
-        //       U_MSS_ITEMBONIF: ('tipo' in product)?'Y':'N',
-        //       U_MSSC_BONI: ('tipo' in product)?'Y':'N',
-        //     }))
-        // }
-// //         console.log(body)
-// //         const response = await guardarNuevoPedido(body);
-// //     }
-// //     // funcion para el catpcha
-
-// //     function onChange(value) {
-// //       console.log("Captcha value:", value);
-// //     }
-
-// //     return(
-// //         <>
-// //         <div className='tw-h-20'>
-// //             <ReCAPTCHA
-// //               sitekey="6Lfiy1MqAAAAAHcepIzS3inu4JEisDbyKWfaXuDp"
-// //               onChange={onChange}
-// //               style={{transform: 'scale(.89)', transformOrigin: '0 0'}}
-// //             />,
-// //         </div>
-// //         <div>
-// //             <button className='button-14 tw-w-full tw-h-10 tw-my-4 tw-font-sans tw-font-medium' disabled={false} style={{margin: '0 auto'}} onClick={guardarOV}>
-// //                 Validar Operación
-// //             </button>
-// //         </div>
-// //         </>
-// //     )
-// // }
-
-
 
 export {BuscarModal, IngresarTexto, IngresarFecha, SelectorCombo, Anticipo_Credito, Institucional_Campo}

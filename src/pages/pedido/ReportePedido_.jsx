@@ -6,7 +6,6 @@ import { commercialContext } from '../../context/ComercialContext';
 import { decodeJWT } from '../../utils/decode';
 import { PedidoCarusel } from './componentes/PedidoCarusel';
 import Carousel from 'react-bootstrap/Carousel';
-import DetallePedido from './DetallePedido';
 
 const pages = {
     lista: 0,
@@ -64,7 +63,3 @@ export default function ReportePedido_() {
         </div>
     )
 }
-
-// {/* <PedidoCarusel indexPedidoCarusel={indexPedidoCarusel}>
-// </PedidoCarusel> */}
-// {/* <DetallePedido itemSelected={itemSelected} tipoPedido={params?.reporte}/> */}

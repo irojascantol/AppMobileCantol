@@ -84,6 +84,24 @@ function NuevoPedidoCabecera({data}) {
             <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "telefono")}&nbsp;`}}/>
             </div>
         </ListGroup.Item>
+
+        {!!nuevoPedido?.monto_facturado && (
+            <ListGroup.Item
+                as="li"
+                className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1"
+                variant="no style"
+                >
+                <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
+                <div className="header_section_title tw-text-blue-700 tw-font-bold">Última Compra:</div>
+                <div className='tw-flex tw-items-center'>
+                    <span>Fecha:&nbsp;<span className='tw-text-blue-700 tw-font-bold tw-text-sm'>{nuevoPedido?.fecha_compra}</span></span>
+                    &nbsp;
+                    <span>|&nbsp;Monto:&nbsp;<span className='tw-text-blue-700 tw-font-bold tw-text-sm'>S/. {nuevoPedido?.monto_facturado?.toLocaleString()}</span></span>
+                </div>
+                </div>
+            </ListGroup.Item>
+        )}
+
         <ListGroup.Item
             as="li"
             className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1"
@@ -289,22 +307,12 @@ function NuevoPedidoProductos(){
 
     //activa solo cuando se modifica la tabla productos
     useEffect(()=>{
-        // if (items.length > prevLengthRef.current) {
-            //     // Esta función se ejecuta solo cuando un item se agrega (longitud crece)
-            //     console.log('Item agregado, lista actualizada:', items);
-            // }
-            
-        // // Actualizamos la longitud previa para la próxima comparación
-        // prevLengthRef.current = items.length;
-        
         if (nuevoPedido?.products?.length > prevLengthRef.current)
             actualizarDescuentoLinea() //Actualiza descuentos de la linea en tiempo real
-
         !!largo_productos && calcularTotal()
         !largo_productos && setearCero()
         //desactiva el boton de eliminar
         !largo_productos && setDeleteMode(false)
-        
         prevLengthRef.current = nuevoPedido?.products?.length;
 
     }, [nuevoPedido.products, nuevoPedido.montos.descuento])
@@ -318,15 +326,27 @@ function NuevoPedidoProductos(){
     }, [modalValues.returnedValue])
 
     //quita descuento y bonificacion cuando cambia cliente
+    // !!!!! SE ESTA CAMBIANDO CONDICION PARA QUE NO QUITE DESCUENTOS EN CASO CAMBIE CLIENTE
     useEffect(()=>{
         if (isFirstRender) {
             setIsFirstRender(false);
             return; // No hacer nada en el primer renderizado
-          }else{
-            //   eliminar_Dsct_Bonificado(false, dsctFormato?.dsctDoc?.dsct1?.selected, false)
-              eliminar_Dsct_Bonificado(false, 0.0, false)
-          }
+        }else{
+            actualizarDescuentoLinea() //Actualiza descuentos de la linea en tiempo real
+            !!largo_productos && calcularTotal()
+            }
     }, [isClientChanged.active])
+    
+    //quita descuento y bonificacion cuando cambia cliente
+    // useEffect(()=>{
+    //     if (isFirstRender) {
+    //         setIsFirstRender(false);
+    //         return; // No hacer nada en el primer renderizado
+    //       }else{
+    //         //   eliminar_Dsct_Bonificado(false, dsctFormato?.dsctDoc?.dsct1?.selected, false)
+    //           eliminar_Dsct_Bonificado(false, 0.0, false)
+    //       }
+    // }, [isClientChanged.active])
 
     //Despues de aplicar descuento en DiscountOvDialog (APLICAR!!!!)
     //Ahora tambien va pasar cuando cambiemos el cliente

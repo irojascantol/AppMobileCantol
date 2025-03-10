@@ -4,6 +4,7 @@ import Tabs from 'react-bootstrap/Tabs';
 // import { Route, Routes, Link, useLocation } from 'react-router-dom';
 import { commercialContext } from '../../../context/ComercialContext';
 import { useContext } from 'react';
+import '../../../style/MyTabPedido.css'
 
 // const handleKeyDown = (event) => {
 //   // Disable arrow key navigation
@@ -24,7 +25,7 @@ export default function MyTabPedido({components = []}) {
       activeKey={tabActivePedido}
       onSelect={(tab)=>handleTabPedido(tab)}
       id="uncontrolled-tab-example"
-      className="mb-3"
+      className="mb-0"
     >
           <Tab eventKey="general" title="General">
               {components[0]}

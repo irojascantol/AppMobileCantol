@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import Card from 'react-bootstrap/Card';
 import '../../style/accordion.css'
 import { SearchClientButton } from './Componentes/botones';
-import PedidoModal from '../../componentes/modal/pedidoModal';
+import {PedidoModal} from '../../componentes/modal/pedidoModal';
 import { BuscarModal } from '../pedido/plantillas/modalPlantilla';
 import { getEstadoCuentaCliente } from '../../services/clienteService';
 import { CuentaEstadoCard } from './Componentes/tabla';
