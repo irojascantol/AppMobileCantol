@@ -1,21 +1,22 @@
+// import Button from 'react-bootstrap/Button';
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Spinner from 'react-bootstrap/Spinner';
 import Accordion from 'react-bootstrap/Accordion';
-// import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { useAccordionButton } from 'react-bootstrap/AccordionButton';
 import { useDebounce } from 'use-debounce';
 import { getClientePorFiltro, getProductoPorFiltro, getTransportistaPorFiltro } from '../../../services/clienteService';
 import { decodeJWT } from '../../../utils/decode';
-import { BsSearch } from 'react-icons/bs';
+import { BsCheckCircle, BsSearch } from 'react-icons/bs';
 import { upSelectedOption } from '../../../utils/array';
 import { commercialContext } from '../../../context/ComercialContext';
 import { getCreditoAnticipo, obtenerDescuentoDocumento } from '../../../services/pedidoService';
 import { addOneDecimal } from '../../../utils/math';
-
+import { Button } from 'react-bootstrap';
+import { useSnackbar } from 'notistack';
 
 const fetchFunctions = {
     Cliente: (body)=>getClientePorFiltro(body),
@@ -29,8 +30,11 @@ const body = {
                 <div className='text-secondary tw-text-sm'>{item.numero_documento}</div></>),
     SoloCliente: (item)=>(<><div className="tw-font-medium tw-text-md">{item.razon_social}</div>
                 <div className='text-secondary tw-text-sm'>{item.numero_documento}</div></>),
-    Producto: (item, isQuotation)=>(<>
-                <div className="tw-font-medium tw-text-sm">{item?.descripcion}</div>
+    Producto: (item, isQuotation, isSelected = false)=>(<>
+                <div className='tw-flex tw-gap-1'>
+                    <div className="tw-font-medium tw-text-sm">{item?.descripcion}</div>
+                    {isSelected && <div><BsCheckCircle className='tw-flex tw-flex-col bg-success tw-rounded-lg' color='white'/></div>}
+                </div>
                 <div className='text-secondary tw-font-medium tw-text-sm'>{item.codigo}</div>
                 <div className='tw-flex tw-justify-between'>
                     <div className='text-secondary tw-font-medium tw-text-sm'>Precio: <span className='text-dark'>{item?.unidad_moneda} {item.precio}</span></div>
@@ -76,9 +80,12 @@ const fillData = {
         ruc: item.numero_documento,
         razonsocial: item.razon_social,
     }),
-    Producto: (item, products, nuevoPedido)=>{
-        return {products: [...products, item]}
+    Producto: (items, products, nuevoPedido)=>{
+        return {products: [...products].concat(items)}
     },
+    // Producto: (item, products, nuevoPedido)=>{
+    //     return {products: [...products, item]}
+    // },
     Transportista: (item)=>({
         ructransporte: {
             codigo_transporte: item?.codigo_trasnportista,
@@ -130,10 +137,20 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
     const [dataSearch, setDataSearch ] = useState([]);
     const [textFilter, setTextFilter ] = useState('');
     const [isSpinner,  setIsSpinner] = useState(false);
-    const [currentItem, setCurrentItem] = useState(null);
+
+    //Items retenidos para seleccion masiva
+    const [heldItems, setHeldItems]  = useState([]); 
+
+
     const [debounceTextFilter] = useDebounce(textFilter, 500);
     const {handleInputTextModal, showInputTextModal, nuevoPedido, isClientChanged, handleClienteChange, handleClose, dsctFormato, handleDescuento} = useContext(commercialContext)
     const prevState = useRef(false)
+
+    const { enqueueSnackbar } = useSnackbar();
+
+    const imprimir_mensaje = (itemName, variant) => {
+        enqueueSnackbar(itemName, { variant, autoHideDuration: 1000 });
+    }
 
     useEffect(()=>{
         const doFetch = async () => {
@@ -159,29 +176,35 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
         doFetch()
     },[debounceTextFilter])
 
-
-    //aqui se define la cantidad del producto seleccionado
-    useEffect(()=>{
-        if (Number(showInputTextModal.returnedValue) > 0){
-            handleNewSaleOrder(fillData[buscarModalValues?.operacion]({...currentItem, cantidad: Number(showInputTextModal.returnedValue), descuento: 0, dsct_porcentaje: 0}, buscarModalValues?.options[0]?.products))
-            handleInputTextModal({returnedValue: null}) //deja en null returnedValue para en el primer render no se active estas condicionales
-            handleCloseModal();
-        }else if(showInputTextModal.returnedValue !== null && Number(showInputTextModal.returnedValue) === 0){
-            alert("La cantidad debe ser mayor a cero")
-        }
-    },[showInputTextModal.returnedValue])
-    
     const agregarItem = async (item) => {
         //revisar si el producto ya esta agregado
         if(buscarModalValues?.operacion === 'Producto') {
             
             let tmpList = buscarModalValues.options[0]?.products;
+
+            //verifica item que no este en lista principal
             if(tmpList.findIndex((item_list)=>(item_list.codigo === item.codigo)) === -1){
-                //abre el modal para ingresar la cantidad
-                handleInputTextModal({show: true, modalTitle: 'Ingrese cantidad', tipomodal: 'text', operacion: 'agregarProducto', returnedValue: null, options: {stock: item.stock}})
-                //graba el item seleccionado para grabar cantidad en useeffect
-                setCurrentItem(item)
-            }else{alert("El producto ya se encuentra agregado");}
+                
+                //verifica si pedido es mayor al stock y si no es cotizacion
+                if(item.stock < 1 && !isQuotation){
+                    imprimir_mensaje('Producto sin stock', 'secondary')
+                }else{
+                    let copiedHeldItems = [...heldItems]
+                    let index = copiedHeldItems.findIndex((item_)=>(item_.codigo === item.codigo)) 
+                    //verifica item que no este en lista suspendida
+                    if( index === -1){
+                        setHeldItems([...heldItems].concat({...item, cantidad: 1, descuento: 0, dsct_porcentaje: 0, stockMax: item.stock})) //agrega el item a la lista de items suspendidos
+                        // imprimir_mensaje(`Agregado: ${item?.descripcion}`, 'secondary')
+                    }
+                    else{ 
+                        copiedHeldItems.splice(index, 1); //elimina item
+                        setHeldItems(copiedHeldItems) //setea lista a estado lista suspedndida
+                        imprimir_mensaje('¡Producto eliminado!', 'error')
+                    }
+                }
+            }else{
+                imprimir_mensaje('Ya existe en la lista principal', 'warning')
+            }
 
         }else if(buscarModalValues?.operacion === 'Cliente'){
             let tmpCliente = fillData[buscarModalValues?.operacion](item, nuevoPedido)
@@ -199,28 +222,10 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                 // Iterar sobre las propiedades de descuento y agregar el campo "selected"
                 for (let key in restoDesc) {
                     if (restoDesc[key].hasOwnProperty('dft')) {
-                        // restoDesc[key].selected = restoDesc[key].dft; //carga descuento por defecto
                         restoDesc[key].selected = 0.0; //carga por defecto 0 sin descuento
                     }
                 }
 
-                //Actualiza tres tipos de descuento, categoria cliente, detalle producto y forma de pago
-
-                // console.log({
-                //     dsctDoc: {
-                //         dsct1: {
-                //             // selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
-                //             selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
-                //             min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
-                //             max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
-                //             catName: tmpCliente?.descuento?.categoria?.nombre || '',
-                //             default: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
-                //         },  //por categoria cliente general
-                //         dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
-                //         ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
-                //         }
-                // })
- 
                 handleDescuento({
                     dsctDoc: {
                         dsct1: {
@@ -235,20 +240,6 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                         ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
                         }
                 })
-                // handleDescuento({
-                //     dsctDoc: {
-                //         dsct1: {
-                //             // selected: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,  
-                //             selected: 0.0,  
-                //             min: parseFloat(tmpCliente?.descuento?.categoria?.min) || 0.0, 
-                //             max: parseFloat(tmpCliente?.descuento?.categoria?.max) || 0.0,
-                //             catName: tmpCliente?.descuento?.categoria?.nombre || '',
-                //             default: parseFloat(tmpCliente?.descuento?.categoria?.dft) || 0.0,
-                //         },  //por categoria cliente general
-                //         dsctFP: {value: descuentoDoc?.descuento_documento, enabled: false}, //forma de pago
-                //         ...{restoDesc} //otros descuentos que son evaluados a nivel de detalle
-                //         }
-                // })
 
                 descuentoDoc === 406 && handleClose() //Si retorna 406, activa ventana bloqueo 
                 
@@ -285,43 +276,65 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
         }
     }
 
+    /**
+     * Funcion que migra lista suspendida a lista principal
+     */
+    const migrarListaSuspendida = () => {
+        handleNewSaleOrder(fillData[buscarModalValues?.operacion]([...heldItems], buscarModalValues?.options[0]?.products))
+        handleCloseModal(); //cierra modal
+    }
+
     return (
         <>
-        <Accordion defaultActiveKey="1" flush>
-            <Card>
-                <div className='tw-h-12'>
-                    <Form.Group className="tw-w-100 tw-flex" controlId="PedidoModalForm.ControlInput1">
-                        <Form.Control
-                        type="text"
-                        placeholder={buscarModalValues.placeholder}
-                        onChange={(x)=>{setTextFilter(x.target.value)}}
-                        autoComplete='off'
-                        />
-                        <InputGroup.Text className='tw-w-10 tw-block tw-h-10'>
-                            {isSpinner ? (<Spinner animation="border" role='status' size='sm' variant='secondary'/>): <BsSearch size={15}/>}
-                        </InputGroup.Text>
-                    </Form.Group>
-                    <CustomToggle eventKey="0" isCollapse={isCollapse} setIsCollapse={setIsCollapse} prevState={prevState}>Click me!</CustomToggle>
-                </div>
-                {/* </Card.Header> */}
-                <Accordion.Collapse eventKey="0">
-                    {/* Aca se va colocar la altura del scroll */}
-                    <ListGroup className='tw-max-h-[800px] tw-overflow-y-scroll'> 
-                        {dataSearch.map((item, index)=>(
-                            <ListGroup.Item key={(index+3).toString()} className='active:tw-border-yellow-400 active:tw-border-2'>
-                                <div className="ms-0 me-auto" onClick={()=>{
-                                    agregarItem(item);
-                                    }}>
-                                    <div>
-                                        {body[buscarModalValues?.operacion](item, isQuotation)}
+            <Accordion defaultActiveKey="1" flush>
+                <Card>
+                    <div className='tw-h-12'>
+                        <Form.Group className="tw-w-100 tw-flex" controlId="PedidoModalForm.ControlInput1">
+                            <Form.Control
+                                type="text"
+                                placeholder={buscarModalValues.placeholder}
+                                onChange={(x)=>{setTextFilter(x.target.value)}}
+                                autoComplete='off'
+                            />
+                            <Button 
+                                variant="success" 
+                                id="button-addon2" 
+                                className={`tw-flex tw-justify-center tw-items-center tw-px-0 !tw-w-${heldItems.length ? '36' : '12'}`}
+                                onClick={migrarListaSuspendida}
+                                disabled={!heldItems.length}
+                            >
+                                {isSpinner ? 
+                                    (<Spinner animation="border" role='status' size='sm' variant='white'/>) : 
+                                    (!heldItems.length ? 
+                                        (<BsSearch size={15}/>) : 
+                                        (<h className='tw-text-sm tw-h-fit'>{`Agregar (${heldItems.length})`}</h>))
+                                    }
+                                {/* Agregar */}
+                            </Button>
+                        </Form.Group>
+                        <CustomToggle eventKey="0" isCollapse={isCollapse} setIsCollapse={setIsCollapse} prevState={prevState}>Click me!</CustomToggle>
+                    </div>
+                    {/* </Card.Header> */}
+                    <Accordion.Collapse eventKey="0">
+                        {/* Aca se va colocar la altura del scroll */}
+                        <ListGroup className='tw-max-h-[800px] tw-overflow-y-scroll'> 
+                            {dataSearch.map((item, index)=>(
+                                <ListGroup.Item key={(index+3).toString()} className='active:tw-border-yellow-400 active:tw-border-2'>
+                                    <div className="ms-0 me-auto" onClick={()=>{
+                                        agregarItem(item);
+                                        }}>
+                                        <div>
+                                            {/* Si el item existe en lista temporal, envia true para pintar circle check icon, lo de abajo*/}
+                                            {/*(([...heldItems].findIndex((item_)=>(item_.codigo === item.codigo))) !== -1)*/}
+                                            {body[buscarModalValues?.operacion](item, isQuotation, (([...heldItems].findIndex((item_)=>(item_.codigo === item.codigo))) !== -1) )}
+                                        </div>
                                     </div>
-                                </div>
-                            </ListGroup.Item>
-                        ))}
-                    </ListGroup>
-                </Accordion.Collapse>
-            </Card>
-        </Accordion>
+                                </ListGroup.Item>
+                            ))}
+                        </ListGroup>
+                    </Accordion.Collapse>
+                </Card>
+            </Accordion>
         </>
   )
 }
@@ -360,7 +373,7 @@ function IngresarTexto({modalValues, handleInputTextModal, handleNewSaleOrder, t
                                 // verifica que no se negativo
                                 alert('La cantidad no debe ser menor a 1')
                             else
-                                handleInputTextModal({show: false, returnedValue: value});
+                                handleInputTextModal({show: false, returnedValue: {value, itemCode: modalValues?.options?.itemCode}});
                             }
                     }else{
                         handleNewSaleOrder({ructransporte: value}); 

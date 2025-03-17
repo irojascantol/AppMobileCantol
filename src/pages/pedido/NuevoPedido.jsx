@@ -5,16 +5,19 @@ import '../../style/accordion.css'
 import {PedidoModal, PedidoModal_Oferta} from '../../componentes/modal/pedidoModal';
 import { Anticipo_Credito, BuscarModal, IngresarFecha, IngresarTexto, SelectorCombo , Institucional_Campo } from './plantillas/modalPlantilla';
 import { commercialContext } from '../../context/ComercialContext';
-import { getNuevoPedidoClave, guardarNuevaOferta, guardarNuevoPedido } from '../../services/pedidoService';
+import { editarPedido, getNuevoPedidoClave, getSaleOrder, guardarNuevaOferta, guardarNuevoPedido, obtenerDescuentoDocumento } from '../../services/pedidoService';
 import { decodeJWT } from '../../utils/decode';
 import { getFormatShipDate} from '../../utils/humandateformat';
 import Spinner from 'react-bootstrap/Spinner';
 import { getCurrentLocation } from '../../utils/location';
-import { makeSaleOrderBody } from './utils';
+import { makeEditBody, makeSaleOrderBody } from './utils';
 import { useNavigate, useParams } from 'react-router-dom';
-import { delay } from '../../utils/delay';
-import { ServerError } from '@azure/msal-browser';
+import { useLocation } from 'react-router-dom';
+import Backdrop from '@mui/material/Backdrop';
+// import { delay } from '../../utils/delay';
+// import { ServerError } from '@azure/msal-browser';
 import { BsGeoAltFill } from 'react-icons/bs';
+import { CircularProgress } from '@mui/material';
 // import { delay } from '../../utils/delay';
 
 const tipoModal = {
@@ -27,12 +30,38 @@ const tipoModal = {
 // Final_Pedido: (nuevopedido, modalValues, handlemodal, setSaleOrder)=>(<Final_Pedido nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder}/>)
 
 const tipoPedido = {venta: 'ORDEN DE VENTA',
-                    oferta: 'COTIZACIÓN'};
+                    oferta: 'COTIZACIÓN',
+                    editar: 'ORDEN DE VENTA'
+                  };
 
 const grabarCuerpo ={
     venta: (body)=>guardarNuevoPedido(body),
     oferta: (body)=>guardarNuevaOferta(body),
+    editar: (body)=>editarPedido(body)
+  }
+  
+const makeBody={
+    venta: (param1, param2, param3)=>makeSaleOrderBody(param1, param2, param3),
+    oferta: (param1, param2, param3)=>makeSaleOrderBody(param1, param2, param3),
+    editar: (param1)=>makeEditBody(param1)
 }
+
+const operacion={
+  venta: 'NUEVA',
+  oferta: 'NUEVA',
+  editar: 'EDITAR',
+}
+
+const loadingMessage = (msg, showLocation) => (
+    <div className='tw-flex tw-items-start tw-gap-4'>
+      <h6>{msg}</h6>
+      {showLocation ? (
+        <div><BsGeoAltFill color='white' size={20}/></div>
+      ): (
+        <CircularProgress color="inherit" size={20}/>
+      )}
+    </div>
+  )
 
 export default function NuevoPedido() {
   const { 
@@ -58,66 +87,140 @@ export default function NuevoPedido() {
           setNuevoPedido
         } = useContext(commercialContext);
   
-  const tipo =  useParams().tipo in tipoPedido ? tipoPedido[useParams().tipo] : null;
-  const tipo_root = useParams().tipo in tipoPedido ? useParams().tipo : null;
-  const [isLoading, setIsLoading] = useState(false)
+  const loc = useLocation();
+  const {tipo, tipo_root} =  useParams().tipo in tipoPedido ? {tipo: tipoPedido[useParams().tipo], tipo_root: useParams().tipo} : {tipo: null, tipo_root: null};
+  const [isLoading, setIsLoading] = useState({show: false, msg: ''}) //BACKDROP PARA GRABAR PEDIDO / CARGAR PEDIDO EDITAR
   const [location, setLocation] = useState(false)
+  const { docentry } = loc.state || {};  // Obtiene docEntry para editar
 
-  // //aqui se ve el tipo de cotizacion
+  //handle isLoading state
+  const handleLoading = (obj) => {
+    setIsLoading((prev)=>({...prev, ...obj}))
+  }
+  // //aqui se ve el tipo de cotizacion/ si es por venta sin stock o propuesta
   const [showDialogCoti, setShowDialogCoti] = useState(false)
   
-  const recoverOrder = useRef(false)
+  // const recoverOrder = useRef(false)
   const navigate = useNavigate();
 
-  
-  const setInitialcondition = async () => {
+  const setInitialcondition = async (tipo_r) => {
+    
+    let response = null
+    let cuerpo = null
+
+    if(tipo_r !== 'editar'){
     const data_token = await decodeJWT();
-    const response = await getNuevoPedidoClave({usuario_codigo: data_token.username});
+      response = await getNuevoPedidoClave({usuario_codigo: data_token.username});
+    }else if(tipo_r === 'editar'){
+      //Aqui se trae el metodo para que traiga todos los datos
+      if(!!docentry){
+        handleLoading({show: true, msg: 'Cargando datos del pedido...'})
+        response = await getSaleOrder({doc_entry: docentry.toString()});
+        handleLoading({show: false})
+        cuerpo = {docentry: response?.DocEntry,
+                        numero: response?.U_MSSM_CLM || 'vacio',
+                        ruc: response?.ruc || 'vacio',
+                        razonsocial: response?.razonsocial || 'vacio',
+                        cliente_codigo: response?.CardCode || 'vacio',
+                        telefono: response?.telefono || '',
+                        fcontable: response?.fcontable || 'vacio',
+                        fentrega: response?.fentrega || 'vacio',
+                        moneda: response?.moneda || 'vacio',
+                        SlpCode: response?.SlpCode || null,
+                        comentarios: {vendedor: response?.Comments || ''},
+                        direccionentrega: [{direccion_entrega: response?.direccionentrega || 'vacio'}],
+                        ructransporte: {
+                          nombre_transporte: response?.U_MSSL_NTR || 'vacio',
+                          documento_transporte: response?.ructransporte || 'vacio',
+                        },
+                        canal_familia: {nombre_canal: response?.canal_familia || 'vacio', codigo_canal: response?.codigo_canal || -1},
+                        condicionpago: [{PaymentGroupCode: response?.PaymentGroupCode || -1, PymntGroup: response?.condicionpago || 'vacio'}],
+                        montos: {anticipo: 0, descuento: 0, impuesto: 0, nota_credito: 0, total: 0, total_cred_anti: 0, unidad: '', valor_venta: 0},
+                        dsctSN: response?.U_DST_DESOTO || 0.0,
+                        ubicacion: Number(response?.ubicacion_cliente) || null,
+                        grupo_familia: response?.U_MSSC_GRFA || null,
+                        products: response?.DocumentLines.map((item, idx)=>({
+                          cantidad: item?.Quantity || 0,
+                          Quantity_old: item?.Quantity || 0,
+                          codigo: item?.ItemCode || '',
+                          precio: item?.UnitPrice || 0.0,
+                          dsct_porcentaje: parseFloat(item?.U_MSSC_NV1) || 0.0,
+                          dsct_porcentaje2: parseFloat(item?.U_MSSC_NV2) || 0.0,
+                          descripcion: item?.descripcion || 'vacio',
+                          unidad_moneda: response?.DocCurrency || 'zz',
+                          marca: item?.marca || '',
+                          impuesto: item?.impuesto,
+                          stock: item?.stock >= 0 ? ((item?.stock + item?.Quantity) || 0) : item?.Quantity, //cuando stock real es negativo, muestra la cantidad de entrada como maximo
+                          stockMax: item?.stock >= 0 ? ((item?.stock + item?.Quantity) || 0) : item?.Quantity, //cuando stock real es negativo, muestra la cantidad de entrada como maximo
+                          almacen: item?.WarehouseCode || null,
+                          codigo_familia: item?.codigo_familia || null,
+                          codigo_subfamilia: item?.codigo_subfamilia || null, 
+                          doEdit: true, //esta bandera indica que el producto viene de editar
+                          isBoni: (item?.U_MSS_ITEMBONIF === 'Y' && item?.U_MSSC_BONI === 'Y') || false,
+                        }))
+                    }
+              }else{
+                alert('No existe pedido seleccionado')
+                navigate('/main/home')
+              }
+          }
     // //secure shield
     response === 406 && handleShow()
     // //
-    if(response !== 406 && !!response){
-      handleNewSaleOrder({cliente_codigo: null, comentarios: {vendedor: '', nota_anticipo: ''}, numero: response.code_sale, 
-      fcontable: response.fecha, ruc:'', razonsocial:'', telefono: '',
-      fentrega: getFormatShipDate({fechacontable: new Date(response.fecha), moredays: 1}), direccionentrega:'', ructransporte: '', moneda:'', 
-      codigogrupo: '', condicionpago:'', products: [], grupo_familia: null, ubicacion: null, montos: {anticipo: 0, descuento: 0, impuesto: 0, nota_credito: 0, total: 0, total_cred_anti: 0,
-      unidad: '', valor_venta: 0}, institucional: {cmp1: '', cmp2: '', cmp3: '', oc: ''}})
-    }else if(response !== 406 && !response){
+    //ejecuta cuando esta en condicion editar
+    if(response !== 406 && !!response && tipo_r !== 'editar'){
+      handleNewSaleOrder({
+        cliente_codigo: null, 
+        comentarios: {vendedor: '', nota_anticipo: ''}, 
+        numero: response.code_sale, 
+        fcontable: response.fecha, 
+        fentrega: getFormatShipDate({fechacontable: new Date(response.fecha), moredays: 1}), 
+        ruc:'', razonsocial:'', 
+        telefono: '',
+        direccionentrega:'', ructransporte: '', moneda:'', codigogrupo: '', condicionpago:'', 
+        products: [], 
+        grupo_familia: null, 
+        ubicacion: null, 
+        montos: {anticipo: 0, descuento: 0, impuesto: 0, nota_credito: 0, total: 0, total_cred_anti: 0, unidad: '', valor_venta: 0}, 
+        institucional: {cmp1: '', cmp2: '', cmp3: '', oc: ''}})
+
+    }else if(response !== 406 && !!response && tipo_r === 'editar' && !!cuerpo){
+        let body = {
+            PaymentGroupCode: (cuerpo?.condicionpago[0]?.PaymentGroupCode).toString(),
+            codigo_canal_cliente: (cuerpo?.canal_familia?.codigo_canal).toString(),
+        }
+        
+        let descuentoDoc = await obtenerDescuentoDocumento(body) //fetch descuento por forma de pago
+
+        handleDescuento({
+          doEdit: true, // esta bandera activa los descuentos a nivel de detalle automaticamente
+          dsctDoc: {
+              dsct1: {
+                  selected: cuerpo.dsctSN || 0.0,
+              },  //por categoria cliente general
+              dsctFP: {value: descuentoDoc?.descuento_documento, enabled: true}, //forma de pago
+              // ...{restoDesc} //🎃PENDIENTE, DSCT X MARCA, FALTA REGISTRAR ESE DATO EN ORDR 🎃
+              }
+        })
+
+        //aqui descuento por forma de pago
+        cuerpo.montos.descuento = descuentoDoc?.descuento_documento
+
+        // handleNewSaleOrder({products: [...ghost_products], montos: {...nuevoPedido?.montos, ...{descuento: dsctDocTotal}}})
+        handleNewSaleOrder(cuerpo)
+    }
+    else if(response !== 406 && !response){
       alert('Error durante ejecución, contactar con TI')
     }
   }
-
   //primera vez y cuando cambio en la ruta
   useEffect(()=>{
-    const doFetch = async () => 
-      {
-        // if(!!sessionStorage.getItem('draft_order') && !recoverOrder.current){
-        // if(!!sessionStorage.getItem('draft_order')){
-        if(false){
-          console.log('Proceso para continuar una OV pendiente')
-          //ESTOOOOO ES PARA GUARDAR UNA OV QUE ESTA EN PROCESO
-          //   let resultado = confirm("Existe un pedido en curso\n¿Desea restablecerlo?");
-          //   recoverOrder.current = true
-          //   if (resultado){
-          //     console.log('Si entra aqui 1')
-          //     let draft_order = JSON.parse(sessionStorage.getItem('draft_order'));
-          //     console.log(draft_order)
-          //     handleNewSaleOrder(draft_order)
-          //     sessionStorage.removeItem('draft_order')
-          // }else{
-          //   sessionStorage.removeItem('draft_order')
-          //   await setInitialcondition()
-          // }
-        }else{
-          // if (!recoverOrder.current){
-            // console.log('Si entra aqui 2')
-            await setInitialcondition()
-        }
-      }
+    const doFetch = async (tipo_r) => 
+      {await setInitialcondition(tipo_r)}
       //verifica que la ruta sea venta u oferta
       if(tipo){
         //obtiene clave  mobile y fecha contable
-        doFetch();
+        doFetch(tipo_root);
         //Activa consulta en cotización
         tipo  === 'COTIZACIÓN' && setShowDialogCoti(true)
       }else{
@@ -125,7 +228,8 @@ export default function NuevoPedido() {
         //deberia en condicion de inicial el cuerpo del context
         navigate('/main/home')
       }
-    },[tipo])
+    // },[tipo])
+    },[tipo_root])
 
   /**
    * Equivalente a un F5
@@ -134,8 +238,6 @@ export default function NuevoPedido() {
     window.location.reload()
   };
 
-  // console.log(JSON.stringify(nuevoPedido, null, 2))
-  // console.log(JSON.stringify(nuevoPedido))
   //valida que todos los campos esten correctos OV antes de guardar
   const validarCampos = async () => {
     // verifica si registro cliente
@@ -148,15 +250,17 @@ export default function NuevoPedido() {
               try{
                 //Logica que solicita dos veces los permisos de geolocalizacion
                 let currentLocation = null
-                setIsLoading(true); //Bloqueo ventana antes de pedir geolocalizacion
+                setIsLoading({show:true, msg: `Grabando ${tipoPedido[tipo_root].toLowerCase()}...`}); //Bloqueo ventana antes de pedir geolocalizacion
                 try{
                   currentLocation = await getCurrentLocation(2);
                 }catch(error){
                   console.log('Localizacion desactivada en navegador: ', error.message)
                 }
                 setLocation(!!currentLocation) //esto para enviar el cuadrado negro en frond
-                let body = makeSaleOrderBody(nuevoPedido, currentLocation, dsctFormato)
-                // console.log(body)
+
+                let body = makeBody[tipo_root](nuevoPedido, currentLocation, dsctFormato)
+                
+                // // let body = makeSaleOrderBody(nuevoPedido, currentLocation, dsctFormato)
                 // await delay(2000)
                 const [response, status] = !!tipo_root ? await grabarCuerpo[tipo_root](body): [null, 206];
                 // const [response, status] = ['OV Creada!', 200];
@@ -164,20 +268,23 @@ export default function NuevoPedido() {
                 // //
                 status === 406 && handleShow()
                 //aca se devuelve una respuesta cuando concluye el proceso
-                setIsLoading(false);
+                setIsLoading({show: false});
                 status !== 200 && alert(JSON.stringify(response))
                 if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) === 'number'){
+                  console.log('1')
                   alert('¡Orden de venta y borrador creados!\nRedireccion a pedidos pendientes')
-                  sessionStorage.removeItem('draft_order')
                   navigate('/main/pedido/pendiente')
                 }else if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) !== 'number'){
+                  console.log('2')
                   alert('¡Borrador creado!\nRedireccion a pedidos pendientes')
-                  sessionStorage.removeItem('draft_order')
                   navigate('/main/pedido/pendiente')
                 }else if(status === 200 && typeof(response) === 'string'){
                   alert(response)
-                  sessionStorage.removeItem('draft_order')
-                  refreshPage() // aqui se refresca la pagina cuando se crea un nuevo pedido
+                  if(tipo_root === 'editar'){
+                    navigate('/main/pedido/pendiente')
+                  }else{
+                    refreshPage() // aqui se refresca la pagina cuando se crea una oferta de venta
+                  }
                 }
               }catch(error){
                 setIsLoading(false);
@@ -211,52 +318,47 @@ export default function NuevoPedido() {
           {tipoModal[modalValues.tipomodal](nuevoPedido, modalValues, handleInputTextModal, handleNewSaleOrder, tipo_root==='oferta', handleDescuentoDoc)}
         </PedidoModal>
       )}
-      <h6 className='tw-text-center bg-secondary tw-text-white tw-rounded-md' style={{marginBottom: 0, padding: "5px 0"}}>{tipo? `NUEVA ${tipo}`:'*************'}</h6>
-      <div className='tw-absolute tw-w-full'>
-      <Accordion defaultActiveKey="0">
-        <Accordion.Item eventKey="0">
-          <Accordion.Header>Datos del cliente</Accordion.Header>
-          <Accordion.Body>
-            <MyListGroup plantilla="nuevopedidocabecera" data={undefined}/>
-          </Accordion.Body>
-        </Accordion.Item>
-        <Accordion.Item eventKey="1">
-          <Accordion.Header>Productos</Accordion.Header>
-          <Accordion.Body>
-            <MyListGroup plantilla="nuevopedidoproductos" data={undefined}/>
-          </Accordion.Body>
-        </Accordion.Item>
-      </Accordion>
-      {/* </div> */}
-      <div className='tw-flex tw-flex-col tw-items-center tw-border-2'>
-        <button className='button-14 tw-w-2/3 tw-h-10 tw-my-4 tw-font-sans tw-font-medium' disabled={isLoading?true:false} style={{margin: '0 auto'}} onClick={validarCampos}>
-          {isLoading ? (
-            <>
-              Grabando.....
-              <Spinner animation="grow" role="status" size='sm' className='tw-ml-2'>
-                <span className="visually-hidden">Loading...</span>
-              </Spinner>
-            </>
-          ):(
-            <>
-              {tipo? `Grabar ${tipo.toLowerCase()}`:'*************'}
-            </>
-          )}
-        </button>
+      <h6 className='tw-text-center bg-secondary tw-text-white tw-rounded-md' style={{marginBottom: 0, padding: "5px 0"}}>{tipo? `${operacion[tipo_root]} ${tipo}`:'*************'}</h6>
+        <div className='tw-absolute tw-w-full'>
+          <Accordion defaultActiveKey="0">
+            <Accordion.Item eventKey="0">
+              <Accordion.Header>Datos del cliente</Accordion.Header>
+              <Accordion.Body>
+                <MyListGroup plantilla="nuevopedidocabecera" data={undefined} doEdit={tipo_root === 'editar'}/>
+              </Accordion.Body>
+            </Accordion.Item>
+            <Accordion.Item eventKey="1">
+              <Accordion.Header>Productos</Accordion.Header>
+              <Accordion.Body>
+                <MyListGroup plantilla="nuevopedidoproductos" data={undefined} doEdit={tipo_root === 'editar'}/>
+              </Accordion.Body>
+            </Accordion.Item>
+          </Accordion>
+                  <div className='tw-flex tw-flex-col tw-items-center tw-border-2'>
+                              <button className='button-14 tw-w-2/3 tw-h-10 tw-my-4 tw-font-sans tw-font-medium' disabled={isLoading.show?true:false} style={{margin: '0 auto'}} onClick={validarCampos}>
+                                {isLoading.show ? (
+                                  <>
+                                    Grabando.....
+                                    <Spinner animation="grow" role="status" size='sm' className='tw-ml-2'>
+                                      <span className="visually-hidden">Loading...</span>
+                                    </Spinner>
+                                  </>
+                                ):(
+                                  <>
+                                    {tipo? `Grabar ${tipo.toLowerCase()}`:'*************'}
+                                  </>
+                                )}
+                              </button>
+                  </div>
         </div>
-      </div>
-      {
-      isLoading && (<div className='glass_layer'>
-        <div className='tw-flex tw-justify-center tw-items-start'>
-          <h3>{`Grabando ${tipoPedido[tipo_root].toLowerCase()}...`}</h3>
-          {location && (
-            <div><BsGeoAltFill color='black' size={20}/></div>
-          )}
-        </div>
-
-      </div>)
-      }
+        <Backdrop
+          sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+          open={isLoading.show}
+        >
+          {loadingMessage(isLoading.msg, location)}
+        </Backdrop>
     </div>
+    
   );
 }
 

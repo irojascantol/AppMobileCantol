@@ -61,6 +61,29 @@ export function makeSaleOrderBody(saleOrder, location, dsctFormato){
     return body
 }
 
+export function makeEditBody(body){
+    return( {
+        DocEntry: body.docentry.toString() || null,
+        DocumentLines: body?.products?.map((prd)=>(
+            {
+                ItemCode: prd?.codigo,
+                Quantity: prd?.cantidad,
+                TaxCode: prd?.impuesto?.codigo,
+                WarehouseCode: prd?.almacen,
+                UnitPrice: prd?.precio,
+                U_MSSC_NV1: prd?.dsct_porcentaje,
+                U_MSSC_NV2: prd?.dsct_porcentaje2 || 0,
+                U_MSSC_NV3: 0,
+                U_MSSC_DSC: truncate(dsctEquiv(prd?.dsct_porcentaje, prd?.dsct_porcentaje2), 2),
+                DiscountPercent: truncate(dsctEquiv(prd?.dsct_porcentaje, prd?.dsct_porcentaje2), 2),
+                U_MSS_ITEMBONIF: ('tipo' in prd) || (('isBoni' in prd) && !!prd?.isBoni) ? 'Y':'N',
+                U_MSSC_BONI: ('tipo' in prd) || (('isBoni' in prd) && !!prd?.isBoni) ? 'Y':'N',
+                SalesPersonCode: body?.SlpCode,
+                Quantity_old: prd?.Quantity_old || 0
+            }
+        ))
+    })
+}
 
 /**
  * Funcion que retorna lista de descuentos con resolucion step,

@@ -51,7 +51,6 @@ function ComercialContext({children}) {
               }, 
       promociones: {enabled: true}
       });
-    // const [nuevoPedido, setNuevoPedido] =  useState(!!sessionStorage.getItem("CDTToken") && {products: [], montos: {valor_venta: 0, descuento: 0, impuesto: 0, total_cred_anti: 0, total: 0, unidad: null, anticipo: 0, nota_credito: 0,}})
     
     //handlers
     //manejo seguridad
