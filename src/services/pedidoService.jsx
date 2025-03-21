@@ -19,10 +19,10 @@ async function getPedido(innerParams, state, tipo) {
     try{
         if(state in rutas_reportes || state in rutas_ofertas){
             let ruta = ''
-            if(!tipo)
-                ruta = `${mainURL}/comercial/ventas/pedido${rutas_reportes[state]}`
+            if(tipo==='pedido')
+                ruta = `${mainURL}/comercial/ventas/pedido${rutas_reportes[state]}` //RUTA PARA PEDIDOS
             else
-                ruta = `${mainURL}/comercial/ventas/${tipo}${rutas_ofertas[state]}`
+                ruta = `${mainURL}/comercial/ventas/${tipo}${rutas_ofertas[state]}` //RUTA PARA OFERTAS
             
             const response = await axios(ruta, {
                 withCredentials: true,
@@ -47,7 +47,6 @@ async function getPedido(innerParams, state, tipo) {
 async function getDetallePedidoGeneral(innerParams, tipoPedido, tipoDoc) {
     axios.defaults.withCredentials = true;
     try{
-        console.log(rutas(tipoPedido,'general', tipoDoc))
         const response = await axios(rutas(tipoPedido,'general', tipoDoc), {
             withCredentials: true,
             params: innerParams

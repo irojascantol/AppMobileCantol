@@ -28,7 +28,7 @@ const bgColor = {
   facturado: 'bg-info'
 }
 
-function MyListGroup({data, plantilla, handleCarusel, tipoPedido, modalValues, handleModal, tipoDoc, doEdit}) {
+function MyListGroup({data, plantilla, move2Detail, tipoPedido, modalValues, handleModal, tipoDoc, doEdit}) {
   //tipoDoc: pedido, entrega
   if(['pendiente', 'aprobado', 'rechazado', 'facturado'].includes(plantilla)){
     return (
@@ -42,7 +42,8 @@ function MyListGroup({data, plantilla, handleCarusel, tipoPedido, modalValues, h
               </Badge>
             </li>
         {data.map((item, index)=>(
-            <li key={(index + 1).toString()} onClick={()=>{handleCarusel(item)}}>
+          // move2Detail, sirve para navegar al detalle del pedido u oferta
+            <li key={(index + 1).toString()} onClick={()=>{move2Detail(item)}}> 
                 {plantillas[plantilla](item)}
             </li>
         ))}

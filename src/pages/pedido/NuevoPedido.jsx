@@ -273,15 +273,15 @@ export default function NuevoPedido() {
                 if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) === 'number'){
                   console.log('1')
                   alert('¡Orden de venta y borrador creados!\nRedireccion a pedidos pendientes')
-                  navigate('/main/pedido/pendiente')
+                  navigate('/main/pedido/pendiente?page=lista', {state:{tipo: 'pedido'}})
                 }else if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) !== 'number'){
                   console.log('2')
                   alert('¡Borrador creado!\nRedireccion a pedidos pendientes')
-                  navigate('/main/pedido/pendiente')
+                  navigate('/main/pedido/pendiente?page=lista', {state:{tipo: 'pedido'}})
                 }else if(status === 200 && typeof(response) === 'string'){
                   alert(response)
                   if(tipo_root === 'editar'){
-                    navigate('/main/pedido/pendiente')
+                    navigate('/main/pedido/pendiente?page=lista', {state:{tipo: 'pedido'}})
                   }else{
                     refreshPage() // aqui se refresca la pagina cuando se crea una oferta de venta
                   }

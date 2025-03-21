@@ -1,25 +1,26 @@
-import { useContext } from 'react'
-import { commercialContext } from '../../context/ComercialContext'
 import { MyListGroup } from './componentes/MyListGroup'
 import MyTabPedido from './componentes/MyTabPedido'
-// import FileCopyIcon from '@mui/icons-material/FileCopyOutlined';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 const actions = [
     { icon: <ModeEditIcon />, name: 'Editar' },
   ];
 
-export default function DetallePedido({itemSelected = {}, tipoPedido= 'None'}) {
-    // const {handlePedidoCarusel, handleTabPedido} = useContext(commercialContext)
-    const navigate = useNavigate()
+export default function DetallePedido() {
+    const navigate = useNavigate() // se utiliza para la opcion editar
+    const location = useLocation();
+    const {reporte: tipoPedido} = useParams();
+    const {item: itemSelected, tipo: tipoDoc} = location.state;
+
+
     return (
         <>
             {/* editar se activa solo para pendiente */}
-            {tipoPedido === 'pendiente' && (
+            {tipoPedido === 'pendiente' && tipoDoc === 'pedido' && (
                 <SpeedDial
                     ariaLabel="SpeedDial basic example"
                     sx={{ position: 'fixed', bottom: 32, right: 16 }}
@@ -37,13 +38,12 @@ export default function DetallePedido({itemSelected = {}, tipoPedido= 'None'}) {
                 </SpeedDial>
             )}
 
-
-
+            {/* tipoPedido: pendiente, tipoDoc: pedidos */}
             <MyTabPedido components={[
-            <MyListGroup data={itemSelected} plantilla='general' tipoPedido={tipoPedido}/>,
-            <MyListGroup data={itemSelected} plantilla='contenido' tipoPedido={tipoPedido}/>,
-            <MyListGroup data={itemSelected} plantilla='logistica' tipoPedido={tipoPedido}/>,
-            <MyListGroup data={itemSelected} plantilla='finanzas' tipoPedido={tipoPedido}/>]}/>
+            <MyListGroup data={itemSelected} plantilla='general' tipoPedido={tipoPedido} tipoDoc={tipoDoc}/>,
+            <MyListGroup data={itemSelected} plantilla='contenido' tipoPedido={tipoPedido} tipoDoc={tipoDoc}/>,
+            <MyListGroup data={itemSelected} plantilla='logistica' tipoPedido={tipoPedido} tipoDoc={tipoDoc}/>,
+            <MyListGroup data={itemSelected} plantilla='finanzas' tipoPedido={tipoPedido} tipoDoc={tipoDoc}/>]}/>
         </>
     )
 }
