@@ -10,6 +10,7 @@ import { getProductosBonificacion, postaplicarDescuento } from '../../../service
 import { InputNumberSpinner } from '../../../componentes/globales/input';
 import { DiscountOvDialog } from '../componentes/DiscountOvDialog';
 import '../../../style/inputform.css'
+import { button } from '@material-tailwind/react';
 
 
 //Cofiguracion para discount dialog
@@ -32,7 +33,7 @@ let operation = {
     up: (value)=>value+1
 }
 
-function NuevoPedidoCabecera({data}) {
+function NuevoPedidoCabecera({data, doEdit=true}) {
     const { handleSearchModal, handleInputTextModal, nuevoPedido} = useContext(commercialContext);
 
     return (
@@ -68,7 +69,12 @@ function NuevoPedidoCabecera({data}) {
                     <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "razonsocial")}&nbsp;`}}/>
                 </div>
                 <div className='tw-w-[20px]'>
-                    <Button variant="outline-secondary" id="button-addon2" onClick={()=>handleSearchModal({show: true, modalTitle: 'Buscar cliente', operacion: 'Cliente', placeholder: 'Ingrese Razon Social o RUC'})} className='tw-px-3 tw-h-12'>
+                    <Button variant="outline-secondary" 
+                            id="button-addon2" 
+                            onClick={()=>handleSearchModal({show: true, modalTitle: 'Buscar cliente', operacion: 'Cliente', placeholder: 'Ingrese Razon Social o RUC'})} 
+                            className='tw-px-3 tw-h-12'
+                            disabled={doEdit}
+                            >
                         <BsSearch className='tw-text-black' size={20}/>
                     </Button>
                 </div>
@@ -123,7 +129,10 @@ function NuevoPedidoCabecera({data}) {
                     <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${getFormatShipDate_peru({fecha: new Date(nuevoPedido?.fentrega)})}&nbsp;`}}/>
                 </div>
                 <div className='tw-w-[20px]'>
-                    <Button variant="outline-secondary" id="button-addon2" onClick={()=>{
+                    <Button variant="outline-secondary" 
+                            id="button-addon2" 
+                            disabled={doEdit}
+                            onClick={()=>{
                         if(!!nuevoPedido.ruc && !!nuevoPedido.razonsocial){
                             handleInputTextModal({show: true, options: getFormatShipDate({fechacontable: new Date(nuevoPedido?.fcontable), moredays: 1}), modalTitle: 'Ingresar fecha de entrega', tipomodal: 'date', operacion: 'direccionentrega'})
                         }else{alert("Debe seleccionar un cliente")}}} className='tw-px-3 tw-h-12'>
@@ -143,7 +152,10 @@ function NuevoPedidoCabecera({data}) {
                     <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${!!nuevoPedido.direccionentrega && nuevoPedido?.direccionentrega[0]?.direccion_entrega || ''}&nbsp;`}}/>
                 </div>
                 <div className='tw-w-[20px]'>
-                    <Button variant="outline-secondary" onClick={()=>{
+                    <Button 
+                        variant="outline-secondary" 
+                        disabled={doEdit}
+                        onClick={()=>{
                         if(!!nuevoPedido.ruc && !!nuevoPedido.razonsocial){
                             handleInputTextModal({show: true, options: nuevoPedido.direccionentrega, modalTitle: 'Seleccionar dirección de entrega', tipomodal: 'combo', operacion: 'direccionentrega'})
                         }else{alert("Debe seleccionar un cliente")}
@@ -166,7 +178,10 @@ function NuevoPedidoCabecera({data}) {
                     <div className='tw-text-xs tw-font-semibold' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "ructransporte")?.documento_transporte || '&nbsp'}&nbsp;`}}/>
                 </div>
                 <div className='tw-w-[20px]'>
-                    <Button variant="outline-secondary" id="button-addon2" onClick={()=>{
+                    <Button variant="outline-secondary" 
+                            id="button-addon2" 
+                            disabled={doEdit}
+                            onClick={()=>{
                         if(!!nuevoPedido.ruc && !!nuevoPedido.razonsocial){
                             handleSearchModal({show: true, modalTitle: 'Buscar transportista', operacion: 'Transportista', placeholder: 'Ingrese Razon Social o RUC'})       
                         }else{alert("Debe seleccionar un cliente")}
@@ -188,16 +203,6 @@ function NuevoPedidoCabecera({data}) {
             <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "moneda")}&nbsp;`}}/>
             </div>
         </ListGroup.Item>
-        {/* <ListGroup.Item
-            as="li"
-            className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1"
-            variant="no style"
-            >
-            <div className="ms-2 me-auto tw-border-4 tw-border-indigo-600">
-            <div className="header_section_title">Grupo familiar:</div>
-            <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${retornaDatos(nuevoPedido, "grupo_familia") || 'NO TIENE'}&nbsp;`}}/>
-            </div>
-        </ListGroup.Item> */}
         <ListGroup.Item
             as="li"
             className="d-flex justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1"
@@ -209,7 +214,9 @@ function NuevoPedidoCabecera({data}) {
                 <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${!!nuevoPedido.condicionpago && nuevoPedido?.condicionpago[0].PymntGroup || ''}&nbsp;`}}/>
             </div>
             <div className='tw-w-[20px]'>
-                <Button variant="outline-secondary" onClick={()=>{
+                <Button variant="outline-secondary" 
+                        disabled={doEdit}
+                        onClick={()=>{
                     if(!!nuevoPedido.ruc && !!nuevoPedido.razonsocial){
                         handleInputTextModal({show: true, modalTitle: 'Ingresar metodo de pago', tipomodal: 'combo', options: nuevoPedido?.condicionpago, operacion: 'condicionpago', data: {canal_familia: nuevoPedido?.canal_familia, montos: nuevoPedido?.montos}})
                     }else{alert("Debe seleccionar un cliente")}
@@ -231,7 +238,9 @@ function NuevoPedidoCabecera({data}) {
                 <div className='header_section_content' dangerouslySetInnerHTML={{__html: `${nuevoPedido?.canal_familia?.nombre_canal || '&nbsp;'}&nbsp;`}}/>
             </div>
             <div className='tw-w-[20px]'>
-                <Button variant="outline-secondary" onClick={()=>{
+                <Button variant="outline-secondary" 
+                        disabled={doEdit}
+                        onClick={()=>{
                     if(!!nuevoPedido.ruc && !!nuevoPedido.razonsocial){
                         handleInputTextModal({show: true, modalTitle: 'Campos obligatorios', tipomodal: 'Institucional_Campos', options: nuevoPedido?.condicionpago, operacion: 'condicionpago'})
                     }else{alert("Debe seleccionar un cliente")}
@@ -253,7 +262,9 @@ function NuevoPedidoCabecera({data}) {
                 <div className='header_section_content tw-max-w-[330px] tw-h-7 tw-overflow-y-hidden tw-overflow-x-hidden' dangerouslySetInnerHTML={{__html: `${nuevoPedido?.comentarios?.vendedor || '&nbsp;'}&nbsp;`}}/>
             </div>
             <div className='tw-w-[20px]'>
-                <Button variant="outline-secondary" onClick={()=>{
+                <Button variant="outline-secondary" 
+                        disabled={doEdit}   
+                        onClick={()=>{
                     if(!!nuevoPedido.ruc && !!nuevoPedido.razonsocial){
                         handleInputTextModal({show: true, modalTitle: 'Ingrese comentarios', tipomodal: 'text', options: nuevoPedido?.comentarios, operacion: 'comentarios'})
                     }else{alert("Debe seleccionar un cliente")}
@@ -268,7 +279,7 @@ function NuevoPedidoCabecera({data}) {
   )
 }
 
-function NuevoPedidoProductos(){
+function NuevoPedidoProductos({data, doEdit=true}){
     //maneja la apertura de modal de busqueda de productos
     //apertura del comercialcontext
     const {nuevoPedido, 
@@ -276,13 +287,11 @@ function NuevoPedidoProductos(){
             handleNewSaleOrder, 
             handleInputTextModal, 
             showInputTextModal: modalValues, 
-            handleClienteChange,
             handleDescuento, 
             isClientChanged, 
             handleShow,
             handleNewSaleMontos,
-            dsctFormato,
-            handleDescPromocion} = useContext(commercialContext);
+            dsctFormato} = useContext(commercialContext);
 
     // //activate los botones para eliminar productos
     const [deleteMode,  setDeleteMode] = useState(false);
@@ -302,13 +311,18 @@ function NuevoPedidoProductos(){
 
 
     // variables de referencia
-    const prevLengthRef = useRef(nuevoPedido?.products?.length);  // Referencia para guardar la longitud anterior
+    const prevLengthRef = useRef(nuevoPedido?.products?.length);  // Almacena cantidad de productos en lista
+    const isQtyChangedRef = useRef(false);  // Activa cuando se modifica la cantidad de un producto
+
 
 
     //activa solo cuando se modifica la tabla productos
     useEffect(()=>{
-        if (nuevoPedido?.products?.length > prevLengthRef.current)
+        console.log('Ingresa nuevoPedido.products, nuevoPedido.montos.descuento')
+        console.log(nuevoPedido?.products?.length, prevLengthRef.current, isQtyChangedRef.current)
+        if ((nuevoPedido?.products?.length > prevLengthRef.current) || (isQtyChangedRef.current)) //aplica descuento cuando cantidad cantidad de productos o cuando cambia cantidad de un item
             actualizarDescuentoLinea() //Actualiza descuentos de la linea en tiempo real
+            isQtyChangedRef.current = false // desactiva el estado cambio de cantidad
         !!largo_productos && calcularTotal()
         !largo_productos && setearCero()
         //desactiva el boton de eliminar
@@ -319,9 +333,24 @@ function NuevoPedidoProductos(){
 
     //aplica el descuento por anticipo y nota de credito
     useEffect(()=>{
-        let condition = (modalValues?.returnedValue === null || modalValues?.returnedValue === undefined)
-        if((!condition) && typeof(modalValues?.returnedValue) === 'object' && 'anticipo' in modalValues?.returnedValue && 'nota_credito' in modalValues?.returnedValue){
-            setearDescuentoCredAnti(modalValues.returnedValue)
+        console.log('Ingresa modalValues.returnedValue')
+        if(modalValues.operacion === 'agregarProducto' && !!modalValues.returnedValue){ //aqui actualiza la cantidad al cerrar dialog
+            const {value, itemCode} = modalValues.returnedValue
+            let listModified = JSON.parse(JSON.stringify([...nuevoPedido?.products])) //copia
+            listModified.forEach((item)=>{
+                if(!('tipo' in item) && item.codigo === itemCode){ // esto excluye la cantidad de los bonificados
+                    item.cantidad = Number(value)
+                    }
+            })
+            //verifica si existe algun cambio
+            isQtyChangedRef.current = JSON.stringify([...nuevoPedido?.products]) !==  JSON.stringify(listModified) //verifica que exista cambio de cantidades
+            // 🎃IMPORTANTE| Falta desarrollar esa parte🎃, deberian eliminartse los bonificados cuando se cambia la cantidades
+            handleNewSaleOrder({products: listModified})
+        }else{
+            let condition = (modalValues?.returnedValue === null || modalValues?.returnedValue === undefined)
+            if((!condition) && typeof(modalValues?.returnedValue) === 'object' && 'anticipo' in modalValues?.returnedValue && 'nota_credito' in modalValues?.returnedValue){
+                setearDescuentoCredAnti(modalValues.returnedValue)
+            }
         }
     }, [modalValues.returnedValue])
 
@@ -351,10 +380,15 @@ function NuevoPedidoProductos(){
     //Despues de aplicar descuento en DiscountOvDialog (APLICAR!!!!)
     //Ahora tambien va pasar cuando cambiemos el cliente
     useEffect(()=>{
-        if(!open.show && open.accepted){
-            console.log('Aplica descuento')
-            aplicarDescuento()
+        if(!open.show && open.accepted){ //se activa cuando se cierra el dialogo de descuento
+            console.log('Aplica descuento de dialog')
+            aplicarDescuento('dialog')
         }
+        //else if (!!dsctFormato.doEdit){
+        //     console.log('Aplica descuento de Editar')
+        //     aplicarDescuento('editar')
+        // }
+    // },[open.show, dsctFormato.doEdit])
     },[open.show])
     // },[open.show, nuevoPedido.products])
     
@@ -428,30 +462,23 @@ function NuevoPedidoProductos(){
                 familia_nombre = dsctFormato?.dsctDoc?.restoDesc?.familia?.nombre
             }
 
-        ghost_products.forEach((item, index) => {  //para aplicar unicamente descuentos de nivel 1
-                            
-            if(!('tipo' in item) && ('marca' in item)){
-                // if ('marca' in item)// se agregar el descuento nivel 1, primero evalua por marca y luego por categoria de cliente
-                // item.descuento = objRes?.total_descuento_n1 || "0";
+        
+            ghost_products.forEach((item, index) => {  //para aplicar unicamente descuentos de nivel 1
+            //siempre ingresa aqui por que todos tienen marca, solo descarta bonificados              
+            if((!('tipo' in item) && !('isBoni' in item) && ('marca' in item)) || (!('tipo' in item) && ('isBoni' in item) && !item?.isBoni && ('marca' in item))){ //analiza dsct marca
                 if (dsctMarcaProducto !== null && item?.marca === marca_nombre){
-                    // item.descuento = Number(objRes?.total_descuento_n1 || 0);
-                    // item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
                     item.descuento = null;
                     item.dsct_porcentaje = dsctMarcaProducto;
                 }
                 else{
-                    // item.descuento = Number(objRes?.total_descuento_n1 || 0);
-                    // item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
                     item.descuento = null;
                     item.dsct_porcentaje = dsctCateCliente;
                 }
             }
-            else{
-                // item.descuento = Number(objRes?.total_descuento_n1 || 0);
-                // item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
-                item.descuento = null;
-                item.dsct_porcentaje = dsctCateCliente;
-            }
+            // else{
+            //     item.descuento = null;
+            //     item.dsct_porcentaje = dsctCateCliente;
+            // }
         })
 
         if(!!dsctFormato?.promociones?.enabled){ // para aplicar unicamente descuento nivel 2
@@ -459,51 +486,63 @@ function NuevoPedidoProductos(){
             // if(!!dsctFormato?.promociones?.enabled){
             let response = null
             //obtener cuerpo para aplicar descuentos
-            let productos_ = nuevoPedido?.products?.filter((x)=>(!('tipo' in x))) // filtra los que no son bonificados
+            let productos_ = nuevoPedido?.products?.filter(
+                (x)=>((!('tipo' in x) && !('isBoni' in x)) || (!('tipo' in x) && ('isBoni' in x) && !x?.isBoni)) //filtra los productos bonificados/ tanto metodo normal como editar
+            ) 
+
             let requestBody = {
                 codigo_cliente: nuevoPedido?.cliente_codigo,
                 ubicacion_cliente: Number(nuevoPedido?.ubicacion),
                 grupo_familiar:  nuevoPedido?.grupo_familia,
                 fecha_promocion: getCurrentDate(),
-                productos: productos_?.map((x)=>({
+                productos: productos_?.filter(y=>!('doEdit' in y)).map((x)=>({ //evalua dsct nivel 2  de los items que no vienen de modo editar: solo nuevos
                     "codigo_articulo": x?.codigo,
                     "codigo_familia": x?.codigo_familia,
                     "codigo_subfamilia": x?.codigo_subfamilia,
                     "cantidad": x?.cantidad,
                     "precio": x?.precio,
-                }))}
+                }))
+            }
 
-            if(!!(productos_?.length)){
-                response = await postaplicarDescuento(requestBody)
+            if(!!(productos_?.length) && !!requestBody?.productos?.length){ //si hay productos
+                
+                response = await postaplicarDescuento(requestBody) //hace consulta de promociones: nivel 2
+
                 response === 406 && handleShow()
                 if(response !== 406 && !!response?.length){
-                    // //aca se agrega la actualizacion
+                    //aca se agrega la actualizacion
                     for( const objRes of response){
                         ghost_products.forEach((item, index) => {
-                            if(!!dsctFormato?.promociones?.enabled){   ///aqui solo se aplica las promociones de nivel2
-                                if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
-                                        // item.descuento2 = objRes?.total_descuento_n2 || "0";
-                                        item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
-                                        item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
+                            if(!!dsctFormato?.promociones?.enabled){   ///aplica promociones cuando esta activo en dsctFormato
+                                if(!('tipo' in item) && !('isBoni' in item) && item?.codigo === objRes?.codigo_articulo){ // cuando no existe isBoni en item
+                                    item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
+                                    item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
+                                }else if(!('tipo' in item) && ('isBoni' in item) && !item?.isBoni && item?.codigo === objRes?.codigo_articulo){ // cuando si existe isBoni en item/ init input
+                                    item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
+                                    item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
+                                }
+                                else{ //esto es cuando el item no se encuentra en response y es bonificado
+                                    item.descuento2 = 0;
+                                    item.dsct_porcentaje2 = 0.0;
                                 }
                             }else{
-                                if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
-                                        // item.descuento2 = objRes?.total_descuento_n2 || "0";
-                                        item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
-                                        item.dsct_porcentaje2 = 0.0;
+                                if(!('tipo' in item) && !('isBoni' in item) && item?.codigo === objRes?.codigo_articulo){
+                                    item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
+                                    item.dsct_porcentaje2 = 0.0;
+                                }else if(!('tipo' in item) && ('isBoni' in item) && !item?.isBoni && item?.codigo === objRes?.codigo_articulo){ // cuando si existe isBoni en item/ init input
+                                    item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
+                                    item.dsct_porcentaje2 = 0.0;
                                 }
-                            }                                       ///aqui termina las promociones de nivel 2
+                            } ///aqui termina las promociones de nivel 2
                             })
                     }
                 }
             }
         }
-        
         handleNewSaleOrder({products: [...ghost_products]})
     }    
     
-    
-    const aplicarDescuento = async() => {
+    const aplicarDescuento = async() => { //aplica solo cuando esta activo el boton Aplicar descuento
         //1-Primero, solo elimina descuentos, no bonificados
         //SIRVE PARA DESCUENTOS DE PROMOCIONES
         // eliminar_Dsct_Bonificado(true)
@@ -516,13 +555,15 @@ function NuevoPedidoProductos(){
         let dsctFamiliaProducto = null
         let familia_nombre = null
         
-        //Descuento nivel 1 - Por marca o familia
-        if('marca' in dsctFormato.dsctDoc.restoDesc)
+        //Descuento nivel 1 - Por marca
+        if(!!dsctFormato?.dsctDoc?.restoDesc && 'marca' in dsctFormato?.dsctDoc?.restoDesc)
             {
                 dsctMarcaProducto = parseFloat(dsctFormato.dsctDoc.restoDesc.marca.selected) || 0.0
                 marca_nombre = dsctFormato?.dsctDoc?.restoDesc?.marca?.nombre
             }
-        if('familia' in dsctFormato.dsctDoc.restoDesc)
+        
+        //Descuento nivel 2 - Por familia (OJO: En caso exista)
+        if(!!dsctFormato.dsctDoc.restoDesc && 'familia' in dsctFormato.dsctDoc.restoDesc)
             {
                 dsctFamiliaProducto = parseFloat(dsctFormato.dsctDoc.restoDesc.familia.selected) || 0.0
                 familia_nombre = dsctFormato?.dsctDoc?.restoDesc?.familia?.nombre
@@ -592,6 +633,9 @@ function NuevoPedidoProductos(){
                                         // item.descuento2 = objRes?.total_descuento_n2 || "0";
                                         item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
                                         item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
+                                }else{
+                                    item.descuento2 = 0;
+                                    item.dsct_porcentaje2 = 0.0;
                                 }
                             }else{
                                 if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
@@ -599,7 +643,7 @@ function NuevoPedidoProductos(){
                                         item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
                                         item.dsct_porcentaje2 = 0.0;
                                 }
-                            }                                       ///aqui termina las promociones de nivel 2
+                                }                                       ///aqui termina las promociones de nivel 2
                             })
                         }
 
@@ -774,10 +818,6 @@ function NuevoPedidoProductos(){
             }
 
             handleNewSaleOrder({products: [...itemsNoBonificados], montos: {...nuevoPedido?.montos, ...{descuento: dsctTotal}}})
-            // if(!!dsctTotal){ //recibe dsctTotal desde aplicarDescuento
-            // }else{
-            //     handleNewSaleOrder({products: [...itemsNoBonificados]})
-            // }
         }
 
         const handleInputSpinner = (action, itemCode, value) => {
@@ -811,7 +851,7 @@ function NuevoPedidoProductos(){
                     <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>eliminar_Dsct_Bonificado()}>
                         <BsTextWrap size={22}/>
                     </button>
-                    <button variant="danger" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>{!!(largo_productos) && setDeleteMode(!deleteMode)}}>
+                    <button variant="danger" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={(!isClientExits || doEdit) ?true:false} onClick={()=>{!!(largo_productos) && setDeleteMode(!deleteMode)}}>
                         {(!deleteMode) ?(<BsTrash3Fill size={22}/>):(<BsArrowClockwise size={22}/>)} 
                     </button>
                 </div>
@@ -821,7 +861,6 @@ function NuevoPedidoProductos(){
                 <ListGroup as="ol" numbered={!!largo_productos ? true : false} className='tw-flex tw-gap-2 tw-pb-1 tw-h-96 tw-overflow-y-auto'>
                         {!largo_productos?(
                             <ListGroup.Item as="li" className="d-flex tw-w-full tw-flex-row tw-justify-start tw-gap-2 tw-pl-2 product_card tw-relative" variant="no style">
-                                {/* <div className='tw-flex tw-justify-center tw-items-center tw-w-full tw-h-24 tw-font-medium'> */}
                                 <div className='tw-flex tw-justify-center tw-items-center tw-w-full tw-h-[365px] tw-font-medium'>
                                     {"Lista vacia"}&nbsp;&nbsp;&nbsp;<BsArchive size={28}/>
                                 </div>
@@ -851,19 +890,21 @@ function NuevoPedidoProductos(){
                                                         <span className='tw-text-xs'>{itx?.unidad_moneda}</span> 
                                                         {truncate((1.0 - dsctEquiv(itx?.dsct_porcentaje, itx?.dsct_porcentaje2, true)) * itx?.precio, 2)}
                                                     </div>
-                                                    {/* &nbsp;&nbsp; */}
-                                                    {/* {addOneDecimal(itx?.precio)} */}
                                                 </div>
-                                                <div className={`tw-text-base tw-flex`}>
-                                                    <div>
-                                                        <span className='tw-text-sm'>Cant:</span>&nbsp;
+                                                <div className={`tw-text-base tw-flex tw-flex-col tw-items-center`}>
+                                                    <div className='tw-absolute tw-top-[52px] tw-translate-x-[2px]'>
+                                                        <span className='tw-text-xs tw-font-medium'>Cant.</span>&nbsp;
                                                     </div>
-                                                    {itx?.tipo === 'bonificado' ? 
-                                                    (
-                                                        <InputNumberSpinner min={0} max={itx?.maxLimit} value={itx?.cantidad} onChange={(action)=>{handleInputSpinner(action, itx?.codigo, itx?.cantidad)}}/>
-                                                    ):
-                                                        (<span>{itx?.cantidad}</span>)
-                                                    }
+                                                    <div className='tw-relative'>
+                                                        {itx?.tipo === 'bonificado' ? 
+                                                        (
+                                                            <InputNumberSpinner min={0} max={itx?.maxLimit} value={itx?.cantidad} onChange={(action)=>{handleInputSpinner(action, itx?.codigo, itx?.cantidad)}}/>
+                                                        ):
+                                                            (<button className='button-14' onClick={()=>{
+                                                                handleInputTextModal({show: true, modalTitle: (<div>Ingrese cantidad <br/> <span className='!tw-text-base'>{`Stock real: ${itx?.stockMax}`} und</span></div>), tipomodal: 'text', operacion: 'agregarProducto', returnedValue: null, options: {stock: itx?.stockMax, itemCode: itx?.codigo}})
+                                                            }}>{itx?.cantidad}</button>)
+                                                        }
+                                                    </div>
                                                 </div>
                                             <div className='tw-text-base'>
                                                 <span className='tw-text-sm'>Subtotal:</span>&nbsp;
@@ -896,7 +937,6 @@ function NuevoPedidoProductos(){
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
                 {/* <div className='myFontFamily tw-font-medium'>Desc. por (F. Pago + Ctg. Cliente):</div> */}
                 <div className='myFontFamily tw-font-medium'>Desc. forma de pago:</div>
-                {/* <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.valor_venta)*(nuevoPedido?.montos?.descuento * 0.01), 2)}</d)iv> */}
                 <div className='myFontFamily tw-font-normal tw-bg-white product_card tw-rounded-sm tw-min-w-32 tw-text-end tw-px-2'>{nuevoPedido?.montos?.unidad} {addOneDecimal(truncate((nuevoPedido?.montos?.dsctDoc), 2))}</div>
             </ListGroup.Item>
             <ListGroup.Item className='tw-px-2 tw-py-1 tw-flex tw-justify-end tw-gap-2' variant='secondary'>
@@ -916,16 +956,19 @@ function NuevoPedidoProductos(){
             className="d-flex tw-flex-col justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-gap-2"
             variant="no style"
             >
-                {/* <button className='button-4 tw-w-full' disabled={true} onClick={()=>{aplicarBonificacion()}}> */}
                 <button className='button-4 tw-w-full' disabled={true} onClick={()=>{aplicarBonificacion()}}>
                     Aplicar bonificación (Desactivado)
                 </button>
-                <button className='button-4 tw-w-full tw-flex tw-justify-center tw-items-center tw-gap-2' disabled={!isClientExits?true:false} onClick={()=>{handleShowDsctDialog({show: true});}}>
+                <button className='button-4 tw-w-full tw-flex tw-justify-center tw-items-center tw-gap-2' 
+                        disabled={(!isClientExits || doEdit)?true:false} 
+                        onClick={()=>{handleShowDsctDialog({show: true});}}>
                     <span>Aplicar descuento</span>
-                    {/* {isClientChanged?.active && (<span className=''><BsExclamationTriangleFill/></span>)} */}
                 </button>
-                <button className='button-4 tw-w-full' disabled={!isClientExits?true:false} onClick={()=>{
-                    handleInputTextModal({show: true, modalTitle: 'Notas de crédito y anticipos', tipomodal: 'Anticipo_Credito', options: nuevoPedido?.montos})}}>
+                <button className='button-4 tw-w-full' 
+                    disabled={(!isClientExits || doEdit)?true:false} 
+                    onClick={()=>{
+                    handleInputTextModal({show: true, modalTitle: 'Notas de crédito y anticipos', tipomodal: 'Anticipo_Credito', options: nuevoPedido?.montos})}}
+                    >
                     Aplicar anticipos y notas de creditos
                 </button>
             </ListGroup.Item>

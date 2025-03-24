@@ -19,10 +19,10 @@ async function getPedido(innerParams, state, tipo) {
     try{
         if(state in rutas_reportes || state in rutas_ofertas){
             let ruta = ''
-            if(!tipo)
-                ruta = `${mainURL}/comercial/ventas/pedido${rutas_reportes[state]}`
+            if(tipo==='pedido')
+                ruta = `${mainURL}/comercial/ventas/pedido${rutas_reportes[state]}` //RUTA PARA PEDIDOS
             else
-                ruta = `${mainURL}/comercial/ventas/${tipo}${rutas_ofertas[state]}`
+                ruta = `${mainURL}/comercial/ventas/${tipo}${rutas_ofertas[state]}` //RUTA PARA OFERTAS
             
             const response = await axios(ruta, {
                 withCredentials: true,
@@ -47,7 +47,6 @@ async function getPedido(innerParams, state, tipo) {
 async function getDetallePedidoGeneral(innerParams, tipoPedido, tipoDoc) {
     axios.defaults.withCredentials = true;
     try{
-        console.log(rutas(tipoPedido,'general', tipoDoc))
         const response = await axios(rutas(tipoPedido,'general', tipoDoc), {
             withCredentials: true,
             params: innerParams
@@ -225,6 +224,23 @@ async function guardarNuevaOferta(requestBody) {
     }
 }
 
+async function editarPedido(requestBody) {
+    axios.defaults.withCredentials = true;
+    try{
+        let response = await axios.post(`${mainURL}/comercial/ventas/pedido/editarordenventa`, requestBody);
+        response = response.data
+        if (response[0] === 200){
+            return [response[1], response[0]];
+        }else
+        {
+            return [null, 406];
+        }
+    }catch(error){
+        console.log(`An Error ocurred: (editarPedido) _ ${error}`);
+        return [error.response.data.detail, error.response.status];
+    }
+}
+
 async function obtenerDescuentoDocumento(requestBody) {
     axios.defaults.withCredentials = true;
     try{
@@ -237,6 +253,25 @@ async function obtenerDescuentoDocumento(requestBody) {
         }
     }catch(error){
         console.log(`An Error ocurred: (obtenerDescuentoDocumento) _ ${error}`);
+        return error.response.status
+    }
+}
+
+async function getSaleOrder(innerParams) {
+    axios.defaults.withCredentials = true;
+    try{
+        const response = await axios.get(`${mainURL}/comercial/ventas/pedido/obtenerordenventa`, {
+            params:innerParams,
+            timeout: 100000
+        });
+        if (!!response.data && response.status === 200){
+            return response.data;
+        }else
+        {
+            return null;
+        }
+    }catch(error){
+        console.log(`An Error ocurred: (getSaleOrder) _ ${error}`);
         return error.response.status
     }
 }
@@ -254,35 +289,6 @@ export {getPedido,
         guardarNuevoPedido,
         obtenerDescuentoDocumento,
         guardarNuevaOferta,
+        getSaleOrder,
+        editarPedido
     }
-
-// axios.defaults.withCredentials = true;
-// const reponse = await fetch(`${mainURL}/comercial/ventas/pedido${rutas_reportes[state]}?usuario_codigo=IROJAS`, {
-//     method: 'GET',
-//     credentials: 'include',
-//     headers: {
-//         'Content-Type': 'application/json',
-//     }
-// })
-// console.log(response.json());
-// .then(response => {
-//     if (!response.ok) {
-//         throw new Error('Network response was not ok');
-//     }
-//     return response.json(); // Convertir la respuesta a JSON
-// })
-// .then(data => {
-//     // Mostrar el valor de la cookie en el DOM
-//     console.log(data.cookie_value)
-//     // document.getElementById('result').textContent = `Cookie Value: ${data.cookie_value}`;
-// })
-// .catch(error => {
-//     console.error('Error:', error);
-// });
-// const response = await axios.get(ruta, {
-//     withCredentials: true,
-//     params: innerParams,
-//     headers: {
-//         'Content-Type': 'application/json'
-//     }
-// });

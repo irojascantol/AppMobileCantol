@@ -18,7 +18,6 @@ function ComercialContext({children}) {
     const [loading, setLoading] = useState(false);
     const [userName,  setUserName] = useState(!!sessionStorage.getItem("USR") ? reverseString(sessionStorage.getItem("USR")) : undefined)
     const [showSecurity, setShowSecurity] = useState(false);
-    const [indexPedidoCarusel, setIndexPedidoCarusel] = useState(0);
     const [tabActivePedido,  setTabActivePedido] = useState('xxx');
     const [searchClientModal,  setSearchclientModalOpen] = useState({show: false, modalTitle: '', returnedValue: undefined, options: [], operacion: null, placeholder: null});
     const [showInputTextModal, setShowInputTextModal] = useState({show: false, modalTitle: '', returnedValue: undefined, options: [], tipomodal:null, operacion:null});
@@ -51,7 +50,6 @@ function ComercialContext({children}) {
               }, 
       promociones: {enabled: true}
       });
-    // const [nuevoPedido, setNuevoPedido] =  useState(!!sessionStorage.getItem("CDTToken") && {products: [], montos: {valor_venta: 0, descuento: 0, impuesto: 0, total_cred_anti: 0, total: 0, unidad: null, anticipo: 0, nota_credito: 0,}})
     
     //handlers
     //manejo seguridad
@@ -66,7 +64,6 @@ function ComercialContext({children}) {
 
     const handleLogo = (logo_) => setLogo_C(logos[logo_]);
     const handleUser = (name) => setUserName(name);
-    const handlePedidoCarusel = (index) => setIndexPedidoCarusel(index);
     const handleTabPedido = (tabPedido) => setTabActivePedido(tabPedido);
     //handler buscar modal
     const handleSearchModal = (obj) => setSearchclientModalOpen({...searchClientModal, ...obj})
@@ -94,7 +91,6 @@ function ComercialContext({children}) {
         loading,
         userName,
         logo_c,
-        indexPedidoCarusel,
         tabActivePedido,
         showSecurity,
         searchClientModal,
@@ -107,7 +103,6 @@ function ComercialContext({children}) {
         handleClose,
         handleLogo,
         handleUser,
-        handlePedidoCarusel,
         handleTabPedido,
         //handler buscar modal
         handleSearchModal,

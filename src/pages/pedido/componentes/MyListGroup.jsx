@@ -16,8 +16,8 @@ const plantillas = {
   logistica: (data, tipoPedido, tipoDoc)=><DetallePlantillaLogistica data={data} tipoPedido={tipoPedido} tipoDoc={tipoDoc} />,
   finanzas: (data, tipoPedido, tipoDoc)=><DetallePlantillaFinanzas data={data} tipoPedido={tipoPedido} tipoDoc={tipoDoc} />,
   contenido: (data, tipoPedido, tipoDoc)=><DetallePlantillaContenido data={data} tipoPedido={tipoPedido} tipoDoc={tipoDoc} />,
-  nuevopedidocabecera: (data, y)=><NuevoPedidoCabecera data={data}/>,
-  nuevopedidoproductos: (data, y)=><NuevoPedidoProductos data={data}/>,
+  nuevopedidocabecera: (data, x, y, doEdit)=><NuevoPedidoCabecera data={data} doEdit={doEdit}/>,
+  nuevopedidoproductos: (data, x, y, doEdit)=><NuevoPedidoProductos data={data} doEdit={doEdit}/>,
   nuevopedidototal: (x,y)=><div></div>,
 }
 
@@ -28,7 +28,7 @@ const bgColor = {
   facturado: 'bg-info'
 }
 
-function MyListGroup({data, plantilla, handleCarusel, tipoPedido, modalValues, handleModal, tipoDoc}) {
+function MyListGroup({data, plantilla, move2Detail, tipoPedido, modalValues, handleModal, tipoDoc, doEdit}) {
   //tipoDoc: pedido, entrega
   if(['pendiente', 'aprobado', 'rechazado', 'facturado'].includes(plantilla)){
     return (
@@ -42,7 +42,8 @@ function MyListGroup({data, plantilla, handleCarusel, tipoPedido, modalValues, h
               </Badge>
             </li>
         {data.map((item, index)=>(
-            <li key={(index + 1).toString()} onClick={()=>{handleCarusel(item)}}>
+          // move2Detail, sirve para navegar al detalle del pedido u oferta
+            <li key={(index + 1).toString()} onClick={()=>{move2Detail(item)}}> 
                 {plantillas[plantilla](item)}
             </li>
         ))}
@@ -64,7 +65,7 @@ function MyListGroup({data, plantilla, handleCarusel, tipoPedido, modalValues, h
   else if(['general', 'logistica', 'finanzas', 'contenido', 'nuevopedidocabecera', 'nuevopedidoproductos', 'nuevopedidototal' ].includes(plantilla)){
     return(
       <ListGroup as="ol" className={"tw-h-fit tw-bg-gray-500"}>
-        {plantillas[plantilla](data, tipoPedido, tipoDoc)}
+        {plantillas[plantilla](data, tipoPedido, tipoDoc, doEdit)}
       </ListGroup>
     )
   }

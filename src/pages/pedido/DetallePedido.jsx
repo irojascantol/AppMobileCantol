@@ -1,39 +1,49 @@
-import { useContext } from 'react'
-import { commercialContext } from '../../context/ComercialContext'
 import { MyListGroup } from './componentes/MyListGroup'
 import MyTabPedido from './componentes/MyTabPedido'
-// import FileCopyIcon from '@mui/icons-material/FileCopyOutlined';
-// import SpeedDial from '@mui/material/SpeedDial';
-// import SpeedDialIcon from '@mui/material/SpeedDialIcon';
-// import SpeedDialAction from '@mui/material/SpeedDialAction';
+import SpeedDial from '@mui/material/SpeedDial';
+import SpeedDialIcon from '@mui/material/SpeedDialIcon';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import ModeEditIcon from '@mui/icons-material/ModeEdit';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-// const actions = [
-//     { icon: <FileCopyIcon />, name: 'Copy' },
-//   ];
+const actions = [
+    { icon: <ModeEditIcon />, name: 'Editar' },
+  ];
 
-export default function DetallePedido({itemSelected = {}, tipoPedido= 'None'}) {
-    const {handlePedidoCarusel, handleTabPedido} = useContext(commercialContext)
+export default function DetallePedido() {
+    const navigate = useNavigate() // se utiliza para la opcion editar
+    const location = useLocation();
+    const {reporte: tipoPedido} = useParams();
+    const {item: itemSelected, tipo: tipoDoc} = location.state;
+
+
     return (
         <>
-            {/* <SpeedDial
-                ariaLabel="SpeedDial basic example"
-                // sx={{ position: 'absolute', bottom: 16, right: 16 }}
-                sx={{ position: 'fixed', bottom: 32, right: 16 }}
-                icon={<SpeedDialIcon />}
-            >
-                {actions.map((action) => (
-                <SpeedDialAction
-                key={action.name}
-                icon={action.icon}
-                tooltipTitle={action.name}
-                />
-                ))}
-            </SpeedDial> */}
+            {/* editar se activa solo para pendiente */}
+            {tipoPedido === 'pendiente' && tipoDoc === 'pedido' && (
+                <SpeedDial
+                    ariaLabel="SpeedDial basic example"
+                    sx={{ position: 'fixed', bottom: 32, right: 16 }}
+                    icon={<SpeedDialIcon />}
+                >
+                    {actions.map((action) => (
+                    <SpeedDialAction
+                    key={action.name}
+                    icon={action.icon}
+                    tooltipTitle={action.name}
+                    tooltipOpen
+                    onClick={()=>navigate('/main/nuevopedido/editar', {state: {docentry: itemSelected?.DocEntry}})}
+                    />
+                    ))}
+                </SpeedDial>
+            )}
+
+            {/* tipoPedido: pendiente, tipoDoc: pedidos */}
             <MyTabPedido components={[
-            <MyListGroup data={itemSelected} plantilla='general' tipoPedido={tipoPedido}/>,
-            <MyListGroup data={itemSelected} plantilla='contenido' tipoPedido={tipoPedido}/>,
-            <MyListGroup data={itemSelected} plantilla='logistica' tipoPedido={tipoPedido}/>,
-            <MyListGroup data={itemSelected} plantilla='finanzas' tipoPedido={tipoPedido}/>]}/>
+            <MyListGroup data={itemSelected} plantilla='general' tipoPedido={tipoPedido} tipoDoc={tipoDoc}/>,
+            <MyListGroup data={itemSelected} plantilla='contenido' tipoPedido={tipoPedido} tipoDoc={tipoDoc}/>,
+            <MyListGroup data={itemSelected} plantilla='logistica' tipoPedido={tipoPedido} tipoDoc={tipoDoc}/>,
+            <MyListGroup data={itemSelected} plantilla='finanzas' tipoPedido={tipoPedido} tipoDoc={tipoDoc}/>]}/>
         </>
     )
 }

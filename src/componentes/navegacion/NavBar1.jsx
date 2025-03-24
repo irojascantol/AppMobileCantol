@@ -51,7 +51,6 @@ const NavBar1 = () => {
     const {
       loading,
       userName,
-      // handlePedidoCarusel,
       handleTabPedido,
     } = useContext(commercialContext)
 
@@ -139,24 +138,24 @@ const NavBar1 = () => {
                   </NavItem>
                   <NavDropdown title="Estados" id="basic-nav-dropdown" className='nav-dropdown-custom-height'>
                     <NavDropdown title="Pedidos" id="basic-nav-dropdown" className='nav-dropdown-custom-height'>
-                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/aprobado?page=lista')}}>
+                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/aprobado?page=lista', 'pedido')}}>
                         <NavDropdown.Item href="#">Aprobados</NavDropdown.Item>
                       </div>
                       <NavDropdown.Divider />
-                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/pendiente?page=lista')}}>
+                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/pendiente?page=lista', 'pedido')}}>
                         <NavDropdown.Item href="#">Pendientes</NavDropdown.Item>
                       </div>
                       <NavDropdown.Divider />
-                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/rechazado?page=lista')}}>
+                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/rechazado?page=lista', 'pedido')}}>
                         <NavDropdown.Item href="#">Rechazados</NavDropdown.Item>
                       </div>
                       <NavDropdown.Divider />
-                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/facturado?page=lista')}}>
+                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/facturado?page=lista', 'pedido')}}>
                         <NavDropdown.Item href="#">Facturados</NavDropdown.Item>
                       </div>
                     </NavDropdown>
                     <NavDropdown title="Cotizaciones" id="basic-nav-dropdown" className='nav-dropdown-custom-height'>
-                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/oferta/pendiente?page=lista', 'ofertas')}}>
+                      <div className='tw-w-full' onClick={()=>{navigate2Path('/main/pedido/pendiente?page=lista', 'ofertas')}}>
                         <NavDropdown.Item href="#">Pendientes</NavDropdown.Item>
                       </div>
                     </NavDropdown>
@@ -193,8 +192,3 @@ const NavBar1 = () => {
 }
 
 export { NavBar1 };
-
-
-{/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/aprobado?page=lista')}}> */}
-{/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/pendiente?page=lista')}}> */}
-{/* <div className='tw-w-full' onClick={()=>{handlePedidoCarusel(0); navigate2Path('/main/pedido/rechazado?page=lista')}}> */}

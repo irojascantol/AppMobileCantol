@@ -14,7 +14,7 @@ const params_ = {
 
 function DetallePlantillaContenido({data, tipoPedido, tipoDoc}) {
   const [componentData, setComponentData] = useState(null);
-  const {tabActivePedido, indexPedidoCarusel, handleShow} = useContext(commercialContext)
+  const {tabActivePedido, handleShow} = useContext(commercialContext)
 
   useEffect(()=>{
     const getDetalleContenido = async () => {
@@ -37,7 +37,7 @@ function DetallePlantillaContenido({data, tipoPedido, tipoDoc}) {
       }
     }
     getDetalleContenido();
-   },[tabActivePedido, indexPedidoCarusel]);
+   },[tabActivePedido]);
 
 
   return (
@@ -51,7 +51,7 @@ function DetallePlantillaContenido({data, tipoPedido, tipoDoc}) {
 
 function DetallePlantillaFinanzas({data, tipoPedido, tipoDoc}) {
   const [componentData, setComponentData] = useState(null);
-  const {tabActivePedido, indexPedidoCarusel, handleShow} = useContext(commercialContext)
+  const {tabActivePedido, handleShow} = useContext(commercialContext)
   
   useEffect(()=>{
     const getDetalleFinanzas = async () => {
@@ -68,7 +68,7 @@ function DetallePlantillaFinanzas({data, tipoPedido, tipoDoc}) {
       }
     }
     getDetalleFinanzas();
-   },[tabActivePedido, indexPedidoCarusel]);
+   },[tabActivePedido]);
 
 
   return (
@@ -109,7 +109,7 @@ function DetallePlantillaFinanzas({data, tipoPedido, tipoDoc}) {
 
 function DetallePlantillaLogistica({data, tipoPedido, tipoDoc}) {
   const [componentData, setComponentData] = useState(null);
-  const {tabActivePedido, indexPedidoCarusel, handleShow} = useContext(commercialContext)
+  const {tabActivePedido, handleShow} = useContext(commercialContext)
 
   useEffect(()=>{
     const getDetalleLogistica = async () => {
@@ -124,7 +124,7 @@ function DetallePlantillaLogistica({data, tipoPedido, tipoDoc}) {
       }
     }
     getDetalleLogistica();
-   },[tabActivePedido, indexPedidoCarusel]);
+   },[tabActivePedido]);
 
   return (
     <>
@@ -165,37 +165,27 @@ function DetallePlantillaLogistica({data, tipoPedido, tipoDoc}) {
 
 function DetallePlantillaGeneral({data, tipoPedido, tipoDoc}) {
   const [componentData, setComponentData] = useState(null);
-  const {indexPedidoCarusel, tabActivePedido, handleShow} = useContext(commercialContext)
+  const { tabActivePedido, handleShow} = useContext(commercialContext)
+  //data: {LicTradNum: '20454317468', CardName: 'ESTRONGER E.I.R.L.', DocDueDate: '2025-03-15T00:00:00', DocTotal: 446.1, DocEntry: 3575203, …}
   //tipoPedido : pendiente, rechazado y aprobado
+  //tipoDoc: pedidos
 
-  // console.log(data, tipoPedido, tipoDoc)
-
+  
   useEffect(()=>{
     const getDetalleGeneral = async () => {
-      // console.log(tipoPedido, tabActivePedido, indexPedidoCarusel, data?.DocEntry, tipoDoc)
-      if(tabActivePedido==='general' && indexPedidoCarusel === 1 && data?.DocEntry && !tipoDoc){
-        const response = await getDetallePedidoGeneral(params_[tipoPedido](data), tipoPedido);
+        if(tabActivePedido==='general' && !!data?.DocEntry && !!tipoDoc){
+        const response = await getDetallePedidoGeneral(params_[tipoPedido](data), tipoPedido, tipoDoc);
         //secure shield
         if(response !== undefined){
-            // console.log('1')
             await setComponentData(response[0])
           }else{
             handleShow();
           }
-        }else if(!!data?.DocEntry && !!tipoDoc){
-          const response = await getDetallePedidoGeneral(params_[tipoPedido](data), tipoPedido, tipoDoc);
-        //secure shield
-        if(response !== undefined){
-          // console.log('2')
-          await setComponentData(response[0])
-        }else{
-            handleShow();
         }
-      }
     }
     getDetalleGeneral();
     }
-   ,[indexPedidoCarusel, tabActivePedido]);
+   ,[tabActivePedido]);
 
   return (
     <>
