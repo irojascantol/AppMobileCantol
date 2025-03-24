@@ -56,7 +56,7 @@ const NavBar1 = () => {
     } = useContext(commercialContext)
 
     const innerNavigate = (path, tipo) => {
-      console.log(path, tipo)
+      // console.log(path, tipo)
       setExpanded(false)
       !tipo && navigate(path)
       !!tipo && navigate(path, { state: { tipo } }) // para identficar si es pedido u oferta

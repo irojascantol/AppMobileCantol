@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 src/authConfig.js
+
+version_21_03_2025

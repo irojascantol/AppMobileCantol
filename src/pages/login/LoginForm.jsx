@@ -40,8 +40,9 @@ const LoginForm = () => {
     setLoading(true);
     responseJson = await Login(inputUsername, inputPassword, inputCompany);
     await delay(200);
+    setLoading(false);
+
     // if(capchaToken && inputUsername && inputPassword && inputCompany){
-    //   setLoading(false);
     // }
 
     if (responseJson !== undefined){
@@ -140,12 +141,12 @@ const LoginForm = () => {
         </div>
         {!loading ? (
           // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
-            <Button className="w-100 tw-mt-3" variant="dark" type="submit">
+          <Button className="w-100 tw-mt-3" variant="dark" type="submit">
             <span className="tw-text-sm">INGRESAR</span>
           </Button>
         ) : (
           // <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={!capchaToken}>
-            <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={false}>
+          <Button className="w-100 tw-mt-3" variant="dark" type="submit" disabled={false}>
               <span className="tw-text-sm">INGRESANDO....</span>
           </Button>
         )}

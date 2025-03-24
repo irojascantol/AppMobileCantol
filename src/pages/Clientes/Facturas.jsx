@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-// import { Button } from 'react-bootstrap';
 import Card from 'react-bootstrap/Card';
 import '../../style/accordion.css'
 import { SearchClientButton } from './Componentes/botones';
@@ -10,6 +9,7 @@ import { FacturaCard } from './Componentes/tarjetas';
 import { getFacturaPDF, getListarFacturas } from '../../services/clienteService';
 import PDFVisualizer from './Componentes/PDFVisualizer';
 import { ReporteClienteModal } from '../../componentes/modal/reporteClienteModal';
+import { BsDownload } from 'react-icons/bs';
 
 
 
@@ -40,7 +40,31 @@ function FacturasCliente() {
             };
             const response = await getFacturaPDF(params);
             const pdfUrl = URL.createObjectURL(response);
-            handlePdfVisualizer({show: true, title: 'Visualizador 🔍', URL: pdfUrl});
+
+            const downloadPdfFile = (route_) => {
+                const fileName = route_.split('\\').pop()
+                // Crear un enlace para descargar el archivo
+                const a = document.createElement('a');
+                a.href = pdfUrl;
+                a.download = fileName;  // Nombre con el que se descargará el archivo
+                a.click();  // Simula el clic para iniciar la descarga
+
+                // Liberamos la URL del Blob para evitar fugas de memoria
+                URL.revokeObjectURL(pdfUrl);
+            }
+            
+
+            //aqui vamos a poner el boton de descargar el pdf
+            // handlePdfVisualizer({show: true, title: (<div></div>)'Visualizador 🔍', URL: pdfUrl});
+            handlePdfVisualizer({show: true, title: (<div className='tw-flex tw-gap-10 tw-items-center'>
+                                                        <p className='tw-my-0'>Visualizador 🔍</p>
+                                                        <button 
+                                                        className='button-14 tw-p-1 tw-h-fit tw-flex tw-items-center tw-gap-2 tw-mt-2'
+                                                        onClick={()=>downloadPdfFile(route)}
+                                                        >
+                                                        <p className='tw-py-0 tw-mb-0'>Descargar</p>
+                                                        <BsDownload size={15}/></button>
+                                                    </div>), URL: pdfUrl});
         } catch (error) {
             console.error(error);
         }
