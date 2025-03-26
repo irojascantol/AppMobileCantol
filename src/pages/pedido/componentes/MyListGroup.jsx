@@ -4,6 +4,7 @@ import { Pendiente, Aprobado, Rechazado, PendienteChofer, CompletoChofer, Factur
 import { Badge, ListGroup } from 'react-bootstrap'
 import { NuevoPedidoCabecera, NuevoPedidoProductos } from '../plantillas/nuevopedidoPlantilla';
 import { truncate } from '../../../utils/math';
+import { InputField_lIcon } from '../../../componentes/inputfields';
 
 const plantillas = {
   pendiente: (item)=><Pendiente item={item}/>,
@@ -28,7 +29,7 @@ const bgColor = {
   facturado: 'bg-info'
 }
 
-function MyListGroup({data, plantilla, move2Detail, tipoPedido, modalValues, handleModal, tipoDoc, doEdit}) {
+function MyListGroup({data, plantilla, move2Detail, tipoPedido, modalValues, handleModal, tipoDoc, doEdit, searchTxt, handleSearch }) {
   //tipoDoc: pedido, entrega
   if(['pendiente', 'aprobado', 'rechazado', 'facturado'].includes(plantilla)){
     return (
@@ -40,6 +41,9 @@ function MyListGroup({data, plantilla, move2Detail, tipoPedido, modalValues, han
               <Badge bg="dark" pill>
                 Total:&nbsp;&nbsp;S/.{truncate(data?.reduce((acc, cur)=> acc + cur.DocTotal, 0), 2).toLocaleString()}
               </Badge>
+            </li>
+            <li>
+              <InputField_lIcon searchValue={searchTxt} setSearchValue={handleSearch} placeholder={'Ingrese razón social o RUC'}/> {/* buscador */}
             </li>
         {data.map((item, index)=>(
           // move2Detail, sirve para navegar al detalle del pedido u oferta

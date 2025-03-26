@@ -4,6 +4,7 @@ import { getPedido } from '../../services/pedidoService';
 import { MyListGroup } from './componentes/MyListGroup';
 import { commercialContext } from '../../context/ComercialContext';
 import { decodeJWT } from '../../utils/decode';
+import { InputField_lIcon } from '../../componentes/inputfields';
 // import Carousel from 'react-bootstrap/Carousel';
 // import DetallePedido from './DetallePedido';
 
@@ -14,6 +15,8 @@ import { decodeJWT } from '../../utils/decode';
 
 export default function ReportePedido() {
     const [listReporte, setListReporte] = useState([]);
+    const [searchTxt, setSearchTxt] = useState("");
+    const [dataFiltered, setDataFiltered] = useState([])
     // const [itemSelected,  setItemSelected] = useState(null);
     const {
         setLoading,
@@ -27,6 +30,17 @@ export default function ReportePedido() {
     const {tipo} = location.state; //tipo define si es pedido u oferta
     const page = new URLSearchParams(location.search).get('page');
 
+
+    const handleSearch = (event) =>{
+        const {value} = event.target;
+        let upperPattern = value.toUpperCase();
+        let filtered = listReporte.filter(item => 
+            `${item?.LicTradNum} ${item?.CardName}`.includes(upperPattern)
+        );
+        setSearchTxt(value)
+        setDataFiltered(filtered) //Actualiza lista filtrada
+    }
+
     useEffect(()=>{
         const waitFunc = async () => {
             setLoading(true);
@@ -35,7 +49,8 @@ export default function ReportePedido() {
             //secure shield
             if(response !== undefined){
                 setLoading(false);
-                await setListReporte(response);
+                await setListReporte([...response]);
+                await setDataFiltered([...response]); //aqui maneja lista de busqueda
             }else{
                 handleShow();
                 setLoading(false);
@@ -52,7 +67,8 @@ export default function ReportePedido() {
 
     return (
         <div >
-            <MyListGroup data={listReporte} plantilla={params.reporte} move2Detail={move2Detail}/>
+            {/* <MyListGroup data={listReporte} plantilla={params.reporte} move2Detail={move2Detail} searchTxt={searchTxt} handleSearch={handleSearch}/> */}
+            <MyListGroup data={dataFiltered} plantilla={params.reporte} move2Detail={move2Detail} searchTxt={searchTxt} handleSearch={handleSearch}/>
         </div>
     )
 }

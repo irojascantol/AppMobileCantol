@@ -104,6 +104,23 @@ async function getListarFacturas(innerParams) {
     }
 }
 
+async function getListarNotaCredito(innerParams) {
+    try{
+        const response = await axios(`${mainURL}/comercial/reporte/notacredito/listar`, {
+            params: innerParams
+        });
+        if (!!response.data && response.status === 200){
+            return response.data;
+        }else
+        {
+            return [];
+        }
+    }catch(error){
+        console.log(`An Error ocurred: (getEstadoCuentaCliente) _ ${error}`);
+        undefined;
+    }
+}
+
 // const response = await axios(`${mainURL}/comercial/reporte/factura/pdfformat`, {
 //     params: innerParams,
 //     responseType: 'arraybuffer',
@@ -127,4 +144,4 @@ async function getFacturaPDF(innerParams) {
     }
 }
 
-export {getClientePorFiltro, getProductoPorFiltro, getTransportistaPorFiltro, getEstadoCuentaCliente, getListarFacturas, getFacturaPDF}
+export {getClientePorFiltro, getProductoPorFiltro, getTransportistaPorFiltro, getEstadoCuentaCliente, getListarFacturas, getFacturaPDF, getListarNotaCredito}

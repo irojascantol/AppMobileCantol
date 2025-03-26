@@ -20,6 +20,7 @@ import {
 import { getCodigo } from '../../utils/objects';
 import { validaAcceso } from '../../services/usuario';
 import { decodeJWT } from '../../utils/decode';
+import { check_module } from '../../utils/security';
 
 //viene el codigo de las rutas
 const codigo_permisos = {
@@ -41,12 +42,14 @@ const codigo_permisos = {
   cliente: {
     estadocuenta: {direccion: '/main/cliente/estadocuenta' , codigo: 'COMEST'},
     facturas: {direccion: '/main/cliente/facturas' , codigo: 'COMFAC'},
+    notascredito: {direccion: '/main/cliente/notascredito' , codigo: 'COMNCR'},
+    documentos: {direccion: '/main/cliente/documentos' , codigo: 'COMDOC'}
   }
 }
 
 const NavBar1 = () => {
     const navigate = useNavigate()
-    const [expanded,  setExpanded] = useState(false);
+    const [expanded,  setExpanded] = useState(false); //expande /colapsa la barra de navegacion
         
     const {
       loading,
@@ -62,26 +65,16 @@ const NavBar1 = () => {
     }
 
     const navigate2Path = async (path, tipo) => {
-      //filtra el query paramater
-      let route = path.split('?')[0]
-      const codigo_modulo = await getCodigo(codigo_permisos, route);
-      const {company: empresa_codigo, username: usuario_login } = await decodeJWT() || {company: undefined, username: undefined};
-      let body = {
-        usuario_login: usuario_login,
-        empresa_codigo: empresa_codigo,
-        modulo_codigo: codigo_modulo
-      }
-      if(!!empresa_codigo && !!usuario_login){
-        const {acceso} = await validaAcceso(body)
-        // console.log("muestrame acceso:",acceso)
-        // if(1){
+        //filtra el query paramater
+        let route = path.split('?')[0]
+        const codigo_modulo = await getCodigo(codigo_permisos, route);
+        let acceso = await check_module(codigo_modulo) //VALIDA ACCESO A MODULO
         if(!!acceso){
           innerNavigate(path, tipo)
         }else{
           alert('No cuenta con permisos para ingresar');
-          setExpanded(false);
+          setExpanded(false); //esto es para expandir la barra de navegacion
         }
-      }
     }
 
     return (
@@ -169,10 +162,20 @@ const NavBar1 = () => {
                       </div>
                     </NavItem>
                     <NavItem className='nav-item-custom-height'>
+                      <div className='nav-item-custom-height tw-w-full' onClick={()=>{navigate2Path('/main/cliente/documentos')}}>
+                        <NavLink href="#">Documentos</NavLink>
+                      </div>
+                    </NavItem>
+                    {/* <NavItem className='nav-item-custom-height'>
                       <div className='nav-item-custom-height tw-w-full' onClick={()=>{navigate2Path('/main/cliente/facturas')}}>
                         <NavLink href="#">Facturas</NavLink>
                       </div>
-                    </NavItem>
+                    </NavItem> */}
+                    {/* <NavItem className='nav-item-custom-height'>
+                      <div className='nav-item-custom-height tw-w-full' onClick={()=>{navigate2Path('/main/cliente/notascredito')}}>
+                        <NavLink href="#">Notas de crédito</NavLink>
+                      </div>
+                    </NavItem> */}
                 </NavDropdown>
               <hr className='tw-my-0'/>
               <NavItem className='nav-item-custom-height hola'>

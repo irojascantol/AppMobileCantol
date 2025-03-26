@@ -318,8 +318,8 @@ function NuevoPedidoProductos({data, doEdit=true}){
 
     //activa solo cuando se modifica la tabla productos
     useEffect(()=>{
-        console.log('Ingresa nuevoPedido.products, nuevoPedido.montos.descuento')
-        console.log(nuevoPedido?.products?.length, prevLengthRef.current, isQtyChangedRef.current)
+        // console.log('Ingresa nuevoPedido.products, nuevoPedido.montos.descuento')
+        // console.log(nuevoPedido?.products?.length, prevLengthRef.current, isQtyChangedRef.current)
         if ((nuevoPedido?.products?.length > prevLengthRef.current) || (isQtyChangedRef.current)) //aplica descuento cuando cantidad cantidad de productos o cuando cambia cantidad de un item
             actualizarDescuentoLinea() //Actualiza descuentos de la linea en tiempo real
             isQtyChangedRef.current = false // desactiva el estado cambio de cantidad

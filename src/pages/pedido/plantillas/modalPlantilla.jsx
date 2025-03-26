@@ -299,7 +299,7 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                             <Button 
                                 variant="success" 
                                 id="button-addon2" 
-                                className={`tw-flex tw-justify-center tw-items-center tw-px-0 !tw-w-${heldItems.length ? '36' : '12'}`}
+                                className={`tw-flex tw-justify-center tw-items-center tw-px-0 ${heldItems.length ? '!tw-w-36' : '!tw-w-12'}`}
                                 onClick={migrarListaSuspendida}
                                 disabled={!heldItems.length}
                             >

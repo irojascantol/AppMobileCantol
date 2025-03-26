@@ -18,7 +18,6 @@ import Backdrop from '@mui/material/Backdrop';
 // import { ServerError } from '@azure/msal-browser';
 import { BsGeoAltFill } from 'react-icons/bs';
 import { CircularProgress } from '@mui/material';
-// import { delay } from '../../utils/delay';
 
 const tipoModal = {
   text: (nuevopedido, modalValues, handlemodal, setSaleOrder, isQuotation)=>(<IngresarTexto nuevopedido={nuevopedido} modalValues={modalValues} handleInputTextModal={handlemodal} handleNewSaleOrder={setSaleOrder} type={'number'} isQuotation={isQuotation}/>),
@@ -109,7 +108,7 @@ export default function NuevoPedido() {
     let cuerpo = null
 
     if(tipo_r !== 'editar'){
-    const data_token = await decodeJWT();
+      const data_token = await decodeJWT();
       response = await getNuevoPedidoClave({usuario_codigo: data_token.username});
     }else if(tipo_r === 'editar'){
       //Aqui se trae el metodo para que traiga todos los datos
@@ -240,6 +239,7 @@ export default function NuevoPedido() {
 
   //valida que todos los campos esten correctos OV antes de guardar
   const validarCampos = async () => {
+    const data_token = await decodeJWT();
     // verifica si registro cliente
     if(!!nuevoPedido?.razonsocial){
         //verifica existe producto en lista
@@ -247,50 +247,52 @@ export default function NuevoPedido() {
           //verifica que no haya cambiado de cliente, pendiente actualizacion de descuento
           // if(!isClientChanged.active){ // ahora funciona cuando cambia cliente, los descuentos se quitan
             if(!!nuevoPedido?.ructransporte){
-              try{
-                //Logica que solicita dos veces los permisos de geolocalizacion
-                let currentLocation = null
-                setIsLoading({show:true, msg: `Grabando ${tipoPedido[tipo_root].toLowerCase()}...`}); //Bloqueo ventana antes de pedir geolocalizacion
-                try{
-                  currentLocation = await getCurrentLocation(2);
-                }catch(error){
-                  console.log('Localizacion desactivada en navegador: ', error.message)
-                }
-                setLocation(!!currentLocation) //esto para enviar el cuadrado negro en frond
-
-                let body = makeBody[tipo_root](nuevoPedido, currentLocation, dsctFormato)
-                
-                // // let body = makeSaleOrderBody(nuevoPedido, currentLocation, dsctFormato)
-                // await delay(2000)
-                const [response, status] = !!tipo_root ? await grabarCuerpo[tipo_root](body): [null, 206];
-                // const [response, status] = ['OV Creada!', 200];
-                // await delay(2000)
-                // //
-                status === 406 && handleShow()
-                //aca se devuelve una respuesta cuando concluye el proceso
-                setIsLoading({show: false});
-                status !== 200 && alert(JSON.stringify(response))
-                if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) === 'number'){
-                  console.log('1')
-                  alert('¡Orden de venta y borrador creados!\nRedireccion a pedidos pendientes')
-                  navigate('/main/pedido/pendiente?page=lista', {state:{tipo: 'pedido'}})
-                }else if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) !== 'number'){
-                  console.log('2')
-                  alert('¡Borrador creado!\nRedireccion a pedidos pendientes')
-                  navigate('/main/pedido/pendiente?page=lista', {state:{tipo: 'pedido'}})
-                }else if(status === 200 && typeof(response) === 'string'){
-                  alert(response)
-                  if(tipo_root === 'editar'){
-                    navigate('/main/pedido/pendiente?page=lista', {state:{tipo: 'pedido'}})
-                  }else{
-                    refreshPage() // aqui se refresca la pagina cuando se crea una oferta de venta
+              if(data_token?.slpcode !== -2){ //verifica que el usuario sera solo vendedor difernte de -2
+                  try{
+                    //Logica que solicita dos veces los permisos de geolocalizacion
+                    let currentLocation = null
+                    setIsLoading({show:true, msg: `Grabando ${tipoPedido[tipo_root].toLowerCase()}...`}); //Bloqueo ventana antes de pedir geolocalizacion
+                    try{
+                      currentLocation = await getCurrentLocation(2);
+                    }catch(error){
+                      console.log('Localizacion desactivada en navegador: ', error.message)
+                    }
+                    setLocation(!!currentLocation) //esto para enviar el cuadrado negro en frond
+                    let body = makeBody[tipo_root](nuevoPedido, currentLocation, dsctFormato)
+                    // // let body = makeSaleOrderBody(nuevoPedido, currentLocation, dsctFormato)
+                    // await delay(2000)
+                    const [response, status] = !!tipo_root ? await grabarCuerpo[tipo_root](body): [null, 206];
+                    // const [response, status] = ['OV Creada!', 200];
+                    // await delay(2000)
+                    // //
+                    status === 406 && handleShow()
+                    //aca se devuelve una respuesta cuando concluye el proceso
+                    setIsLoading({show: false});
+                    status !== 200 && alert(JSON.stringify(response))
+                    if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) === 'number'){
+                      console.log('1')
+                      alert('¡Orden de venta y borrador creados!\nRedireccion a pedidos pendientes')
+                      navigate('/main/pedido/pendiente?page=lista', {state:{tipo: 'pedido'}})
+                    }else if(status === 200 && typeof(response[1]) === 'number' && typeof(response[2]) !== 'number'){
+                      console.log('2')
+                      alert('¡Borrador creado!\nRedireccion a pedidos pendientes')
+                      navigate('/main/pedido/pendiente?page=lista', {state:{tipo: 'pedido'}})
+                    }else if(status === 200 && typeof(response) === 'string'){
+                      alert(response)
+                      if(tipo_root === 'editar'){
+                        navigate('/main/pedido/pendiente?page=lista', {state:{tipo: 'pedido'}})
+                      }else{
+                        refreshPage() // aqui se refresca la pagina cuando se crea una oferta de venta
+                      }
+                    }
+                  }catch(error){
+                    setIsLoading(false);
+                    alert ('¡Error al generar pedido!\nContactar con el area de TI')
+                    console.error("An error occurred:", error.message);
                   }
-                }
-              }catch(error){
-                setIsLoading(false);
-                alert ('¡Error al generar pedido!\nContactar con el area de TI')
-                console.error("An error occurred:", error.message);
-              }
+            }else{
+              alert('Perfil administrador no permitido')
+            }
           }else{
             alert('Debe seleccionar un transportista en la cabecera')
           }

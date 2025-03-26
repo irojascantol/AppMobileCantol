@@ -12,6 +12,20 @@ function MySelector({initText, setInputCompany}) {
     </Form.Select>
   );
 }
+
+/**
+ * Selector mejor conocido como combate
+ */
+function Combate({value, options, onChange, cmb_name, size='lg'}) {
+  return (
+    <Form.Select onChange={onChange} name={cmb_name} value={value.toString()} size={size} required className='tw-bg-gray-100 tw-text-base tw-font-semibold'>
+      {
+        options.map((option, index) => (<option key={index} value={option?.id?.toString()} disabled={index === 0}>{option?.text}</option>))
+      }
+    </Form.Select>
+  );
+}
+
 //catch event when form.select react bootstrap?
-export { MySelector }
+export { MySelector, Combate }
 

@@ -7,10 +7,10 @@ import Operacion from "../pages/entrega/Operacion";
 import { NotFound } from "../pages/defecto/NotFound";
 import { Dashboard } from "../pages/home/dashboard";
 import EstadoCuenta from "../pages/Clientes/EstadoCuenta";
-import FacturasCliente from "../pages/Clientes/Facturas";
-import { commercialContext } from "../context/ComercialContext";
-import { useContext, useEffect } from "react";
-import { useNavigate } from 'react-router-dom'
+import Documentos from "../pages/Clientes/Documentos";
+// import { commercialContext } from "../context/ComercialContext";
+// import { useContext, useEffect } from "react";
+// import { useNavigate } from 'react-router-dom'
 import DetallePedido from "../pages/pedido/DetallePedido";
 
 export function MiRutas() {
@@ -38,7 +38,9 @@ export function MiRutas() {
                 <Route path="pedido/:reporte" element={<ReportePedido/>}/>
                 <Route path="pedido/detalle/:reporte" element={<DetallePedido/>}/>
                 <Route path="cliente/estadocuenta" element={<EstadoCuenta/>}/>
-                <Route path="cliente/facturas" element={<FacturasCliente/>}/>
+                <Route path="cliente/documentos" element={<Documentos/>}/>
+                {/* <Route path="cliente/facturas" element={<Documentos tipo={'factura'} />}/>
+                <Route path="cliente/notascredito" element={<Documentos tipo={'notacredito'} />}/> */}
             <Route path="*" element={<NotFound/>} />
             </Route>
         </Routes>

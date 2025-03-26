@@ -5,15 +5,39 @@ import { SearchClientButton } from './Componentes/botones';
 import {PedidoModal} from '../../componentes/modal/pedidoModal';
 import { BuscarModal } from '../pedido/plantillas/modalPlantilla';
 import { ListGroup } from 'react-bootstrap';
-import { FacturaCard } from './Componentes/tarjetas';
-import { getFacturaPDF, getListarFacturas } from '../../services/clienteService';
+import { DocumentoCard } from './Componentes/tarjetas';
+import { getFacturaPDF, getListarFacturas, getListarNotaCredito } from '../../services/clienteService';
 import PDFVisualizer from './Componentes/PDFVisualizer';
 import { ReporteClienteModal } from '../../componentes/modal/reporteClienteModal';
 import { BsDownload } from 'react-icons/bs';
+import { Combate } from '../../componentes/Selector';
+// import { DisabledByDefault } from '@mui/icons-material';
+
+
+// const titles = {
+//     factura: 'FACTURAS POR CLIENTE',
+//     notacredito: 'NOTAS DE CREDITO POR CLIENTE',
+// }
+
+
+const documents = [
+    {
+        id: -1,
+        text: 'Tipo de documento',
+    },
+    {
+        id: 0,
+        text: 'Facturas',
+    },
+    {
+        id: 1,
+        text: 'Notas de credito'
+    }
+]
 
 
 
-function FacturasCliente() {
+function Documentos({tipo}) {
     //search modal state
     const [searchClientModal,  setSearchClientModal] = useState({show: false, title: '', returnedValue: {cardCode: null, ruc: null, razonsocial: null}, options: [], operacion: null, placeholder: null});
     
@@ -31,6 +55,9 @@ function FacturasCliente() {
     
     // facturas handler
     const handleFacturas = (obj) =>setFacturas({...facturas, ...obj})
+
+    // selector tipo documento
+    const [docType, setDocType] =  useState('-1') // -1 para Seleccionar documento
 
     // PDF Handler
     const handlePDF = async (route) => {
@@ -73,12 +100,21 @@ function FacturasCliente() {
     //fetch dato estado de cuenta
     const fetchFacturas = async () => {
         try {
-            let params = {
-                cardCode: searchClientModal.returnedValue.cardCode
-            };
-            const response = await getListarFacturas(params);
-            handleFacturas({lista: response.result});
-            handleSearchClientModal({show:false})
+            if(docType === '0'){ // 0 para facturas
+                let params = {
+                    cardCode: searchClientModal.returnedValue.cardCode
+                };
+                const response = await getListarFacturas(params);
+                handleFacturas({lista: response.result});
+                handleSearchClientModal({show:false})
+            }else if(docType === '1'){ // 1 para notas de credito
+                let params = {
+                    cardCode: searchClientModal.returnedValue.cardCode
+                };
+                const response = await getListarNotaCredito(params);
+                handleFacturas({lista: response.result});
+                handleSearchClientModal({show:false});
+            }
         } catch (error) {
             console.error(error);
         }
@@ -91,6 +127,14 @@ function FacturasCliente() {
         }
     },[searchClientModal.returnedValue.cardCode])
 
+    //handler Combate
+    const onChange = (event) => {
+        const {value, name} = event.target;
+        if(name === 'cmb_tipo_doc'){
+            setDocType(value.toString())
+            handleFacturas({lista: []}); //limpia lista
+        }
+    }
     
     return (
     <>
@@ -100,10 +144,15 @@ function FacturasCliente() {
     </PedidoModal>
 
     <div className='tw-relative'>
-        <h6 className='tw-text-center bg-secondary tw-text-white tw-rounded-md' style={{marginBottom: 0, padding: "5px 0"}}>{'FACTURAS POR CLIENTE'}</h6>
+        {/* <h6 className='tw-text-center bg-secondary tw-text-white tw-rounded-md' style={{marginBottom: 0, padding: "5px 0"}}>{titles[tipo] || ''}</h6> */}
+        <h6 className='tw-text-center bg-secondary tw-text-white tw-rounded-md' style={{marginBottom: 0, padding: "5px 0"}}>Documentos por cliente</h6>
         <Card >
         <Card.Header className='tw-px-2'>
-            <SearchClientButton onClick={()=>{handleSearchClientModal({title: 'Buscar cliente', show: true, 
+            <Combate options={documents} onChange={onChange} cmb_name={'cmb_tipo_doc'} value={docType}/>
+        </Card.Header> 
+        <Card.Header className='tw-px-2'>
+            <SearchClientButton disabled={docType === '-1'} onClick={()=>{handleSearchClientModal({title: 'Buscar cliente', 
+            show: true, 
             operacion: 'SoloCliente', 
             placeholder: 'Ingrese Razon Social o RUC', 
             returnedValue: {cardCode: null, ruc: searchClientModal.returnedValue.ruc, razonsocial: searchClientModal.returnedValue.razonsocial }})}}/>
@@ -125,9 +174,7 @@ function FacturasCliente() {
             {
                 facturas.lista.map((item, index)=>{
                     return (
-                        // <ListGroup.Item key={(index+1).toString()} as="li" disabled={false}>
-                            <FacturaCard key={(index+1).toString()} item={item} handlePDF={handlePDF} />
-                        // </ListGroup.Item>
+                            <DocumentoCard key={(index+1).toString()} item={item} handlePDF={handlePDF} tipo={docType}/>
                             )
                  })
              }
@@ -142,4 +189,4 @@ function FacturasCliente() {
     )
 }
 
-export default FacturasCliente
+export default Documentos
