@@ -27,7 +27,7 @@ export default function ReportePedido() {
     const location = useLocation();
     const navigate = useNavigate()
     const params = useParams();
-    const {tipo} = location.state; //tipo define si es pedido u oferta
+    const {tipo} = location.state || {tipo: null}; //tipo define si es pedido u oferta
     const page = new URLSearchParams(location.search).get('page');
 
 

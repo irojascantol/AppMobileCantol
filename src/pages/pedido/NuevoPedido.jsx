@@ -258,7 +258,9 @@ export default function NuevoPedido() {
                       console.log('Localizacion desactivada en navegador: ', error.message)
                     }
                     setLocation(!!currentLocation) //esto para enviar el cuadrado negro en frond
-                    let body = makeBody[tipo_root](nuevoPedido, currentLocation, dsctFormato)
+                    const newPedido = JSON.parse(JSON.stringify(nuevoPedido)); //saca una copia del objecto nuevo pedido
+                    newPedido.SalesPersonCode = data_token?.slpcode; //Agrega el codigo del vendedor al cuerpo copia de nuevo pedido
+                    let body = makeBody[tipo_root](newPedido, currentLocation, dsctFormato)
                     // // let body = makeSaleOrderBody(nuevoPedido, currentLocation, dsctFormato)
                     // await delay(2000)
                     const [response, status] = !!tipo_root ? await grabarCuerpo[tipo_root](body): [null, 206];

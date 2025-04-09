@@ -842,8 +842,6 @@ function NuevoPedidoProductos({data, doEdit=true}){
                     {!!dsctFormato?.dsctDoc?.dsct1?.catName && <BsFillPersonBadgeFill />}
                     <h6 className='tw-font-semibold tw-text-black tw-my-0 tw-p-1 tw-rounded-md'>{dsctFormato?.dsctDoc?.dsct1?.catName}</h6>
                 </div>
-
-
                 <div className='d-flex tw-justify-center tw-gap-2'>
                     <button variant="success" size="lg" className='button-4 tw-w-fit tw-text-base' disabled={!isClientExits?true:false} onClick={()=>handleSearchModal({show: true, modalTitle: 'Buscar producto', returnedValue: null, operacion: 'Producto', options: [{cliente_codigo: nuevoPedido?.cliente_codigo, products: nuevoPedido?.products}], placeholder: 'Ingrese nombre o codigo de producto'})}>
                         <BsPlusSquareFill size={22}/>
@@ -881,8 +879,9 @@ function NuevoPedidoProductos({data, doEdit=true}){
                                                 <div className='tw-text-base tw-flex tw-items-start'>
                                                     <div className='tw-relative'>
                                                         <span className='tw-text-sm'>P. Venta:<br/>
-                                                        <span className='tw-absolute tw-text-xs tw-font-semibold tw-top-[20px]'>
-                                                            ({truncate(dsctEquiv(itx?.dsct_porcentaje, itx?.dsct_porcentaje2), 2)}%)
+                                                        <span className='tw-absolute tw-text-xs tw-font-semibold tw-top-[20px] tw-w-40'>
+                                                            ({truncate(dsctEquiv(itx?.dsct_porcentaje, itx?.dsct_porcentaje2), 2)})%&nbsp;
+                                                            {!!itx?.upv && <span className='tw-text-red-900'>({`UPV: S/ ${itx?.upv}`})</span>}
                                                         </span>
                                                         </span>
                                                     </div>&nbsp;

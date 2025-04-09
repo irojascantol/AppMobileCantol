@@ -43,6 +43,7 @@ export function makeSaleOrderBody(saleOrder, location, dsctFormato){
         U_MSS_CATESN: saleOrder?.dsctCateCode || null,
         // U_MSSL_SECL: saleOrder?.segmentacion_cliente || null, //segmento del cliente
         U_DIS_IDCOTI: saleOrder?.tipocotizacion || null,
+        SalesPersonCode: saleOrder?.SalesPersonCode || null,
         DocumentLines: saleOrder?.products?.map((product)=>({
           ItemCode: product?.codigo,
           Quantity: product?.cantidad,

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { mainURL } from "../constants/globals";
+import { descargar_enlace_archivo } from "../utils/file";
 
 const rutas_reportes = {
     pendiente: '/listarpedidopendiente',
@@ -276,6 +277,39 @@ async function getSaleOrder(innerParams) {
     }
 }
 
+async function getQuotationFile(innerParams) {
+    axios.defaults.withCredentials = true;
+    try{
+        const response = await axios.post(`${mainURL}/comercial/ventas/ofertas/descargar_oferta`, null, {
+            params: innerParams,
+            responseType: "blob"
+        });
+        if (!!response.data && response.status === 200){
+            return response.data;
+        }else
+        {
+            return null;
+        }
+    }catch(error){
+        console.error("Error al descargar el archivo:", error);
+    }
+}
+
+async function getLastSellPrice(requestBody) {
+    axios.defaults.withCredentials = true;
+    try{
+        const response = await axios.post(`${mainURL}/comercial/ventas/pedido/obtenerultimoprecioventa`,requestBody, {timeout: 10000});
+        if (!!response.data && response.status === 200){
+            return response.data;
+        }else
+        {
+            return null;
+        }
+    }catch(error){
+        console.error("Error en getLastSellPrice:", error);
+    }
+}
+
 
 export {getPedido, 
         getDetallePedidoGeneral, 
@@ -290,5 +324,7 @@ export {getPedido,
         obtenerDescuentoDocumento,
         guardarNuevaOferta,
         getSaleOrder,
-        editarPedido
+        editarPedido,
+        getQuotationFile,
+        getLastSellPrice
     }

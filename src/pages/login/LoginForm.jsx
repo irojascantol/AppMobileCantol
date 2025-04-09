@@ -7,13 +7,13 @@ import { delay } from "../../utils/delay";
 import { useNavigate } from "react-router-dom";
 import { decodeJWT } from "../../utils/decode";
 import { reverseString } from "../../utils/string";
-// import { useMsal } from "@azure/msal-react";
 import ReCAPTCHA from 'react-google-recaptcha';
 import useRecaptcha from "../../hooks/useRecaptcha";
 import meLogo from './assets/cantol_black.png';
-// import {Button} from 'react-bootstrap/Button';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import 'C:/AppMobile/src/style/login.css'
+// import {Button} from 'react-bootstrap/Button';
+// import { useMsal } from "@azure/msal-react";
 // import { validarCaptcha } from "../../services/reCaptcha";
 
 const LoginForm = () => {

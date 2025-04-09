@@ -13,7 +13,7 @@ import { decodeJWT } from '../../../utils/decode';
 import { BsCheckCircle, BsSearch } from 'react-icons/bs';
 import { upSelectedOption } from '../../../utils/array';
 import { commercialContext } from '../../../context/ComercialContext';
-import { getCreditoAnticipo, obtenerDescuentoDocumento } from '../../../services/pedidoService';
+import { getCreditoAnticipo, getLastSellPrice, obtenerDescuentoDocumento } from '../../../services/pedidoService';
 import { addOneDecimal } from '../../../utils/math';
 import { Button } from 'react-bootstrap';
 import { useSnackbar } from 'notistack';
@@ -83,9 +83,6 @@ const fillData = {
     Producto: (items, products, nuevoPedido)=>{
         return {products: [...products].concat(items)}
     },
-    // Producto: (item, products, nuevoPedido)=>{
-    //     return {products: [...products, item]}
-    // },
     Transportista: (item)=>({
         ructransporte: {
             codigo_transporte: item?.codigo_trasnportista,
@@ -279,8 +276,24 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
     /**
      * Funcion que migra lista suspendida a lista principal
      */
-    const migrarListaSuspendida = () => {
-        handleNewSaleOrder(fillData[buscarModalValues?.operacion]([...heldItems], buscarModalValues?.options[0]?.products))
+    const migrarListaSuspendida = async () => {
+        let copiaProductos = JSON.parse(JSON.stringify(fillData[buscarModalValues?.operacion]([...heldItems], buscarModalValues?.options[0]?.products)));
+        //1-se hace la consulta de los ultimos precios de venta
+        let body = {} //construye el cuerpo body para hacer la consulta
+        body.Items = copiaProductos?.products.map(item => item.codigo);
+        body.CardCode = buscarModalValues?.options[0]?.cliente_codigo
+        const descuentos = await getLastSellPrice(body) //obtiene descuentos
+        if (Array.isArray(descuentos) && !!descuentos.length){ //si hay descuentos, asigna en la lista supendida
+            copiaProductos?.products?.forEach(element => {
+                for(const item of descuentos){
+                    if(item?.item === element?.codigo ){
+                        element.upv = item?.precio_venta
+                        break;
+                    }
+                }
+            });
+        }
+        handleNewSaleOrder(copiaProductos)
         handleCloseModal(); //cierra modal
     }
 
@@ -325,7 +338,6 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
                                         }}>
                                         <div>
                                             {/* Si el item existe en lista temporal, envia true para pintar circle check icon, lo de abajo*/}
-                                            {/*(([...heldItems].findIndex((item_)=>(item_.codigo === item.codigo))) !== -1)*/}
                                             {body[buscarModalValues?.operacion](item, isQuotation, (([...heldItems].findIndex((item_)=>(item_.codigo === item.codigo))) !== -1) )}
                                         </div>
                                     </div>
