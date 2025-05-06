@@ -35,7 +35,7 @@ export function makeSaleOrderBody(saleOrder, location, dsctFormato){
         U_MSSF_ORDC: saleOrder?.institucional?.oc,
         grupo_familia: saleOrder?.grupo_familia,
         // ubicacion: saleOrder?.ubicacion,
-        ubicacion: saleOrder?.direccionentrega[0]?.ubicacion,
+        ubicacion: saleOrder?.direccionentrega[0]?.ubicacion.toString(),
         U_DIS_LATITU: location?.latitud?.toString() || null,
         U_DIS_LONGIT: location?.longitud?.toString() || null,
         U_DST_DESOTO: dsctFormato?.dsctDoc?.dsct1?.selected || 0.0,

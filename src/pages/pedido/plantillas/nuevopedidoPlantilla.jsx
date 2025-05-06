@@ -11,6 +11,7 @@ import { InputNumberSpinner } from '../../../componentes/globales/input';
 import { DiscountOvDialog } from '../componentes/DiscountOvDialog';
 import '../../../style/inputform.css'
 import { button } from '@material-tailwind/react';
+import { useSnackbar } from 'notistack';
 
 
 //Cofiguracion para discount dialog
@@ -296,6 +297,12 @@ function NuevoPedidoProductos({data, doEdit=true}){
     // //activate los botones para eliminar productos
     const [deleteMode,  setDeleteMode] = useState(false);
     const [isFirstRender, setIsFirstRender] = useState(true);
+
+    // hook para snakbar y funcion para imprimir
+    const { enqueueSnackbar } = useSnackbar();
+    const imprimir_mensaje = (itemName, variant) => {
+        enqueueSnackbar(itemName, { variant, autoHideDuration: 1500 });
+    }
     
     /**
      * Estados para el Discount Dialog
@@ -313,8 +320,6 @@ function NuevoPedidoProductos({data, doEdit=true}){
     // variables de referencia
     const prevLengthRef = useRef(nuevoPedido?.products?.length);  // Almacena cantidad de productos en lista
     const isQtyChangedRef = useRef(false);  // Activa cuando se modifica la cantidad de un producto
-
-
 
     //activa solo cuando se modifica la tabla productos
     useEffect(()=>{
@@ -334,18 +339,23 @@ function NuevoPedidoProductos({data, doEdit=true}){
     //aplica el descuento por anticipo y nota de credito
     useEffect(()=>{
         console.log('Ingresa modalValues.returnedValue')
+        console.log('nuevopedidoPlantilla.jsx, line: 337')
         if(modalValues.operacion === 'agregarProducto' && !!modalValues.returnedValue){ //aqui actualiza la cantidad al cerrar dialog
             const {value, itemCode} = modalValues.returnedValue
             let listModified = JSON.parse(JSON.stringify([...nuevoPedido?.products])) //copia
             listModified.forEach((item)=>{
-                if(!('tipo' in item) && item.codigo === itemCode){ // esto excluye la cantidad de los bonificados
+                if(!('tipo' in item) && item.codigo === itemCode){ // excluye bonificados y actualiza cantidad de no bonificados
                     item.cantidad = Number(value)
                     }
-            })
-            //verifica si existe algun cambio
+                })
+            //verifica si existe algun cambio de cantidad para hacer fetch de los beneficios para cuando exista
             isQtyChangedRef.current = JSON.stringify([...nuevoPedido?.products]) !==  JSON.stringify(listModified) //verifica que exista cambio de cantidades
-            // 🎃IMPORTANTE| Falta desarrollar esa parte🎃, deberian eliminartse los bonificados cuando se cambia la cantidades
-            handleNewSaleOrder({products: listModified})
+            // 🎃Elimina el bonificado del item siempre y cuando exista cambio en la cantidad
+            if(isQtyChangedRef.current){
+                listModified?.some((item)=>('tipo' in item) && (item?.codigo === itemCode)) && imprimir_mensaje(`Bonificación retirada para ${itemCode}`, 'warning')
+                const listWithOutBoni = listModified?.filter((item)=>!(('tipo' in item) && (item?.codigo === itemCode))) //elimina bonificado
+                handleNewSaleOrder({products: listWithOutBoni})
+            }
         }else{
             let condition = (modalValues?.returnedValue === null || modalValues?.returnedValue === undefined)
             if((!condition) && typeof(modalValues?.returnedValue) === 'object' && 'anticipo' in modalValues?.returnedValue && 'nota_credito' in modalValues?.returnedValue){
@@ -381,6 +391,7 @@ function NuevoPedidoProductos({data, doEdit=true}){
     //Ahora tambien va pasar cuando cambiemos el cliente
     useEffect(()=>{
         if(!open.show && open.accepted){ //se activa cuando se cierra el dialogo de descuento
+            console.log('nuevopedidoPlantilla.jsx, line: 386')
             console.log('Aplica descuento de dialog')
             aplicarDescuento('dialog')
         }
@@ -418,12 +429,18 @@ function NuevoPedidoProductos({data, doEdit=true}){
         //se filtra los productos que nos son bonificados
         let request_body = nuevoPedido.products.map((item)=>{if(!('tipo' in item)) return {codigo_articulo: item?.codigo, cantidad: item?.cantidad, precio: item?.precio}});
         request_body = request_body.filter((item)=>item !== undefined);
+        
         let response = await getProductosBonificacion(request_body);
+        
         response === 406 && handleShow()
-        if (response !== 406 && !!response?.length){
-            //elimina los productos de tipo bonificados
-            let ghost_products_for_delete = [...nuevoPedido.products]
+
+        if (response !== 406){ //verifica que exista items en la respuesta
+            let ghost_products_for_delete = [...nuevoPedido.products] //copia lista de productos
+
+            //indexes de los productos que estan bonificados en la lista de productos
             let indexes = ghost_products_for_delete.reduce(function(a, e, i){ if (('tipo' in e) && (e?.tipo === 'bonificado')) a.push(i); return a}, [])
+
+            //--> Esto elimina los productos bonificados
             if(!!indexes.length){
                 //ordenar indices de mayor a menor
                 indexes.sort((a,b)=>b-a)
@@ -432,11 +449,25 @@ function NuevoPedidoProductos({data, doEdit=true}){
                     ghost_products_for_delete.splice(index, 1)              
                 }
             }
-        //crea arrays de las bonificaciones aplicadas
-            let tmpResponse = response.map((item)=>({...item, maxLimit: item?.cantidad, impuesto: {codigo: 'IGV_EXE', valor: 0}, descuento: 100, dsct_porcentaje: 100, tipo: 'bonificado'}))
-            handleNewSaleOrder({products: [...ghost_products_for_delete, ...tmpResponse]})
+
+            if(!!response?.length){//elimina los productos de tipo bonificados
+                // crea arrays de las bonificaciones aplicadas
+                let tmpResponse = response.map((item)=>({...item, maxLimit: item?.cantidad, impuesto: {codigo: 'IGV_EXE', valor: 0}, descuento: 100, dsct_porcentaje: 100, tipo: 'bonificado'}))
+                //maxlimit: es para que no se pueda descontar la cantidad de bonificados entregados
+                
+                //actualizacion de bonificados con dato de almacen padre WarehouseCode
+                console.log([...tmpResponse], ghost_products_for_delete)
+                const newtmpResponse = [...tmpResponse].map(idw=>{
+                    let index = ghost_products_for_delete.findIndex(item => item?.codigo === idw?.codigo)
+                    return {...idw, ...{almacen: ghost_products_for_delete[index]?.almacen}}
+                })
+                handleNewSaleOrder({products: [...ghost_products_for_delete, ...newtmpResponse]})
+            }else{
+                handleNewSaleOrder({products: [...ghost_products_for_delete]})
+            }
         }
     }
+
 
     
     const actualizarDescuentoLinea = async () => {
@@ -608,7 +639,7 @@ function NuevoPedidoProductos({data, doEdit=true}){
                     for( const objRes of response){
                         ghost_products.forEach((item, index) => {
                                 
-                            if(!('tipo' in item) && ('marca' in item)){
+                            if(!('tipo' in item) && ('marca' in item)){ //aplica para no bonificados
                                 // if ('marca' in item)// se agregar el descuento nivel 1, primero evalua por marca y luego por categoria de cliente
                                 // item.descuento = objRes?.total_descuento_n1 || "0";
                                 if (item?.marca === marca_nombre){
@@ -622,14 +653,14 @@ function NuevoPedidoProductos({data, doEdit=true}){
                                     item.dsct_porcentaje = dsctCateCliente;
                                 }
                             }
-                            else{
+                            else if(!('tipo' in item)){ //aplica para no bonificados
                                 item.descuento = Number(objRes?.total_descuento_n1 || 0);
                                 // item.dsct_porcentaje = Number(objRes?.descuento_n1 || 0);
                                 item.dsct_porcentaje = dsctCateCliente;
                             }
                                 
                             if(!!dsctFormato?.promociones?.enabled){   ///aqui solo se aplica las promociones de nivel2
-                                if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
+                                if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){ // no bonificados
                                         // item.descuento2 = objRes?.total_descuento_n2 || "0";
                                         item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
                                         item.dsct_porcentaje2 = Number(objRes?.descuento_n2 || 0);
@@ -638,7 +669,7 @@ function NuevoPedidoProductos({data, doEdit=true}){
                                     item.dsct_porcentaje2 = 0.0;
                                 }
                             }else{
-                                if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){
+                                if(!('tipo' in item) && item?.codigo === objRes?.codigo_articulo){ // no bonificados
                                         // item.descuento2 = objRes?.total_descuento_n2 || "0";
                                         item.descuento2 = Number(objRes?.total_descuento_n2 || 0);
                                         item.dsct_porcentaje2 = 0.0;
@@ -766,13 +797,13 @@ function NuevoPedidoProductos({data, doEdit=true}){
             }
         }
         
-        const setearCero = () => {
+    const setearCero = () => {
             //se quita descuento por que el calculo del porcetaje sera directo
             let temporal_montos = {...nuevoPedido.montos, total: 0, total_cred_anti: 0, valor_venta: 0, impuesto: 0, anticipo: 0, nota_credito: 0, dsctProductos: 0, dsctDoc: 0}
             handleNewSaleOrder({montos: temporal_montos})
         }
         
-        const setearDescuentoCredAnti = () => {
+    const setearDescuentoCredAnti = () => {
             let sum_anti_cred = calculartTotalNotaAnticipo();
             let total_cred_anti = nuevoPedido.montos.total - sum_anti_cred;
             let temporal_montos = {...nuevoPedido.montos, total_cred_anti: total_cred_anti, anticipo: modalValues?.returnedValue?.anticipo, nota_credito: modalValues?.returnedValue?.nota_credito}
@@ -786,15 +817,16 @@ function NuevoPedidoProductos({data, doEdit=true}){
         
         /**
          * Quita descuentos y bonificaciones de la lista de productos
-         * @param {bool} soloDescuento 
+         * @param {bool} soloDescuento
          */
-        const eliminar_Dsct_Bonificado = (soloDescuento=false, dsctTotal=undefined, isInit = true) => {
+    const eliminar_Dsct_Bonificado = (soloDescuento=false, dsctTotal=undefined, isInit = true) => {
             //elimina descuento de no bonificados
-            let itemsSinDescuento = nuevoPedido?.products.map((item)=>(!('tipo' in item)?{...item, ...{descuento: 0.0, dsct_porcentaje: 0.0, descuento2: 0.0, dsct_porcentaje2: 0.0}}:{...item}))
+            let itemsSinDescuento = nuevoPedido?.products.map((item)=>(!('tipo' in item)?{...item, ...{descuento: 0.0, dsct_porcentaje: 0.0, 
+                                                                                            descuento2: 0.0, dsct_porcentaje2: 0.0}}:{...item}))
             let itemsNoBonificados = []
-            if (!soloDescuento){
-                    itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item)) //Elimina bonificados
-                    if(isInit){
+            if (!soloDescuento){ //si es false, entra aqui
+                    itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item)) //Elimina bonificados // conserva los que no tienen tipo
+                    if(isInit){ //si es true, entra aqui
                         
                         let cero_resto = {...dsctFormato.dsctDoc.restoDesc}  //setea cero resto descuentos
                         for (let key in cero_resto) {
@@ -816,10 +848,10 @@ function NuevoPedidoProductos({data, doEdit=true}){
                 //Mantiene toda la lista completa, bonificados y no bonificados
                 itemsNoBonificados = itemsSinDescuento?.filter((item)=>!('tipo' in item) || !!('tipo' in item))
             }
-
             handleNewSaleOrder({products: [...itemsNoBonificados], montos: {...nuevoPedido?.montos, ...{descuento: dsctTotal}}})
         }
 
+        //actualiza cantidad de item bonificado
         const handleInputSpinner = (action, itemCode, value) => {
             //copia la lista de productos
             let ghost_products = JSON.parse(JSON.stringify(nuevoPedido?.products))
@@ -912,10 +944,10 @@ function NuevoPedidoProductos({data, doEdit=true}){
                                             </div>
                                         </div>
                                         <div className={`tw-absolute button-4 tw-right-[-0px] tw-top-[-0px] tw-px-0 tw-py-0 tw-bg-black tw-text-white item-delete ${!deleteMode? 'tw-invisible tw-opacity-0': 'tw-visible tw-opacity-100'}`} onClick={()=>{eliminarProducto(itx)}}>
-                                                <BsX size={20}/>
+                                            <BsX size={20}/>
                                         </div>
-                                        <div className={`tw-absolute button-4 tw-left-[0px] tw-bottom-[0px] tw-px-0 tw-py-0 tw-bg-yellow-400 tw-text-black item-delete ${itx?.tipo === 'bonificado'? 'tw-visible tw-opacity-100': 'tw-invisible tw-opacity-0'}`}>
-                                                <BsBootstrap size={20}/>
+                                        <div className={`tw-absolute button-4 tw-right-[0px] tw-bottom-[-5px] tw-px-0 tw-py-0 tw-bg-yellow-400 tw-text-black item-delete ${itx?.tipo === 'bonificado'? 'tw-visible tw-opacity-100': 'tw-invisible tw-opacity-0'}`}>
+                                            <BsBootstrap size={20}/>
                                         </div>
                                     </div>
                                 </ListGroup.Item>
@@ -955,8 +987,8 @@ function NuevoPedidoProductos({data, doEdit=true}){
             className="d-flex tw-flex-col justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-gap-2"
             variant="no style"
             >
-                <button className='button-4 tw-w-full' disabled={true} onClick={()=>{aplicarBonificacion()}}>
-                    Aplicar bonificación (Desactivado)
+                <button className='button-4 tw-w-full' onClick={()=>{aplicarBonificacion()}}>
+                    Aplicar bonificación
                 </button>
                 <button className='button-4 tw-w-full tw-flex tw-justify-center tw-items-center tw-gap-2' 
                         disabled={(!isClientExits || doEdit)?true:false} 

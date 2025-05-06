@@ -352,6 +352,7 @@ function BuscarModal({buscarModalValues, handleNewSaleOrder, handleCloseModal, i
 }
 
 function IngresarTexto({modalValues, handleInputTextModal, handleNewSaleOrder, type, isQuotation}){
+    
     let initComment = modalValues?.operacion === 'comentarios' ? (modalValues?.options?.vendedor || ''): '';
     type = modalValues?.operacion === 'comentarios' ? 'text' : type;
     let rows = modalValues?.operacion === 'comentarios' ? 3 : 1;
@@ -372,25 +373,26 @@ function IngresarTexto({modalValues, handleInputTextModal, handleNewSaleOrder, t
       />
         <div className='tw-w-full tw-flex tw-justify-end'>
             <button className='button-4 tw-w-fit tw-mt-2 tw-text-yellow-400 bg-dark' onClick={()=>{
-                    if(modalValues.operacion === 'comentarios'){
-                        handleNewSaleOrder({comentarios: {...modalValues?.options, vendedor: value.toString().trim()}}); 
-                        handleInputTextModal({show: false});
-                    }else if(modalValues.operacion === 'agregarProducto'){
+                        if(modalValues.operacion === 'comentarios'){
+                            handleNewSaleOrder({comentarios: {...modalValues?.options, vendedor: value.toString().trim()}}); 
+                            handleInputTextModal({show: false});
+                        }else if(modalValues.operacion === 'agregarProducto'){
 
-                        //verifica si pedido es mayor al stock y si no es cotizacion
-                        if(value > modalValues?.options?.stock && !isQuotation){
-                            alert('La cantidad debe ser menor al stock')
+                            //verifica si pedido es mayor al stock y si no es cotizacion
+                            if(value > modalValues?.options?.stock && !isQuotation){
+                                alert('La cantidad debe ser menor al stock')
+                            }else{
+                                if(Number(value)<1)
+                                    // verifica que no se negativo
+                                    alert('La cantidad no debe ser menor a 1')
+                                else
+                                    //ejemplo del cuerpo de retorno: {returnedValue: {value: '6', itemCode: 'ME0106030002'}, show: false}
+                                    handleInputTextModal({show: false, returnedValue: {value, itemCode: modalValues?.options?.itemCode}});
+                                }
                         }else{
-                            if(Number(value)<1)
-                                // verifica que no se negativo
-                                alert('La cantidad no debe ser menor a 1')
-                            else
-                                handleInputTextModal({show: false, returnedValue: {value, itemCode: modalValues?.options?.itemCode}});
-                            }
-                    }else{
-                        handleNewSaleOrder({ructransporte: value}); 
-                        handleInputTextModal({show: false});
-                    }
+                            handleNewSaleOrder({ructransporte: value}); 
+                            handleInputTextModal({show: false});
+                        }
                     }}>
                     Ingresar
             </button>
