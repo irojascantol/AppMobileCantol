@@ -987,8 +987,11 @@ function NuevoPedidoProductos({data, doEdit=true}){
             className="d-flex tw-flex-col justify-content-between align-items-start active:tw-border-yellow-400 tw-pl-1 tw-gap-2"
             variant="no style"
             >
-                <button className='button-4 tw-w-full' onClick={()=>{aplicarBonificacion()}}>
-                    Aplicar bonificación
+                <button className='button-4 tw-w-full' 
+                    disabled={(!isClientExits || doEdit)?true:false}
+                    onClick={()=>{aplicarBonificacion()}}
+                >
+                    <span>Aplicar bonificación</span>
                 </button>
                 <button className='button-4 tw-w-full tw-flex tw-justify-center tw-items-center tw-gap-2' 
                         disabled={(!isClientExits || doEdit)?true:false} 
