@@ -468,8 +468,6 @@ function NuevoPedidoProductos({data, doEdit=true}){
         }
     }
 
-
-    
     const actualizarDescuentoLinea = async () => {
 
         let ghost_products = [...nuevoPedido.products]
@@ -687,7 +685,7 @@ function NuevoPedidoProductos({data, doEdit=true}){
         if (largo_productos){
             //calcular el valor de venta de producto menos el descuento
             // let valorVenta = nuevoPedido?.products.reduce((acc, item)=>(((item?.precio * (1 - (item?.dsct_porcentaje * 0.01))) * item?.cantidad) + acc), 0); //DESACTIVADO POR UN MOMENTO
-            let valorVenta = nuevoPedido?.products.reduce((acc, item)=>((item?.precio * item?.cantidad) + acc), 0);
+            let valorVenta = nuevoPedido?.products.reduce((acc, item)=>( (!('tipo' in item) ? (item?.precio * item?.cantidad) : 0.0) + acc), 0);
             //calcular descuento total de productos
             let itemsNoBonificados = nuevoPedido?.products.filter((item)=>!('tipo' in item))
             let valorDescuentoProductos = itemsNoBonificados.reduce((acc, item)=>((item?.precio * dsctEquiv(item?.dsct_porcentaje, item?.dsct_porcentaje2) * 0.01 * item?.cantidad) + acc), 0);
@@ -940,7 +938,7 @@ function NuevoPedidoProductos({data, doEdit=true}){
                                             <div className='tw-text-base'>
                                                 <span className='tw-text-sm'>Subtotal:</span>&nbsp;
                                                 <span className='tw-text-xs'>{itx?.unidad_moneda}</span> 
-                                                {addOneDecimal(truncate(itx?.precio * itx?.cantidad, 2))}
+                                                {!(('tipo' in itx) && (itx.tipo === 'bonificado')) ? addOneDecimal(truncate(itx?.precio * itx?.cantidad, 2)) : '0.00'}
                                             </div>
                                         </div>
                                         <div className={`tw-absolute button-4 tw-right-[-0px] tw-top-[-0px] tw-px-0 tw-py-0 tw-bg-black tw-text-white item-delete ${!deleteMode? 'tw-invisible tw-opacity-0': 'tw-visible tw-opacity-100'}`} onClick={()=>{eliminarProducto(itx)}}>
